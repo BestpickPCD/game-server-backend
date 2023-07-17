@@ -14,8 +14,26 @@ const getAllUsers = async (req, res) => {
   }
 }
 
-const register = async (req, res) => {
+const updateUser = async (req, res) => {
+  try {
+    const userId = req.params.userId
+    const { email, username } = req.body
+    
+    const user = await prisma.users.findUnique({
+      where:{
+        id: userId
+      }
+    })
 
+
+    console.log(user)
+
+  } catch (error) {
+    
+  }
+}
+
+const register = async (req, res) => {
   try { 
     const { name, username, email, role_id, password, confirmPassword } = req.body;
 
@@ -27,37 +45,49 @@ const register = async (req, res) => {
       },
     });
 
-    if (existingUser) {
+    if (existingUser)
       return res.status(400).json({ message: 'User already exists' });
-    }
 
     // Check if password and confirm password match
-    if (password !== confirmPassword) {
+    if (password !== confirmPassword)
       return res.status(400).json({ message: 'Password and confirm password do not match' });
-    }
 
     // Hash the password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create the new user
-    const newUser = await prisma.users.create({
-      data: {
-        name: name,
-        username: username,
-        email: email,
-        role_id: role_id,
-        password: hashedPassword,
-      },
-    });
+    try {
 
-    const userResponse = {
-      user_id: newUser.id,
-      username: newUser.username 
-    }
+      // Create the new user
+      const newUser = await prisma.users.create({
+        data: {
+          name: name,
+          username: username,
+          email: email,
+          role_id: role_id,
+          password: hashedPassword,
+        },
+      });
+  
+      const userResponse = {
+        user_id: newUser.id,
+        username: newUser.username 
+      } 
+      res.status(201).json({ message: 'User registered successfully', data: userResponse });
+    } catch (error) {
+      console.log(error)
+      res.status(500).json({message:error})
+    } 
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({message:error})
+  }
 
-    // const { name, email, password, role_id, ...rest } = newUser
+}
 
-    res.status(201).json({ message: 'User registered successfully', data: userResponse });
+const login = async (req, res) => {
+  try {
+    const { username, password } = req.body
+    res.json(req.body)
     
   } catch (error) {
     console.log(error)
@@ -65,4 +95,4 @@ const register = async (req, res) => {
   }
 }
 
-module.exports = { getAllUsers, register };
+module.exports = { getAllUsers, register, login, updateUser };

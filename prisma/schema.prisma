@@ -11,15 +11,18 @@ datasource db {
 }
 
 model Users {
-  id         Int     @id @default(autoincrement())
-  name       String
-  email      String  @unique
-  username   String  @unique
-  password   String
-  role_id    Int
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  deletedAt  DateTime? 
+  id          Int     @id @default(autoincrement())
+  name        String
+  email       String  @unique
+  username    String  @unique
+  password    String
+  roleId      Int
+  role        Roles    @relation(fields: [roleId], references: [id])
+  currencyId  Int?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deletedAt   DateTime? 
+  currency    Currencies? @relation(fields: [currencyId], references: [id]) 
 } 
 
 model Roles {
@@ -28,12 +31,23 @@ model Roles {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
   deletedAt  DateTime? 
+  users      Users[]
 } 
+
+model Currencies {
+  id         Int     @id @default(autoincrement())
+  name       String   @unique
+  code       String   @unique
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  deletedAt  DateTime? 
+  users      Users[]
+}
 
 model ip_user {
   id         Int      @id @default(autoincrement())
-  user_id    Int
-  role_id    Int
+  userId     Int
+  roleId     Int
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
   deletedAt  DateTime? 

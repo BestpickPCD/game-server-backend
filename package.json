@@ -2,6 +2,9 @@
   "name": "game-server-api",
   "version": "1.0.0",
   "description": "",
+  "engines": {
+    "npm": "7.19.1"
+  },
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",

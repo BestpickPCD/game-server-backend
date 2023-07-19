@@ -4,13 +4,13 @@ const app = express()
 app.use(express.json()); 
 
 //controllers
-const userController = require('./controllers/userController')
-const roleController = require('./controllers/roleController')
-const currencyController = require('./controllers/currencyController')
+const userRoutes = require('./routes/user')
+const roleRoutes = require('./routes/role')
+const currencyRoutes = require('./routes/currency')
 // use controllers
-userController(app)
-roleController(app)
-currencyController(app)
+userRoutes(app)
+roleRoutes(app)
+currencyRoutes(app)
 
 const port = process.env.PORT
 app.listen(port, () => {

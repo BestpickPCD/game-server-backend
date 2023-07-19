@@ -1,7 +1,15 @@
-const roleRoutes = require('../routes/roles')
+const { PrismaClient } = require('@prisma/client')
+const prisma = new PrismaClient()
 
-module.exports = (app) => {
-    
-    app.get('/roles', roleRoutes.getRoles)
-
+const getRoles = async (req, res) => {
+    try {
+        const roles = await prisma.roles.findMany()
+        res.status(200).json(roles)
+    } catch (error) {
+        console.log(error)
+        res.status(500).json({message:error})
+    }
 }
+
+
+module.exports = { getRoles }

@@ -10,24 +10,53 @@ const roleModel = require('../models/role')
 // Define your route handler to get all users
 const getAllUsers = async (req, res) => {
   try {
+    const search = req.params.search || ""
+    const page = req.params.page || 0
+    const size =  req.params.size || 10
 
-    const users = await prisma.users.findMany({
-      where: {
-        deletedAt: null
-      }
-    })
-    const rearrangedUsers =  await Promise.all( users.map ( async (user) => {
+    const usersData = await prisma.$transaction([
+      prisma.users.count(),
+      prisma.users.findMany({
+        select: {
+          name: true,
+          email: true,
+          username: true,
+          roleId: true,
+          createdAt: true,
+          updatedAt: true,
+          currency: {
+            select: {
+              code: true
+            }
+          },
+          role: {
+            select: {
+              name: true
+            }
+          }
+        },
+        where: {
+          deletedAt: null,
+          name: {
+            contains: search
+          },
+          email: {
+            contains: search
+          },
+          username: {
+            contains: search
+          } 
+        }, 
+        orderBy: { 
+          updatedAt: 'desc' 
+        }, 
+        skip: Number(page * size), 
+        take: Number(size) 
+      }) 
+    ])
 
-      const role = await roleModel.findById(user.roleId)
-      const currency = await currencyModel.findById(user.currencyId) 
-      const { password, createdAt, updatedAt, deletedAt, roleId, currencyId, ...toShow } = user
-      const getNames = { currency:currency.code, role:role.name, ...toShow } 
 
-      return getNames
-
-    })) 
-    
-    res.status(200).json(rearrangedUsers);
+    res.status(200).json(usersData);
 
   } catch (error) {
     console.error('Error retrieving users:', error);
@@ -50,16 +79,14 @@ const updateUser = async (req, res) => {
     if (!user)
       return res.status(404).json({ message: 'User not found' })
 
-    if (email) 
-      user.email = email
-    if (name) 
-      user.name = name
-    if (username) 
-      user.username = username
-    if (roleId) 
-      user.roleId = roleId
-    if (currencyId) 
-      user.currencyId = currencyId
+    const updateUser = { 
+      ...user, 
+      email: email || user.email, 
+      name: name || user.name, 
+      username: username || user.username, 
+      roleId: roleId || user.roleId, 
+      currencyId: currencyId || user.currencyId 
+    }
 
     try {
       // Save the updated user
@@ -67,16 +94,16 @@ const updateUser = async (req, res) => {
         where: {
           id: userId
         },
-        data: user
+        data: updateUser
       })
       res.status(200).json({ message:"user updated", user:updatedUser })
     } catch (error) {
       console.log(error)
-      res.status(500).json({ message:error })
+      res.status(500).json({ message:"something went wrong", error })
     } 
   } catch (error) {
     console.log(error)
-    res.status(500).json({ message:error })
+    res.status(500).json({ message:"something went wrong", error })
   }
 }
 
@@ -90,7 +117,9 @@ const register = async (req, res) => {
         email: email,
         username: username,
       },
-    });
+    })
+
+    
 
     if (existingUser)
       return res.status(400).json({ message: 'User already exists' });
@@ -123,11 +152,11 @@ const register = async (req, res) => {
       res.status(201).json({ message: 'User registered successfully', data: userResponse });
     } catch (error) {
       console.log(error)
-      res.status(500).json({message:error})
+      res.status(500).json({ message:"something went wrong", error })
     } 
   } catch (error) {
     console.log(error)
-    res.status(500).json({message:error})
+    res.status(500).json({ message:"something went wrong", error })
   }
 
 }
@@ -137,24 +166,18 @@ const deleteUser = async (req, res) => {
   try {
     const userId = parseInt(req.params.userId)
     const findUser = await prisma.users.findUnique({
-      where: {
-        id: userId
-      }
+      where: { id: userId }
     })
 
     if(findUser) {
 
       const user = await prisma.users.update({
-        where: {
-          id: userId
-        },
-        data: {
-          deletedAt: new Date()
-        }
+        where: { id: userId },
+        data: { deletedAt: new Date() }
       })
   
-      if(user)
-        res.status(200).json({ message:'user deleted' })
+      // if there is user -> delete
+      user && res.status(200).json({ message:'user deleted' }) 
 
     }
     else
@@ -162,7 +185,7 @@ const deleteUser = async (req, res) => {
 
   } catch (error) {
     console.log(error)
-    res.status(500).json({message:error})
+    res.status(500).json({ message:"something went wrong", error })
   }
 
 }
@@ -193,7 +216,7 @@ const login = async (req, res) => {
     
   } catch (error) {
     console.log(error)
-    res.status(500).json({message:error})
+    res.status(500).json({ message:"something went wrong", error })
   }
 }
 

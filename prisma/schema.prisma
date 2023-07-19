@@ -16,6 +16,7 @@ model Users {
   email       String  @unique
   username    String  @unique
   password    String
+  inactive    Boolean @default(false)
   roleId      Int
   role        Roles    @relation(fields: [roleId], references: [id])
   currencyId  Int?

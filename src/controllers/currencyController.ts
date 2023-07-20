@@ -2,21 +2,24 @@ import { PrismaClient } from '@prisma/client';
 import { Request, Response } from 'express';
 const prisma = new PrismaClient();
 
-export const getCurrencies = async (_: Request, res: Response) => {
-  try {
+export const getCurrencies = async (req : Request, res: Response) : Promise<any> => {
+  try { 
+    console.log(req.user)
     const currencies = await prisma.currencies.findMany({
       where: { deletedAt: null },
       orderBy: { name: 'asc' }
     });
-    res.status(200).json(currencies);
-  } catch (error) {
-    res.status(500).json({ message: 'something went wrong', error });
-    console.log(error);
+
+    return res.status(200).json(currencies);
+
+  } catch (error) {  
+    return res.status(500).json({ message: 'something went wrong', error }); 
   }
 };
 
-export const addCurrency = async (req: Request, res: Response) => {
+export const addCurrency = async (req: Request, res: Response) : Promise<any> => {
   try {
+
     const { name, code } = req.body;
     const findCurrency = await prisma.currencies.findUnique({
       where: { name, code }
@@ -26,13 +29,15 @@ export const addCurrency = async (req: Request, res: Response) => {
       await prisma.currencies.create({
         data: { name, code }
       });
-      res.status(201).json({ message: 'currency created' });
-    } else res.status(400).json({ message: 'currency exists' });
-  } catch (error) {
-    res.status(500).json({ message: 'something went wrong', error });
-    console.log(error);
+      return res.status(201).json({ message: 'currency created' });
+    } 
+    else 
+      res.status(400).json({ message: 'currency exists' });
+  } catch (error) { 
+    return res.status(500).json({ message: 'something went wrong', error });
   }
 };
+
 export const updateCurrency = async (
   req: Request,
   res: Response
@@ -48,10 +53,11 @@ export const updateCurrency = async (
 
     if (!updatedCurrency)
       return res.status(404).json({ message: 'Currency not found' });
-    else res.status(200).json({ message: 'Currency updated' });
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: 'something went wrong', error });
+    else 
+      return res.status(200).json({ message: 'Currency updated' });
+
+  } catch (error) { 
+    return res.status(500).json({ message: 'something went wrong', error });
   }
 };
 export const deleteCurrency = async (
@@ -67,7 +73,9 @@ export const deleteCurrency = async (
 
     if (!deleteCurrency)
       return res.status(404).json({ message: 'Currency not found' });
-    else res.status(404).json({ message: 'Currency soft-deleted' });
+    else 
+      return res.status(404).json({ message: 'Currency soft-deleted' });
+
   } catch (error) {
     return res.status(500).json({ message: 'something went wrong', error });
   }

@@ -4,6 +4,7 @@ import bcrypt from 'bcrypt';
 import { getTokens } from '../utilities/getTokens.ts';
 import { findById } from '../models/currency.ts';
 import { Response, Request } from 'express';
+import axios from "axios";
 
 // Define your route handler to get all users
 export const getAllUsers = async (req: Request, res: Response) => {
@@ -210,11 +211,17 @@ export const login = async (req: Request, res: Response): Promise<any> => {
       const isValid = await bcrypt.compare(password, user.password);
       if (isValid) {
         const currency = await findById(user.currencyId as number);
+        const currencyFrom = 'USD'
+ 
+        const currencyCode = currency?.code || "KRW" 
+        const currencyRate = await axios.get(`https://api.frankfurter.app/latest?from=${currencyFrom}&to=${currencyCode}`);
+  
         const tokens = getTokens(user.id);
         const data = {
           userId: user.id,
           username: user.username,
           currency: currency && currency.code,
+          rate: currencyRate.data,
           tokens
         };
         return res.status(200).json({ message: 'logged in', data });

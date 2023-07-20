@@ -69,7 +69,6 @@ export const getAllUsers = async (req: Request, res: Response) => {
       message: 'SUCCESS'
     });
   } catch (error) {
-    console.error('Error retrieving users:', error);
     res
       .status(500)
       .json({ error: 'An error occurred while retrieving users.' });
@@ -141,17 +140,14 @@ export const register = async (req: Request, res: Response): Promise<any> => {
     if (existingUser)
       return res.status(400).json({ message: 'User already exists' });
 
-    // Check if password and confirm password match
     if (password !== confirmPassword)
       return res
         .status(400)
         .json({ message: 'Password and confirm password do not match' });
 
-    // Hash the password
     const hashedPassword = await bcrypt.hash(password, 10);
 
     try {
-      // Create the new user
       const newUser = await prisma.users.create({
         data: {
           name: name,
@@ -171,7 +167,6 @@ export const register = async (req: Request, res: Response): Promise<any> => {
         .status(201)
         .json({ message: 'User registered successfully', data: userResponse });
     } catch (error) {
-      console.log(error);
       res.status(500).json({ message: 'something went wrong', error });
     }
   } catch (error) {
@@ -226,7 +221,6 @@ export const login = async (req: Request, res: Response): Promise<any> => {
     }
     return res.status(400).json({ message: 'user not found' });
   } catch (error) {
-    console.log(error);
     res.status(500).json({ message: 'something went wrong', error });
   }
 };

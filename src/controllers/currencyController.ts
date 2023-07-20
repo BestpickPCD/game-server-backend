@@ -8,10 +8,10 @@ export const getCurrencies = async (_: Request, res: Response) => {
       where: { deletedAt: null },
       orderBy: { name: 'asc' }
     });
-    res.status(200).json(currencies);
+    return res.status(200).json(currencies);
   } catch (error) {
-    res.status(500).json({ message: 'something went wrong', error });
     console.log(error);
+    return res.status(500).json({ message: 'something went wrong', error });
   }
 };
 

@@ -14,7 +14,7 @@ const router = express.Router();
 router.get("/users", authentication, getAllUsers);
 router.put("/user/:userId", authentication, permission('admin') as any, updateUser);
 router.delete("/user/:userId", authentication, permission('admin') as any, deleteUser);
-router.post("/register", authentication, permission('admin') as any, register);
+router.post("/register", register);
 router.post("/login", login);
 
 export default router;

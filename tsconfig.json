@@ -1,21 +1,37 @@
 {
   "compilerOptions": {
-    "target": "ES2018", // Set the target ECMAScript version
-    "module": "ESNext", // Specify the module system (Node.js uses commonjs)
-    "outDir": "./dist", // Output directory for compiled files
-    "rootDir": "./src", // Source directory (where your TypeScript files are)
-    "strict": true, // Enable strict type-checking
-    "esModuleInterop": true, // Enable compatibility with commonjs modules
-    // "resolveJsonModule": true, // Allow importing JSON files
-    "forceConsistentCasingInFileNames": true, // Ensure consistent casing in file names (important for some platforms)
-    "emitDeclarationOnly": true,
-    "allowImportingTsExtensions": true,
-    "declaration": true,
-    "moduleResolution": "NodeNext"
+    "target": "es2017",
+    "module": "ESNext",
+    "lib": ["dom", "es6", "es2017", "esnext.asynciterable"],
+    "skipLibCheck": true,
+    "sourceMap": true,
+    "outDir": "./dist",
+    "moduleResolution": "node",
+    "removeComments": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "noImplicitThis": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "resolveJsonModule": true,
+    "baseUrl": ".",
+    "noEmit": true,
+    "allowImportingTsExtensions": true
   },
-  "include": ["src/**/*.ts", "src/server.ts"], // Include TypeScript files from the 'src' directory
-  "exclude": ["node_modules"], // Exclude 'node_modules' from compilation
+  "exclude": ["node_modules"],
+  "include": ["./src/**/*.ts"],
   "ts-node": {
+    // Tell ts-node CLI to install the --loader automatically
     "esm": true
+  },
+  "resolve": {
+    "extensions": [".js", ".jsx", ".ts", ".tsx"]
   }
 }

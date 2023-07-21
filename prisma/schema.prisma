@@ -16,14 +16,15 @@ model Users {
   email       String  @unique
   username    String  @unique
   password    String
-  inactive    Boolean @default(false)
   roleId      Int
-  role        Roles    @relation(fields: [roleId], references: [id])
   currencyId  Int?
+  inactive    Boolean @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   deletedAt   DateTime? 
+  role        Roles    @relation(fields: [roleId], references: [id])
   currency    Currencies? @relation(fields: [currencyId], references: [id]) 
+  transactions Transactions[]
 } 
 
 model Roles {
@@ -43,6 +44,7 @@ model Currencies {
   updatedAt  DateTime @updatedAt
   deletedAt  DateTime? 
   users      Users[]
+  transactions Transactions[]
 }
 
 model ip_user {
@@ -53,3 +55,17 @@ model ip_user {
   updatedAt  DateTime @updatedAt
   deletedAt  DateTime? 
 }
+
+model Transactions {
+  id         Int     @id @default(autoincrement())
+  userId     Int
+  action     Int?
+  amount     Decimal  @db.Decimal(10, 2)
+  currencyId Int
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  deletedAt  DateTime? 
+  user       Users    @relation(fields: [userId], references: [id])
+  currency   Currencies    @relation(fields: [currencyId], references: [id])
+}
+

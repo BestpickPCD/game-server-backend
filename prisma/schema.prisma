@@ -59,7 +59,7 @@ model ip_user {
 model Transactions {
   id         Int     @id @default(autoincrement())
   userId     Int
-  type       String
+  action     Int?
   amount     Decimal  @db.Decimal(10, 2)
   currencyId Int
   createdAt  DateTime @default(now())

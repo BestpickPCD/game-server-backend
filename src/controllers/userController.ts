@@ -4,7 +4,8 @@ import bcrypt from 'bcrypt';
 import { getTokens } from '../utilities/getTokens.ts';
 import { findById } from '../models/currency.ts';
 import { Response, Request } from 'express';
-import axios from "axios";
+import axios from 'axios';
+import { message } from '../utilities/constants/index.ts';
 
 // Define your route handler to get all users
 export const getAllUsers = async (req: Request, res: Response) => {
@@ -12,17 +13,27 @@ export const getAllUsers = async (req: Request, res: Response) => {
     const {
       page = 0,
       size = 10,
-      search = ''
+      search = '',
+      dateFrom = '1970-01-01T00:00:00.000Z',
+      dateTo = '2100-01-01T00:00:00.000Z'
     }: {
       page?: number;
       size?: number;
       search?: string;
+      dateFrom?: string;
+      dateTo?: string;
+      isActive?: true | false | null;
     } = req.query;
 
     const usersData = await prisma.$transaction([
-      prisma.users.count(),
+      prisma.users.count({
+        where: {
+          deletedAt: null
+        }
+      }),
       prisma.users.findMany({
         select: {
+          id: true,
           name: true,
           email: true,
           username: true,
@@ -43,14 +54,26 @@ export const getAllUsers = async (req: Request, res: Response) => {
         },
         where: {
           deletedAt: null,
-          name: {
-            contains: search
-          },
-          email: {
-            contains: search
-          },
-          username: {
-            contains: search
+          OR: [
+            {
+              name: {
+                contains: search
+              }
+            },
+            {
+              email: {
+                contains: search
+              }
+            },
+            {
+              username: {
+                contains: search
+              }
+            }
+          ],
+          updatedAt: {
+            gte: dateFrom || '1970-01-01T00:00:00.000Z',
+            lte: dateTo || '2100-01-01T00:00:00.000Z'
           }
         },
         orderBy: {
@@ -64,116 +87,126 @@ export const getAllUsers = async (req: Request, res: Response) => {
     res.status(200).json({
       data: {
         data: usersData[1],
-        totalItem: usersData[0],
-        page,
-        size
+        totalItems: usersData[0],
+        page: Number(page),
+        size: Number(size)
       },
-      message: 'SUCCESS'
+      message: message.SUCCESS
     });
   } catch (error) {
-    res
-      .status(500)
-      .json({ error: 'An error occurred while retrieving users.' });
+    res.status(500).json({ message: message.INTERNAL_SERVER_ERROR });
   }
 };
 
 export const updateUser = async (req: Request, res: Response): Promise<any> => {
   try {
     const userId = parseInt(req.params.userId);
-    const { name, email, username, roleId, currencyId } = req.body;
-
-    const user = await prisma.users.findUnique({
-      where: {
-        id: userId
-      }
-    });
-
-    // if cant find user
-    if (!user) return res.status(404).json({ message: 'User not found' });
-
-    const updateUser = {
-      ...user,
-      email: email || user.email,
-      name: name || user.name,
-      username: username || user.username,
-      roleId: roleId || user.roleId,
-      currencyId: currencyId || user.currencyId
-    };
-
+    const { name, email, roleId, currencyId } = req.body;
     try {
-      // Save the updated user
-      const updatedUser = await prisma.users.update({
-        where: {
-          id: userId
-        },
-        data: updateUser
+      const newUser = await prisma.users.update({
+        where: { id: userId },
+        data: { email, name, roleId, currencyId }
       });
-      res.status(200).json({ message: 'user updated', user: updatedUser });
+      return res.status(200).json({ message: message.UPDATED, user: newUser });
     } catch (error) {
-      console.log(error);
-      res.status(500).json({ message: 'something went wrong', error });
+      if (error.code === 'P2025') {
+        return res.status(404).json({ message: message.NOT_FOUND });
+      } else if (error.code === 'P2002') {
+        return res.status(400).json({
+          message: message.DUPLICATE,
+          subMessage: 'Email already exists'
+        });
+      }
+      return res
+        .status(500)
+        .json({ message: message.INTERNAL_SERVER_ERROR, error });
     }
   } catch (error) {
     console.log(error);
-    return res.status(500).json({ message: 'something went wrong', error });
+    res.status(500).json({ message: message.INTERNAL_SERVER_ERROR, error });
   }
 };
-
+export const getUserById = async (req: Request, res: Response) => {
+  const { userId } = req.params;
+  try {
+    const user = await prisma.users.findUnique({
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        username: true,
+        roleId: true,
+        currencyId: true,
+        createdAt: true,
+        updatedAt: true
+      },
+      where: {
+        id: parseInt(userId)
+      }
+    });
+    return res.status(200).json({ message: message.SUCCESS, data: user });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: message.INTERNAL_SERVER_ERROR, error });
+  }
+};
 export const register = async (req: Request, res: Response): Promise<any> => {
   try {
-    const {
-      name,
-      username,
-      email,
-      roleId,
-      password,
-      confirmPassword,
-      currencyId
-    } = req.body;
+    const { firstName, lastName, username, email, password, confirmPassword } =
+      req.body;
 
     // Check if the user already exists
-    const existingUser = await prisma.users.findUnique({
+    const existingUser = await prisma.users.findMany({
+      select: {
+        email: true,
+        username: true
+      },
       where: {
-        email: email,
-        username: username
+        OR: [{ email }, { username }]
       }
     });
 
-    if (existingUser)
-      return res.status(400).json({ message: 'User already exists' });
+    if (existingUser.length > 0) {
+      return res.status(400).json({ message: message.DUPLICATE });
+    } else {
+      if (password !== confirmPassword) {
+        return res.status(400).json({
+          message: message.INVALID,
+          subMessage: "Password and Confirm Password did't match"
+        });
+      } else {
+        const hashedPassword = await bcrypt.hash(password, 10);
+        try {
+          const newSchema = {
+            name: `${firstName} ${lastName}`,
+            username,
+            email,
+            roleId: 2,
+            password: hashedPassword,
+            currencyId: 1
+          };
 
-    if (password !== confirmPassword)
-      return res
-        .status(400)
-        .json({ message: 'Password and confirm password do not match' });
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    try {
-      const newUser = await prisma.users.create({
-        data: {
-          name: name,
-          username: username,
-          email: email,
-          roleId: roleId,
-          password: hashedPassword,
-          currencyId: currencyId
+          const newUser = await prisma.users.create({
+            data: newSchema
+          });
+          const userResponse = {
+            userId: newUser.id,
+            username: newUser.username
+          };
+          return res.status(201).json({
+            data: userResponse,
+            message: message.CREATED
+          });
+        } catch (error) {
+          return res
+            .status(500)
+            .json({ message: message.INTERNAL_SERVER_ERROR, error });
         }
-      });
-
-      const userResponse = {
-        userId: newUser.id,
-        username: newUser.username
-      };
-      res
-        .status(201)
-        .json({ message: 'User registered successfully', data: userResponse });
-    } catch (error) {
-      res.status(500).json({ message: 'something went wrong', error });
+      }
     }
   } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: 'something went wrong', error });
+    res.status(500).json({ message: message.INTERNAL_SERVER_ERROR, error });
   }
 };
 
@@ -211,11 +244,13 @@ export const login = async (req: Request, res: Response): Promise<any> => {
       const isValid = await bcrypt.compare(password, user.password);
       if (isValid) {
         const currency = await findById(user.currencyId as number);
-        const currencyFrom = 'USD'
- 
-        const currencyCode = currency?.code || "KRW" 
-        const currencyRate = await axios.get(`https://api.frankfurter.app/latest?from=${currencyFrom}&to=${currencyCode}`);
-  
+        const currencyFrom = 'USD';
+
+        const currencyCode = currency?.code || 'KRW';
+        const currencyRate = await axios.get(
+          `https://api.frankfurter.app/latest?from=${currencyFrom}&to=${currencyCode}`
+        );
+
         const tokens = getTokens(user.id);
         const data = {
           userId: user.id,
@@ -224,11 +259,11 @@ export const login = async (req: Request, res: Response): Promise<any> => {
           rate: currencyRate.data,
           tokens
         };
-        return res.status(200).json({ message: 'logged in', data });
+        return res.status(200).json({ message: message.SUCCESS, data });
       }
     }
-    return res.status(400).json({ message: 'user not found' });
+    return res.status(400).json({ message: message.NOT_FOUND });
   } catch (error) {
-    return res.status(500).json({ message: 'something went wrong', error });
+    res.status(500).json({ message: message.INTERNAL_SERVER_ERROR });
   }
 };

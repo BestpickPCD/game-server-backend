@@ -4,10 +4,12 @@ import bcrypt from 'bcrypt'
 const prisma = new PrismaClient();
 
 async function main() {
-    await prisma.roles.create({
-        data: {
-        name: 'admin',
-        },
+    await prisma.roles.createMany({
+      data: [
+        { name: 'admin' },
+        { name: 'user' },
+      ],
+      skipDuplicates: true,
     });
 
     await prisma.currencies.create({
@@ -30,10 +32,7 @@ async function main() {
         },
     });
 }
-
-
-
-
+ 
 main()
   .catch((error) => {
     console.error(error);

@@ -66,10 +66,6 @@ model Transactions {
   updatedAt  DateTime @updatedAt
   deletedAt  DateTime? 
   user       Users    @relation(fields: [userId], references: [id])
-  currency   Currencies    @relation(fields: [currencyId], references: [id])
-<<<<<<< HEAD
+  currency   Currencies    @relation(fields: [currencyId], references: [id]) 
 }
-
-=======
-}
->>>>>>> feature/transaction
+   

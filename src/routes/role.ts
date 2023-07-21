@@ -6,7 +6,7 @@ import {
 } from "../controllers/roleController.ts";
 import express from "express";
 import { authentication } from "../middleware/authentication.ts";
-import { permission } from "..//middleware/permission.ts";
+import { permission } from "../middleware/permission.ts";
 
 const router = express.Router();
 

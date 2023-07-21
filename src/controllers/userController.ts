@@ -26,7 +26,11 @@ export const getAllUsers = async (req: Request, res: Response) => {
     } = req.query;
 
     const usersData = await prisma.$transaction([
-      prisma.users.count(),
+      prisma.users.count({
+        where: {
+          deletedAt: null
+        }
+      }),
       prisma.users.findMany({
         select: {
           id: true,
@@ -83,7 +87,7 @@ export const getAllUsers = async (req: Request, res: Response) => {
     res.status(200).json({
       data: {
         data: usersData[1],
-        totalItem: usersData[0],
+        totalItems: usersData[0],
         page: Number(page),
         size: Number(size)
       },
@@ -162,7 +166,6 @@ export const register = async (req: Request, res: Response): Promise<any> => {
         OR: [{ email }, { username }]
       }
     });
-    console.log(existingUser);
 
     if (existingUser.length > 0) {
       return res.status(400).json({ message: message.DUPLICATE });

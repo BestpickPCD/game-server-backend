@@ -102,28 +102,42 @@ export const updateUser = async (req: Request, res: Response): Promise<any> => {
   try {
     const userId = parseInt(req.params.userId);
     const { name, email, roleId, currencyId } = req.body;
-    try {
-      const newUser = await prisma.users.update({
-        where: { id: userId },
-        data: { email, name, roleId, currencyId }
+    const updatedUser = {
+      ...(name && { name }),
+      ...(email && { email }),
+      ...(roleId && { roleId }),
+      ...(currencyId && { currencyId })
+    };
+    const newUser = await prisma.users.update({
+      where: { id: userId },
+      data: updatedUser
+    });
+    return res.status(200).json({ data: newUser, message: message.UPDATED });
+  } catch (error) {
+    if (error.code === 'P2025') {
+      return res.status(404).json({ message: message.NOT_FOUND });
+    } else if (error.code === 'P2002') {
+      return res.status(400).json({
+        message: message.DUPLICATE,
+        subMessage: 'Email already exists'
       });
-      return res.status(200).json({ message: message.UPDATED, user: newUser });
-    } catch (error) {
-      if (error.code === 'P2025') {
-        return res.status(404).json({ message: message.NOT_FOUND });
-      } else if (error.code === 'P2002') {
-        return res.status(400).json({
-          message: message.DUPLICATE,
-          subMessage: 'Email already exists'
+    } else if (error.code === 'P2003') {
+      if (error.meta.field_name === 'roleId') {
+        return res.status(404).json({
+          message: message.NOT_FOUND,
+          subMessage: 'RoleId not found'
         });
       }
-      return res
-        .status(500)
-        .json({ message: message.INTERNAL_SERVER_ERROR, error });
+      if (error.meta.field_name === 'currencyId') {
+        return res.status(404).json({
+          message: message.NOT_FOUND,
+          subMessage: 'CurrencyId not found'
+        });
+      }
     }
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: message.INTERNAL_SERVER_ERROR, error });
+    return res
+      .status(500)
+      .json({ message: message.INTERNAL_SERVER_ERROR, error });
   }
 };
 export const getUserById = async (req: Request, res: Response) => {
@@ -210,25 +224,21 @@ export const register = async (req: Request, res: Response): Promise<any> => {
   }
 };
 
-export const deleteUser = async (req: Request, res: Response) => {
+export const deleteUser = async (req: Request, res: Response): Promise<any> => {
   try {
     const userId = parseInt(req.params.userId);
-    const findUser = await prisma.users.findUnique({
-      where: { id: userId }
+    await prisma.users.update({
+      where: { id: userId },
+      data: { deletedAt: new Date() }
     });
-
-    if (findUser) {
-      const user = await prisma.users.update({
-        where: { id: userId },
-        data: { deletedAt: new Date() }
-      });
-
-      // if there is user -> delete
-      user && res.status(200).json({ message: 'user deleted' });
-    } else res.status(400).json({ message: 'cant find the user' });
+    return res.status(200).json({ message: message.DELETED });
   } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: 'something went wrong', error });
+    if (error.code === 'P2025') {
+      return res.status(404).json({ message: message.NOT_FOUND });
+    }
+    return res
+      .status(500)
+      .json({ message: message.INTERNAL_SERVER_ERROR, error });
   }
 };
 

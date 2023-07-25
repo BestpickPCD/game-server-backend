@@ -33,7 +33,7 @@ model Roles {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   deletedAt   DateTime?
-  permissions String    @db.LongText
+  permissions String?    @db.LongText
   users       Users[]
 }
 

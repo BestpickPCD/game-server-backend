@@ -5,22 +5,26 @@ export default {
       tags: ['Users'],
       consumes: ['application/json'],
       produces: ['application/json'],
-      parameters: [
-        {
-          name: 'username',
-          in: 'formData',
-          description: 'Username',
-          required: true,
-          type: 'string'
-        },
-        {
-          name: 'password',
-          in: 'formData',
-          description: 'Password',
-          required: true,
-          type: 'string'
+      requestBody: {
+        description: 'User data to be created',
+        required: true,
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                username: {
+                  type: 'string'
+                },
+                password: {
+                  type: 'string'
+                }
+              },
+              required: ['username', 'password']
+            }
+          }
         }
-      ],
+      },
       responses: {
         '200': {
           description: 'Success',

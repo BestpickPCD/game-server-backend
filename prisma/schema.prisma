@@ -22,10 +22,35 @@ model Users {
   transactions Transactions[]
   currency     Currencies?    @relation(fields: [currencyId], references: [id])
   role         Roles          @relation(fields: [roleId], references: [id])
+  agents       UserAgentRelation[]
 
   @@index([currencyId], map: "Users_currencyId_fkey")
   @@index([roleId], map: "Users_roleId_fkey")
 }
+
+model Agents {
+  id                 Int      @id @default(autoincrement())
+  name               String
+  level              Int
+  parentAgentId      Int?
+  parentAgent        Agents?   @relation("ChildAgents", fields: [parentAgentId], references: [id])
+  childAgents        Agents[]  @relation("ChildAgents")
+  users              UserAgentRelation[]
+
+  @@index([parentAgentId], map: "Agents_parentAgentId_fkey")
+}
+
+model UserAgentRelation {
+  id                 Int      @id @default(autoincrement())
+  userId             Int
+  agentId            Int
+  user               Users?    @relation(fields: [userId], references: [id])
+  agent              Agents?   @relation(fields: [agentId], references: [id])
+
+  @@index([userId], map: "UserAgentRelation_userId_fkey")
+  @@index([agentId], map: "UserAgentRelation_agentId_fkey")
+}
+
 
 model Roles {
   id          Int       @id @default(autoincrement())
@@ -81,3 +106,4 @@ model Tables {
   updatedAt   DateTime
   deletedAt   DateTime?
 }
+

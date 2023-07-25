@@ -16,7 +16,7 @@ export default {
         {
           name: 'password',
           in: 'formData',
-          description: 'Password',
+          description: 'Password', 
           required: true,
           type: 'string'
         }

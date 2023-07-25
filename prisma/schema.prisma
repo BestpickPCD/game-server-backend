@@ -51,7 +51,7 @@ model Currencies {
 model ip_user {
   id        Int       @id @default(autoincrement())
   userId    Int
-  roleId    Int
+  ip        String
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?

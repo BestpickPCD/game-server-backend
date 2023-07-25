@@ -2,9 +2,8 @@ import { PrismaClient } from '@prisma/client';
 import { Request, Response } from 'express';
 const prisma = new PrismaClient();
 
-export const getCurrencies = async (req : Request, res: Response) : Promise<any> => {
-  try { 
-    console.log(req.user)
+export const getCurrencies = async ( _: Request, res: Response ) : Promise<any> => {
+  try {
     const currencies = await prisma.currencies.findMany({
       where: { deletedAt: null },
       orderBy: { name: 'asc' }
@@ -17,10 +16,24 @@ export const getCurrencies = async (req : Request, res: Response) : Promise<any>
   }
 };
 
-export const addCurrency = async (req: Request, res: Response) : Promise<any> => {
+export const getCurrencyById = async ( req: Request, res: Response ) : Promise<any> => {
   try {
+    const currencyId = parseInt(req.params.currencyId)
+    const currency = await prisma.currencies.findUnique({
+      where: { deletedAt: null, id: currencyId },
+    }); 
+    return res.status(200).json(currency);
 
+  } catch (error) {  
+    return res.status(500).json({ message: 'something went wrong', error }); 
+  }
+};
+
+export const addCurrency = async (req: Request, res: Response) : Promise<any> => {
+  try {  
     const { name, code } = req.body;
+
+    console.log(req.body);
     const findCurrency = await prisma.currencies.findUnique({
       where: { name, code }
     });
@@ -34,6 +47,7 @@ export const addCurrency = async (req: Request, res: Response) : Promise<any> =>
     else 
       res.status(400).json({ message: 'currency exists' });
   } catch (error) { 
+    console.log(error)
     return res.status(500).json({ message: 'something went wrong', error });
   }
 };

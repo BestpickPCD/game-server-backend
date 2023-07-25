@@ -16,7 +16,7 @@ export default {
         {
           name: 'password',
           in: 'formData',
-          description: 'Password', 
+          description: 'Password',
           required: true,
           type: 'string'
         }
@@ -24,14 +24,18 @@ export default {
       responses: {
         '200': {
           description: 'Success',
-          schema: {
-            type: 'object',
-            properties: {
-              token: {
-                type: 'string'
-              },
-              refreshToken: {
-                type: 'string'
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  token: {
+                    type: 'string'
+                  },
+                  refreshToken: {
+                    type: 'string'
+                  }
+                }
               }
             }
           }

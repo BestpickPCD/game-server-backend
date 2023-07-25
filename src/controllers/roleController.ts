@@ -17,14 +17,14 @@ export const getRoles = async (_: Request, res: Response) => {
 
 export const addRole = async (req: Request, res: Response) => {
   try {
-    const { name } = req.body;
+    const { name, permissions } = req.body;
     const roleCheck = await prisma.roles.findMany({
-      where: { name }
+      where: { name, permissions }
     });
 
     if (roleCheck.length == 0) {
       const role = await prisma.roles.create({
-        data: { name }
+        data: { name, permissions }
       });
 
       role && res.status(201).json({ message: 'role created' });

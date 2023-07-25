@@ -2,7 +2,7 @@ export default {
   '/login': {
     post: {
       summary: 'Login',
-      tags: ['Users'],
+      tags: ['AUTH'],
       requestBody: {
         description: 'User data to be created',
         required: true,
@@ -35,6 +35,77 @@ export default {
                     type: 'string'
                   },
                   refreshToken: {
+                    type: 'string'
+                  }
+                }
+              }
+            }
+          }
+        },
+        '404': {
+          description: 'NOT_FOUND'
+        },
+        '500': {
+          description: 'Internal server error'
+        }
+      }
+    }
+  },
+  '/register': {
+    post: {
+      summary: 'Register',
+      tags: ['AUTH'],
+      requestBody: {
+        description: 'User data to be created',
+        required: true,
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                firstName: {
+                  type: 'string'
+                },
+                lastName: {
+                  type: 'string'
+                },
+                username: {
+                  type: 'string'
+                },
+                email: {
+                  type: 'string'
+                },
+                password: {
+                  type: 'string'
+                },
+                confirmPassword: {
+                  type: 'string'
+                }
+              },
+              required: [
+                'firstName',
+                'lastName',
+                'username',
+                'email',
+                'password',
+                'confirmPassword'
+              ]
+            }
+          }
+        }
+      },
+      responses: {
+        '200': {
+          description: 'Success',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  userId: {
+                    type: 'number'
+                  },
+                  username: {
                     type: 'string'
                   }
                 }
@@ -239,9 +310,7 @@ export default {
           description: 'Internal server error'
         }
       }
-    }
-  },
-  '/user/{delete-user-id}': {
+    },
     delete: {
       security: [
         {
@@ -252,7 +321,7 @@ export default {
       tags: ['Users'],
       parameters: [
         {
-          name: 'delete-user-id',
+          name: 'userId',
           in: 'path',
           description: 'ID of the user to retrieve',
           required: true,

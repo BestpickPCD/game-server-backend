@@ -72,8 +72,8 @@ export const getAllUsers = async (req: Request, res: Response) => {
             }
           ],
           updatedAt: {
-            gte: dateFrom || '1970-01-01T00:00:00.000Z',
-            lte: dateTo || '2100-01-01T00:00:00.000Z'
+            gte: dateFrom,
+            lte: dateTo
           }
         },
         orderBy: {
@@ -84,7 +84,7 @@ export const getAllUsers = async (req: Request, res: Response) => {
       })
     ]);
 
-    res.status(200).json({
+    return res.status(200).json({
       data: {
         data: usersData[1],
         totalItems: usersData[0],
@@ -94,13 +94,19 @@ export const getAllUsers = async (req: Request, res: Response) => {
       message: message.SUCCESS
     });
   } catch (error) {
-    res.status(500).json({ message: message.INTERNAL_SERVER_ERROR });
+    return res.status(500).json({ message: message.INTERNAL_SERVER_ERROR });
   }
 };
 
 export const updateUser = async (req: Request, res: Response): Promise<any> => {
   try {
     const userId = parseInt(req.params.userId);
+    const user = await prisma.users.findUnique({
+      where: {
+        id: userId
+      }
+    });
+    if (!user) return res.status(404).json({ message: message.NOT_FOUND });
     const { name, email, roleId, currencyId } = req.body;
     const updatedUser = {
       ...(name && { name }),
@@ -110,13 +116,11 @@ export const updateUser = async (req: Request, res: Response): Promise<any> => {
     };
     const newUser = await prisma.users.update({
       where: { id: userId },
-      data: updatedUser
+      data: { ...user, ...updatedUser }
     });
     return res.status(200).json({ data: newUser, message: message.UPDATED });
   } catch (error) {
-    if (error.code === 'P2025') {
-      return res.status(404).json({ message: message.NOT_FOUND });
-    } else if (error.code === 'P2002') {
+    if (error.code === 'P2002') {
       return res.status(400).json({
         message: message.DUPLICATE,
         subMessage: 'Email already exists'
@@ -158,6 +162,7 @@ export const getUserById = async (req: Request, res: Response) => {
         id: parseInt(userId)
       }
     });
+    if (!user) return res.status(404).json({ message: message.NOT_FOUND });
     return res.status(200).json({ message: message.SUCCESS, data: user });
   } catch (error) {
     return res
@@ -182,7 +187,10 @@ export const register = async (req: Request, res: Response): Promise<any> => {
     });
 
     if (existingUser.length > 0) {
-      return res.status(400).json({ message: message.DUPLICATE });
+      return res.status(400).json({
+        message: message.DUPLICATE,
+        subMessage: 'Email or Username already exists'
+      });
     } else {
       if (password !== confirmPassword) {
         return res.status(400).json({

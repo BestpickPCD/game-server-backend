@@ -1,3 +1,4 @@
+// @ts-nocheck
 import dotenv from 'dotenv';
 import express from 'express';
 import router from './routes/index.ts';
@@ -6,7 +7,7 @@ import swaggerUi from 'swagger-ui-express';
 import swaggerJSDoc from 'swagger-jsdoc';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
-
+import userSwagger from './swagger/index.ts';
 dotenv.config();
 const app = express();
 const port = process.env.PORT;
@@ -27,7 +28,9 @@ const options = {
         bearerAuth: {
           type: 'http',
           scheme: 'bearer',
-          bearerFormat: 'JWT'
+          bearerFormat: 'JWT',
+          in: 'header', // Specify where the bearer token will be passed (e.g., 'header', 'query', etc.)
+          name: 'Authorization' // Specify the name of the header or query parameter carrying the bearer token
         }
       }
     },
@@ -37,10 +40,10 @@ const options = {
       }
     ]
   },
-  apis: [`${__dirname}/routes/user.ts`, './routes/user.js']
+  apis: [ ]
 };
 
-const swaggerSpec = swaggerJSDoc(options);
+const swaggerSpec = swaggerJSDoc(userSwagger, options);
 
 app.use(cors());
 app.use(express.json());

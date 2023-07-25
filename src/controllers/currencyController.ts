@@ -31,9 +31,7 @@ export const getCurrencyById = async ( req: Request, res: Response ) : Promise<a
 
 export const addCurrency = async (req: Request, res: Response) : Promise<any> => {
   try {  
-    const { name, code } = req.body;
-
-    console.log(req.body);
+    const { name, code } = req.body; 
     const findCurrency = await prisma.currencies.findUnique({
       where: { name, code }
     });

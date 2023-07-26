@@ -19,7 +19,7 @@ async function main() {
         },
     });
 
-    const hashedPassword = await bcrypt.hash('master', 10);
+    const hashedPassword = await bcrypt.hash('admin.master.1', 10);
     
     await prisma.users.create({
         data: {

@@ -97,7 +97,6 @@ export const getAllUsers = async (req: Request, res: Response) => {
     return res.status(500).json({ message: message.INTERNAL_SERVER_ERROR });
   }
 };
-
 export const updateUser = async (req: Request, res: Response): Promise<any> => {
   try {
     const userId = parseInt(req.params.userId);
@@ -231,7 +230,6 @@ export const register = async (req: Request, res: Response): Promise<any> => {
     res.status(500).json({ message: message.INTERNAL_SERVER_ERROR, error });
   }
 };
-
 export const deleteUser = async (req: Request, res: Response): Promise<any> => {
   try {
     const userId = parseInt(req.params.userId);
@@ -249,7 +247,6 @@ export const deleteUser = async (req: Request, res: Response): Promise<any> => {
       .json({ message: message.INTERNAL_SERVER_ERROR, error });
   }
 };
-
 export const login = async (req: Request, res: Response): Promise<any> => {
   try {
     const { username, password } = req.body;

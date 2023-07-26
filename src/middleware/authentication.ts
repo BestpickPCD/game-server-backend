@@ -23,32 +23,19 @@ export const authentication = async ( req: Request, res: Response, next: NextFun
     const token = req.header("Authorization")?.replace("Bearer ", "");
 
     if (!token) return res.status(401).json({ message: "Unauthorized" });
-
     try {
-      const decoded = await jwt.verify(token, ACCESS_TOKEN_KEY) as JwtPayload;
-
+      const decoded = await jwt.verify(token, ACCESS_TOKEN_KEY) as JwtPayload;  
       // Fetch the user from the database using Prisma
-      const user = await prisma.users.findUnique({
+      const user = await (prisma[`${decoded.userPosition}s` as any] as any).findUnique({
         select: {
-            name: true,
-            email: true,
+            name: true, 
             username: true, 
             createdAt: true,
-            updatedAt: true,
-            currency: {
-              select: {
-                code: true
-              }
-            },
-            role: {
-              select: {
-                name: true
-              }
-            }
+            updatedAt: true, 
         },
         where: { id: decoded.userId },
       });
-
+      
       if (!user) 
         return res.status(401).json({ message: "User not found" }); 
 

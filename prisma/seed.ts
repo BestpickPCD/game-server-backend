@@ -15,7 +15,6 @@ async function main() {
       code: 'KRW'
     }
   });
-
   const hashedPassword = await bcrypt.hash('master', 10);
 
   await prisma.users.createMany({
@@ -35,8 +34,27 @@ async function main() {
         email: 'pngyn@pngyn.com',
         roleId: 1,
         currencyId: 1
+      },
+      {
+        name: 'User Master',
+        username: 'user',
+        password: await bcrypt.hash('user.master.1', 10),
+        email: 'user@master.com',
+        roleId: 1,
+        currencyId: 1
       }
     ]
+  });
+
+  const hashedPasswordAgent = await bcrypt.hash('agent.master.1', 10);
+  await prisma.agents.create({
+    data: {
+      name: 'Agent Master',
+      username: 'agent',
+      password: hashedPasswordAgent,
+      currencyId: 1,
+      level: 1
+    }
   });
 }
 

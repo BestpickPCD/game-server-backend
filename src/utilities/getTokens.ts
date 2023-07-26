@@ -3,12 +3,13 @@ import jwt from "jsonwebtoken";
 const refreshHours = "72"; // 3 days
 const accessHours = "2"; // 2 hrs
 
-export const getTokens = (userId: number) => {
+export const getTokens = (response: any) => {
   // gen access token
   const accessKey = process.env.ACCESS_TOKEN_KEY as string;
   const accessToken = jwt.sign(
     {
-      userId,
+      userId: response.id,
+      userPosition: response.position,
     },
     accessKey,
     {
@@ -20,7 +21,8 @@ export const getTokens = (userId: number) => {
   const refreshKey = process.env.REFRESH_TOKEN_KEY as string;
   const refreshToken = jwt.sign(
     {
-      userId,
+      userId: response.id,
+      userPosition: response.position,
     },
     refreshKey,
     {

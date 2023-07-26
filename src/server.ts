@@ -40,9 +40,7 @@ const options = {
       }
     ]
   },
-  apis: [
-    `/Users/truongphuocnguyen/Documents/web-project/game-server-backend/src/routes/user.ts`
-  ]
+  apis: [ ]
 };
 
 const swaggerSpec = swaggerJSDoc(userSwagger, options);

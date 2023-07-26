@@ -241,38 +241,67 @@ export const deleteUser = async (req: Request, res: Response): Promise<any> => {
       .json({ message: message.INTERNAL_SERVER_ERROR, error });
   }
 };
+ 
 
-export const login = async (req: Request, res: Response): Promise<any> => {
+export const login = async (req: Request, res: Response): Promise<any> => { 
   try {
     const { username, password } = req.body;
-    const user = await prisma.users.findUnique({
-      where: {
-        username: username
-      }
-    });
-    if (user) {
-      const isValid = await bcrypt.compare(password, user.password);
+
+    // Check what table the username is in
+    const position = await prisma.$queryRaw<any>`SELECT
+        (SELECT COUNT(*) AS userCount FROM users WHERE username = ${username}) AS userCount,
+        (SELECT COUNT(*) AS agentCount FROM agents WHERE username = ${username}) AS agentCount`;
+
+    // Access the counts from the first object in the array
+    const userCount = position[0].userCount;
+    const agentCount = position[0].agentCount;
+    
+    let response: any; 
+    if(userCount) {
+      response = await prisma.users.findUnique({
+        where:{username}
+      })
+      response = { position:'user', ...response }
+    }
+    else if(agentCount) {
+      response = await prisma.agents.findUnique({
+        where:{username}
+      })
+      response = { position:'agent', ...response }
+    }
+    else {
+      return res.status(400).json({ message: message.NOT_FOUND });
+    }
+
+    if (response) {
+
+      // check Password
+      const isValid = await bcrypt.compare(password, response.password);
+
       if (isValid) {
-        const currency = await findById(user.currencyId as number);
+        const currency = await findById(response.currencyId as number);
         const currencyFrom = 'USD';
-
         const currencyCode = currency?.code || 'KRW';
-        const currencyRate = await axios.get(
-          `https://api.frankfurter.app/latest?from=${currencyFrom}&to=${currencyCode}`
-        );
+        const currencyRate = await axios.get(`https://api.frankfurter.app/latest?from=${currencyFrom}&to=${currencyCode}`);
 
-        const tokens = getTokens(user.id);
+        const tokens = getTokens(response);
         const data = {
-          userId: user.id,
-          username: user.username,
+          userId: response.id,
+          username: response.username,
+          position: response.position,
           currency: currency && currency.code,
           rate: currencyRate.data,
           tokens
         };
         return res.status(200).json({ message: message.SUCCESS, data });
+      } else {
+        // Password is incorrect
+        return res.status(401).json({ message: message.INVALID_CREDENTIALS });
       }
+    } else {
+      // Neither user nor agent exists with the given username
+      return res.status(400).json({ message: message.NOT_FOUND });
     }
-    return res.status(400).json({ message: message.NOT_FOUND });
   } catch (error) {
     res.status(500).json({ message: message.INTERNAL_SERVER_ERROR });
   }

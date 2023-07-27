@@ -2,15 +2,16 @@ import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcrypt';
 import { Request, Response } from 'express';
 import { message } from '../utilities/constants/index.ts';
+import { Agent } from '../models/type.ts';
 const prisma = new PrismaClient();
 interface AgentParams {
   page?: number;
   size?: number;
   search?: string;
-  parentAgentId?: number;
   level?: number | string;
   dateFrom?: string;
   dateTo?: string;
+  id?: number;
 }
 interface AgentBody {
   username: string;
@@ -22,45 +23,87 @@ interface AgentBody {
   rate: number;
 }
 
+const filterArrays = (a: any[], b: number[]) =>
+  a.filter((aItem) => !b.some((bItem) => aItem === bItem));
+const mergeArrays = (a: any[], b: number[]) => [...a, ...b];
+
+const resultArray = (a: any[], b: number[], c: any[]) =>
+  mergeArrays(filterArrays(a, b), c);
+
+// const { id } = req.user;
+// !id && res.status(400).json({ message: message.INVALID });
+
 export const getAllAgents = async (req: Request, res: Response) => {
   try {
-    let {
+    const {
       page = 0,
       size = 10,
       search = '',
-      parentAgentId = 1,
       level,
       dateFrom = '1970-01-01T00:00:00.000Z',
-      dateTo = '2100-01-01T00:00:00.000Z'
+      dateTo = '2100-01-01T00:00:00.000Z',
+      id
     }: AgentParams = req.query;
+    const pageNumber = Number(page);
+    const sizeNumber = Number(size);
+    const filter: any = {
+      select: {
+        id: true,
+        username: true,
+        name: true,
+        level: true,
+        currencyId: true,
+        rate: true,
+        parentAgentIds: true,
+        isActive: true,
+        createdAt: true,
+        updatedAt: true,
+        deletedAt: true
+      },
+      where: {
+        ...(level && { level: Number(level) }),
+        deletedAt: null,
+        parentAgentIds: {
+          array_contains: [Number(id)]
+        },
+        OR: [
+          {
+            name: {
+              contains: search
+            }
+          },
+          {
+            username: {
+              contains: search
+            }
+          }
+        ],
+        updatedAt: {
+          gte: dateFrom,
+          lte: dateTo
+        }
+      },
+      orderBy: {
+        updatedAt: 'desc'
+      },
+      skip: pageNumber * sizeNumber,
+      take: sizeNumber
+    };
 
-    let levelString = '';
-    if (level) {
-      levelString = `AND ah.level = ${Number(level)}`;
-    }
-    let dayBetween = '';
-    dayBetween = `AND ah.updatedAt BETWEEN '${dateFrom}' AND '${dateTo}'`;
-    const agents = await prisma.$queryRawUnsafe(
-      `
-      WITH RECURSIVE AgentHierarchy AS (
-        SELECT id, name, username, level, parentAgentId, createdAt, updatedAt
-        FROM Agents
-        WHERE id = ${parentAgentId}
-        UNION ALL
-        SELECT a.id, a.name, a.username, a.level, a.parentAgentId, a.createdAt, a.updatedAt
-        FROM Agents a
-        JOIN AgentHierarchy h ON a.parentAgentId = h.id
-      )
-      SELECT * FROM AgentHierarchy ah
-      WHERE (ah.username LIKE "%${search}%" OR ah.name LIKE "%${search}%") 
-      ${levelString}
-      ${dayBetween}
-      LIMIT ${Number(size)}
-      OFFSET ${Number(size) * Number(page)};
-    `
-    );
+    const { select, skip, take, ...countFilter } = filter;
+    const [agents, count] = await prisma.$transaction([
+      prisma.agents.findMany(filter),
+      prisma.agents.count(countFilter)
+    ]);
+
     return res.status(200).send({
-      data: { data: agents, message: message.SUCCESS }
+      data: {
+        data: agents,
+        page: pageNumber,
+        size: sizeNumber,
+        totalItem: count
+      },
+      message: message.SUCCESS
     });
   } catch (error) {
     return res
@@ -177,6 +220,11 @@ export const createAgent = async (req: Request, res: Response) => {
         level: (parentAgent?.level || 0) + 1 || 1,
         currencyId,
         parentAgentId: parentAgentId || 0,
+        parentAgentIds: [
+          ((parentAgent.parentAgentIds || []) as number[]).push(
+            Number(parentAgent.id)
+          ) || []
+        ],
         rate
       }
     });
@@ -195,16 +243,18 @@ export const createAgent = async (req: Request, res: Response) => {
     });
   }
 };
-export const updateAgent = async (
-  req: Request,
-  res: Response
-): Promise<any> => {
+export const updateAgent = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { name, parentAgentId, currencyId } = req.body;
+
+    const agentId = Number(id);
+    const parentAgentIdNumber = parentAgentId && Number(parentAgentId);
+    const currencyIdNumber = currencyId && Number(currencyId);
+
     const agent = await prisma.agents.findUnique({
       where: {
-        id: Number(id)
+        id: agentId
       }
     });
     if (!agent) {
@@ -215,40 +265,78 @@ export const updateAgent = async (
     }
     let parentAgent;
     let currency;
-    if (parentAgentId) {
+
+    if (parentAgentIdNumber) {
       parentAgent = await prisma.agents.findUnique({
-        where: { id: Number(parentAgentId) }
+        where: { id: parentAgentIdNumber }
       });
-      !parentAgent &&
-        res.status(404).json({
+      if (!parentAgent) {
+        return res.status(404).json({
           message: message.NOT_FOUND,
           subMessage: 'Parent agent not found'
         });
+      }
     }
-    if (currencyId) {
+    if (currencyIdNumber) {
       currency = await prisma.currencies.findUnique({
-        where: { id: Number(currencyId) }
+        where: { id: currencyIdNumber }
       });
-      !currency &&
-        res.status(404).json({
+      if (!currency) {
+        return res.status(404).json({
           message: message.NOT_FOUND,
           subMessage: 'Currency not found'
         });
+      }
     }
-    const updatedAgent = await prisma.agents.update({
-      where: { id: Number(id) },
+    const updatedAgentParentIds =
+      parentAgent &&
+      ([...(parentAgent?.parentAgentIds as any), parentAgent.id] as any);
+    const updatedAgent: Agent = await prisma.agents.update({
+      where: { id: agentId },
       data: {
         name: name || agent.name,
         parentAgentId: parentAgentId || agent.parentAgentId,
+        parentAgentIds: parentAgent
+          ? updatedAgentParentIds
+          : agent.parentAgentIds,
         currencyId: currencyId || agent.currencyId,
-        level: parentAgent ? (parentAgent.level ?? 0) + 1 : agent.level
+        level: parentAgent ? updatedAgentParentIds.length + 1 : agent.level
       }
     });
+    const agentChildren: Agent[] = await prisma.agents.findMany({
+      where: {
+        parentAgentIds: {
+          array_contains: [agentId]
+        }
+      }
+    });
+    if (agentChildren.length > 0) {
+      for (let i = 0; i < agentChildren.length; i++) {
+        const parentAgentIds: any[] = resultArray(
+          agentChildren[i]?.parentAgentIds as number[],
+          agent.parentAgentIds as number[],
+          parentAgent
+            ? ([...(parentAgent?.parentAgentIds as any), parentAgent.id] as any)
+            : agent.parentAgentIds
+        ) as any;
+        await prisma.agents.update({
+          where: {
+            id: agentChildren[i].id
+          },
+          data: {
+            parentAgentIds,
+            level: parentAgentIds.length + 1
+          }
+        });
+      }
+    }
     return res.status(200).json({
       data: {
         id: updatedAgent.id,
         username: updatedAgent.username,
-        level: updatedAgent.level
+        level: updatedAgent.level,
+        name: updatedAgent.name,
+        parentAgentIds: updatedAgent.parentAgentIds
       },
       message: message.UPDATED
     });
@@ -294,3 +382,29 @@ export const deleteAgent = async (
       .json({ message: message.INTERNAL_SERVER_ERROR, error });
   }
 };
+
+// let levelString = '';
+// if (level) {
+//   levelString = `AND ah.level = ${Number(level)}`;
+// }
+// let dayBetween = '';
+// dayBetween = `AND ah.updatedAt BETWEEN '${dateFrom}' AND '${dateTo}'`;
+// const agents = await prisma.$queryRawUnsafe(
+//   `
+//   WITH RECURSIVE AgentHierarchy AS (
+//     SELECT id, name, username, level, parentAgentId, createdAt, updatedAt
+//     FROM Agents
+//     WHERE id = ${parentAgentId}
+//     UNION ALL
+//     SELECT a.id, a.name, a.username, a.level, a.parentAgentId, a.createdAt, a.updatedAt
+//     FROM Agents a
+//     JOIN AgentHierarchy h ON a.parentAgentId = h.id
+//   )
+//   SELECT * FROM AgentHierarchy ah
+//   WHERE (ah.username LIKE "%${search}%" OR ah.name LIKE "%${search}%")
+//   ${levelString}
+//   ${dayBetween}
+//   LIMIT ${Number(size)}
+//   OFFSET ${Number(size) * Number(page)};
+// `
+// );

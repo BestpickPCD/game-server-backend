@@ -16,6 +16,7 @@ async function main() {
     }
   });
   const hashedPassword = await bcrypt.hash('master', 10);
+  const hashedPasswordUser = await bcrypt.hash('user.master.1', 10);
 
   await prisma.users.createMany({
     data: [
@@ -38,7 +39,7 @@ async function main() {
       {
         name: 'User Master',
         username: 'user',
-        password: await bcrypt.hash('user.master.1', 10),
+        password: hashedPasswordUser,
         email: 'user@master.com',
         roleId: 1,
         currencyId: 1

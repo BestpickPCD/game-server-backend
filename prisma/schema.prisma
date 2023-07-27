@@ -36,12 +36,13 @@ model Agents {
   level              Int?
   currencyId         Int?
   parentAgentId      Int?           
+  parentAgentIds     Json?           
   rate               Decimal?       @db.Decimal(10, 2) @default(0)
   isActive           Boolean        @default(true)
   parentAgent        Agents?        @relation("ChildAgents", fields: [parentAgentId], references: [id])
   childAgents        Agents[]       @relation("ChildAgents")
   users              agent_user[]
-  createdAt          DateTime             @default(now())
+  createdAt          DateTime       @default(now())
   updatedAt          DateTime       @updatedAt
   deletedAt          DateTime?
 

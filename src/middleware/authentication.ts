@@ -28,6 +28,7 @@ export const authentication = async ( req: Request, res: Response, next: NextFun
       // Fetch the user from the database using Prisma
       const user = await (prisma[`${decoded.userPosition}s` as any] as any).findUnique({
         select: {
+            id: true, 
             name: true, 
             username: true, 
             createdAt: true,

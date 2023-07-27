@@ -1,6 +1,7 @@
 import userJson from './user.ts';
 import currencyJson from './currency.ts';
 import transactionJson from './transaction.ts';
+import agentJson from './agent.ts';
 export default {
   swaggerDefinition: {
     openapi: '3.0.1', // YOU NEED THIS
@@ -25,6 +26,7 @@ export default {
       ...userJson,
       ...currencyJson,
       ...transactionJson,
+      ...agentJson,
     },
     securityDefinitions: {
       bearerAuth: {

@@ -383,6 +383,58 @@ export const deleteAgent = async (
   }
 };
 
+export const getUsersByAgentId = async (
+  req: Request,
+  res: Response
+): Promise<any> => {
+  try {
+    const agentId = parseInt(req.params.id);
+    const users = await prisma.agent_user.findMany({
+      where: { agentId: agentId },
+      include: {
+        user: {
+          select: {
+            name: true,
+            email: true,
+            username: true,
+            currency: {
+              select: {
+                name: true
+              }
+            },
+            role: {
+              select: {
+                name: true,
+                permissions: true
+              }
+            }
+          }
+        }
+      }
+    });
+
+    const usersList = users.map((userEntry) => {
+      const {
+        user: {
+          name,
+          email,
+          username,
+          currency: { name: currencyName },
+          role: { name: roleName, permissions }
+        }
+      } = userEntry as any;
+      return { name, email, username, currencyName, roleName, permissions };
+    });
+
+    res.status(200).json(usersList);
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ message: error });
+  }
+};
+
+
+
 // let levelString = '';
 // if (level) {
 //   levelString = `AND ah.level = ${Number(level)}`;

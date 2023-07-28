@@ -25,9 +25,9 @@ model Users {
   Agents                  Agents[]
   playerAgents            Players[]      @relation("PlayerAgent")
   currency                Currencies?    @relation(fields: [currencyId], references: [id])
-  transactionsSender      Transactions[] @relation("TransactionSender")
-  transactionsReceiver    Transactions[] @relation("TransactionReceiver")
-  transactionsUpdatedUser Transactions[] @relation("TransactionUpdatedUser")
+  transactionSenders      Transactions[] @relation("TransactionSender")
+  transactionReceivers    Transactions[] @relation("TransactionReceiver")
+  transactionUpdatedUsers Transactions[] @relation("TransactionUpdatedUser")
   BalancesUser            Balances[]     @relation("UserBalance")
   BalanceUpdatedUsers     Balances[]     @relation("BalanceUpdatedUser")
   Players                 Players[]

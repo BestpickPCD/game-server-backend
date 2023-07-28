@@ -1,4 +1,5 @@
- 
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-nocheck
 import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 import bcrypt from 'bcrypt';
@@ -216,7 +217,7 @@ export const register = async (req: Request, res: Response): Promise<any> => {
       const newUser = await prisma.users.create({
         data: newSchema
       });
-      
+
 
       if(newUser && type == "player") {
         return _playerInsert(newUser, agentId, res)

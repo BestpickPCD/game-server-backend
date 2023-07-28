@@ -28,7 +28,9 @@ export const addRole = async (req: Request, res: Response) => {
       });
 
       role && res.status(201).json({ message: 'role created' });
-    } else res.status(500).json({ message: 'role exists' });
+    } else {
+      res.status(500).json({ message: 'role exists' });
+    }
   } catch (error) {
     console.log(error);
     res.status(500).json({ message: 'something went wrong', error });
@@ -45,9 +47,10 @@ export const updateRole = async (req: Request, res: Response): Promise<any> => {
       data: { name }
     });
 
-    if (!updatedRole)
+    if (!updatedRole) {
       return res.status(404).json({ message: 'Role not found' });
-    else res.status(200).json({ message: 'Role updated' });
+    }
+    res.status(200).json({ message: 'Role updated' });
   } catch (error) {
     console.log(error);
     res.status(500).json({ message: 'something went wrong', error });
@@ -62,9 +65,10 @@ export const deleteRole = async (req: Request, res: Response): Promise<any> => {
       data: { deletedAt: new Date() }
     });
 
-    if (!updatedRole)
+    if (!updatedRole) {
       return res.status(404).json({ message: 'Role not found' });
-    else res.status(404).json({ message: 'Role soft-deleted' });
+    }
+    res.status(404).json({ message: 'Role soft-deleted' });
   } catch (error) {
     console.log(error);
     res.status(500).json({ message: 'something went wrong', error });

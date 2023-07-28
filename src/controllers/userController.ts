@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-nocheck
 import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
@@ -106,7 +107,9 @@ export const updateUser = async (req: Request, res: Response): Promise<any> => {
         id: userId
       }
     });
-    if (!user) return res.status(404).json({ message: message.NOT_FOUND });
+    if (!user) {
+      return res.status(404).json({ message: message.NOT_FOUND });
+    }
     const { name, email, roleId, currencyId } = req.body;
     const updatedUser = {
       ...(name && { name }),
@@ -162,7 +165,9 @@ export const getUserById = async (req: Request, res: Response) => {
         id: parseInt(userId)
       }
     });
-    if (!user) return res.status(404).json({ message: message.NOT_FOUND });
+    if (!user) {
+      return res.status(404).json({ message: message.NOT_FOUND });
+    }
     return res.status(200).json({ message: message.SUCCESS, data: user });
   } catch (error) {
     return res
@@ -191,41 +196,39 @@ export const register = async (req: Request, res: Response): Promise<any> => {
         message: message.DUPLICATE,
         subMessage: 'Email or Username already exists'
       });
-    } else {
-      if (password !== confirmPassword) {
-        return res.status(400).json({
-          message: message.INVALID,
-          subMessage: "Password and Confirm Password did't match"
-        });
-      } else {
-        const hashedPassword = await bcrypt.hash(password, 10);
-        try {
-          const newSchema = {
-            name: `${firstName} ${lastName}`,
-            username,
-            email,
-            roleId: 2,
-            password: hashedPassword,
-            currencyId: 1
-          };
+    }
+    if (password !== confirmPassword) {
+      return res.status(400).json({
+        message: message.INVALID,
+        subMessage: "Password and Confirm Password did't match"
+      });
+    }
+    const hashedPassword = await bcrypt.hash(password, 10);
+    try {
+      const newSchema = {
+        name: `${firstName} ${lastName}`,
+        username,
+        email,
+        roleId: 2,
+        password: hashedPassword,
+        currencyId: 1
+      };
 
-          const newUser = await prisma.users.create({
-            data: newSchema
-          });
-          const userResponse = {
-            userId: newUser.id,
-            username: newUser.username
-          };
-          return res.status(201).json({
-            data: userResponse,
-            message: message.CREATED
-          });
-        } catch (error) {
-          return res
-            .status(500)
-            .json({ message: message.INTERNAL_SERVER_ERROR, error });
-        }
-      }
+      const newUser = await prisma.users.create({
+        data: newSchema
+      });
+      const userResponse = {
+        userId: newUser.id,
+        username: newUser.username
+      };
+      return res.status(201).json({
+        data: userResponse,
+        message: message.CREATED
+      });
+    } catch (error) {
+      return res
+        .status(500)
+        .json({ message: message.INTERNAL_SERVER_ERROR, error });
     }
   } catch (error) {
     res.status(500).json({ message: message.INTERNAL_SERVER_ERROR, error });
@@ -298,14 +301,12 @@ export const login = async (req: Request, res: Response): Promise<any> => {
           tokens
         };
         return res.status(200).json({ message: message.SUCCESS, data });
-      } else {
-        // Password is incorrect
-        return res.status(401).json({ message: message.INVALID_CREDENTIALS });
       }
-    } else {
-      // Neither user nor agent exists with the given username
-      return res.status(400).json({ message: message.NOT_FOUND });
+      // Password is incorrect
+      return res.status(401).json({ message: message.INVALID_CREDENTIALS });
     }
+    // Neither user nor agent exists with the given username
+    return res.status(400).json({ message: message.NOT_FOUND });
   } catch (error) {
     res.status(500).json({ message: message.INTERNAL_SERVER_ERROR });
   }

@@ -6,9 +6,9 @@ export default {
   swaggerDefinition: {
     openapi: '3.0.1', // YOU NEED THIS
     info: {
-      title: 'Your API title',
+      title: 'Game Server APIS',
       version: '1.0.0',
-      description: 'Your API description'
+      description: 'Game Server APIS'
     },
     basePath: '/',
     components: {
@@ -26,7 +26,7 @@ export default {
       ...userJson,
       ...currencyJson,
       ...transactionJson,
-      ...agentJson,
+      ...agentJson
     },
     securityDefinitions: {
       bearerAuth: {

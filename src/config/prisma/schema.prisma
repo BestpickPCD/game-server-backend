@@ -35,20 +35,18 @@ model Users {
 }
 
 model Players {
-  id        Int       @id @default(autoincrement())
-  userId    Int       @unique
+  id        Int       @unique
   agentId   Int       @unique
   createdAt DateTime  @default(now())
   updatedAt DateTime? @updatedAt
   deletedAt DateTime?
 
-  user  Users? @relation(fields: [userId], references: [id])
+  user  Users? @relation(fields: [id], references: [id])
   agent Users? @relation("PlayerAgent", fields: [agentId], references: [id])
 }
 
 model Agents {
-  id             Int       @id @default(autoincrement())
-  userId         Int       @unique
+  id             Int       @unique
   level          Int?
   parentAgentId  Int?
   parentAgentIds Json?
@@ -57,7 +55,7 @@ model Agents {
   updatedAt      DateTime? @updatedAt
   deletedAt      DateTime?
 
-  user Users? @relation(fields: [userId], references: [id])
+  user Users? @relation(fields: [id], references: [id])
 }
 
 model Roles {

@@ -1,5 +1,5 @@
 .env
 /node_modules
-/prisma/migrations
+/src/config/prisma/migrations/
 /.env
 /prisma/seed.ts

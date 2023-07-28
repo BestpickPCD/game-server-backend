@@ -15,16 +15,14 @@ async function main() {
       code: 'KRW'
     }
   });
-  const hashedPassword = await bcrypt.hash('master', 10);
-  const hashedPasswordUser = await bcrypt.hash('user.master.1', 10);
 
   await prisma.users.createMany({
     data: [
       {
         name: 'admin',
         username: 'admin',
-        type: 'admin',
-        password: hashedPassword,
+        type: 'agent',
+        password: await bcrypt.hash('admin.master.1', 10),
         email: 'admin@master.com',
         roleId: 1,
         currencyId: 1
@@ -32,7 +30,7 @@ async function main() {
       {
         name: 'pngyn',
         username: 'pngyn',
-        type: 'user',
+        type: 'agent',
         password: await bcrypt.hash('nguyen123!', 10),
         email: 'pngyn@pngyn.com',
         roleId: 1,
@@ -41,15 +39,28 @@ async function main() {
       {
         name: 'User Master',
         username: 'user',
-        type: 'user',
-        password: hashedPasswordUser,
+        type: 'player',
+        password: await bcrypt.hash('user.master.1', 10),
         email: 'user@master.com',
         roleId: 1,
         currencyId: 1
       }
     ]
   });
- 
+
+  await prisma.agents.createMany({
+    data:[
+      { id: 1 }, 
+      { id: 2 }
+    ]
+  })
+
+  await prisma.players.createMany({
+    data:[
+      { id: 3, agentId: 1 }
+    ]
+  })
+
 }
 
 main()

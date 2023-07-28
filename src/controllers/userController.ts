@@ -1,5 +1,4 @@
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-nocheck
+ 
 import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 import bcrypt from 'bcrypt';
@@ -177,7 +176,7 @@ export const getUserById = async (req: Request, res: Response) => {
 };
 export const register = async (req: Request, res: Response): Promise<any> => {
   try {
-    const { firstName, lastName, username, email, password, confirmPassword } =
+    const { firstName, lastName, username, email, password, confirmPassword, type, agentId } =
       req.body;
 
     // Check if the user already exists
@@ -209,7 +208,7 @@ export const register = async (req: Request, res: Response): Promise<any> => {
         name: `${firstName} ${lastName}`,
         username,
         email,
-        roleId: 2,
+        type,
         password: hashedPassword,
         currencyId: 1
       };
@@ -217,14 +216,14 @@ export const register = async (req: Request, res: Response): Promise<any> => {
       const newUser = await prisma.users.create({
         data: newSchema
       });
-      const userResponse = {
-        userId: newUser.id,
-        username: newUser.username
-      };
-      return res.status(201).json({
-        data: userResponse,
-        message: message.CREATED
-      });
+      
+
+      if(newUser && type == "player") {
+        return _playerInsert(newUser, agentId, res)
+      } else if(newUser && type == "agent") {
+        return _agentInsert(newUser, res)
+      }
+
     } catch (error) {
       return res
         .status(500)
@@ -310,4 +309,58 @@ export const login = async (req: Request, res: Response): Promise<any> => {
   } catch (error) {
     res.status(500).json({ message: message.INTERNAL_SERVER_ERROR });
   }
-};
+}
+
+
+const _playerInsert = async (user:any, agentId:number, res:Response) => {
+  try { 
+
+    const userInsert = await prisma.players.create({
+      data: {
+        id: user.id,
+        agentId 
+      }
+    });
+
+    const userResponse = {
+      userId: userInsert.id,
+      username: user.username
+    }; 
+
+    return res.status(201).json({
+      data: userResponse,
+      message: message.CREATED
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      message: "Internal server error"
+    });
+  }
+}
+
+const _agentInsert = async (agent:any, res: Response) => {
+  try { 
+
+    const userInsert = await prisma.players.create({
+      data: {
+        id: agent.id 
+      }
+    });
+
+    const userResponse = {
+      userId: userInsert.id,
+      username: agent.username
+    }; 
+
+    return res.status(201).json({
+      data: userResponse,
+      message: message.CREATED
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      message: "Internal server error"
+    });
+  }
+}

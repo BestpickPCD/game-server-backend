@@ -1,8 +1,5 @@
 export interface Agent {
   id: number;
-  username: string;
-  password: string;
-  name: string;
   level?: number | null;
   currencyId?: number | null;
   parentAgentId?: number | null;
@@ -12,7 +9,7 @@ export interface Agent {
   parentAgent?: Agent | null;
   // childAgents: Agent[];
   // users: AgentUser[];
-  createdAt: Date;
-  updatedAt: Date;
-  deletedAt?: Date | null;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+  deletedAt: Date | string | null;
 }

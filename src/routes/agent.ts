@@ -3,7 +3,7 @@ import {
   getAllAgents,
   getUsersByAgentId,
   getAgentById,
-  createAgent,
+  // createAgent,
   updateAgent,
   deleteAgent
 } from '../controllers/agentController.ts';
@@ -12,7 +12,7 @@ const router = express.Router();
 
 router.get('', getAllAgents);
 router.get('/:id', getAgentById);
-router.post('', createAgent);
+// router.post('', createAgent);
 router.put('/:id', updateAgent);
 router.delete('/:id', deleteAgent);
 router.get('/:id/users', getUsersByAgentId);

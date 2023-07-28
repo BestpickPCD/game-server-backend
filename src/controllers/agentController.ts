@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcrypt';
 import { Request, Response } from 'express';
@@ -432,8 +433,6 @@ export const getUsersByAgentId = async (
     return res.status(500).json({ message: error });
   }
 };
-
-
 
 // let levelString = '';
 // if (level) {

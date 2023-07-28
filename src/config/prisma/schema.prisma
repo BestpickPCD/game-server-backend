@@ -1,0 +1,140 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Users {
+  id         Int       @id @default(autoincrement())
+  name       String
+  email      String    @unique
+  username   String    @unique
+  password   String
+  type       String
+  roleId     Int?
+  currencyId Int?
+  isActive   Boolean   @default(true)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime? @updatedAt
+  deletedAt  DateTime?
+
+  role                    Roles?         @relation(fields: [roleId], references: [id])
+  Agents                  Agents[]
+  playerAgents            Players[]      @relation("PlayerAgent")
+  currency                Currencies?    @relation(fields: [currencyId], references: [id])
+  transactionSenders      Transactions[] @relation("TransactionSender")
+  transactionReceivers    Transactions[] @relation("TransactionReceiver")
+  transactionUpdatedUsers Transactions[] @relation("TransactionUpdatedUser")
+  BalancesUser            Balances[]     @relation("UserBalance")
+  BalanceUpdatedUsers     Balances[]     @relation("BalanceUpdatedUser")
+  Players                 Players[]
+  ip_user                 ip_user[]
+}
+
+model Players {
+  id        Int       @id @default(autoincrement())
+  userId    Int       @unique
+  agentId   Int       @unique
+  createdAt DateTime  @default(now())
+  updatedAt DateTime? @updatedAt
+  deletedAt DateTime?
+
+  user  Users? @relation(fields: [userId], references: [id])
+  agent Users? @relation("PlayerAgent", fields: [agentId], references: [id])
+}
+
+model Agents {
+  id             Int       @id @default(autoincrement())
+  userId         Int       @unique
+  level          Int?
+  parentAgentId  Int?
+  parentAgentIds Json?
+  rate           Decimal?  @default(0) @db.Decimal(10, 2)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime? @updatedAt
+  deletedAt      DateTime?
+
+  user Users? @relation(fields: [userId], references: [id])
+}
+
+model Roles {
+  id          Int       @id @default(autoincrement())
+  name        String    @unique
+  permissions String?   @db.LongText
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  Users Users[]
+}
+
+model Currencies {
+  id        Int       @id @default(autoincrement())
+  name      String    @unique
+  code      String    @unique
+  createdAt DateTime  @default(now())
+  updatedAt DateTime? @updatedAt
+  deletedAt DateTime?
+
+  Users        Users[]
+  Transactions Transactions[]
+  Balances     Balances[]
+}
+
+model ip_user {
+  id        Int       @id @default(autoincrement())
+  userId    Int
+  createdAt DateTime  @default(now())
+  updatedAt DateTime? @updatedAt
+  deletedAt DateTime?
+
+  users Users? @relation(fields: [userId], references: [id])
+}
+
+model Transactions {
+  id         Int       @id @default(autoincrement())
+  senderId   Int
+  receiverId Int?
+  type       String
+  amount     Decimal   @default(0)
+  note       String    @db.Text
+  token      String?
+  status     String
+  currencyId Int
+  updatedBy  Int?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime? @updatedAt
+  deletedAt  DateTime?
+
+  currency    Currencies? @relation(fields: [currencyId], references: [id])
+  sender      Users?      @relation("TransactionSender", fields: [senderId], references: [id])
+  receiver    Users?      @relation("TransactionReceiver", fields: [receiverId], references: [id])
+  updatedUser Users?      @relation("TransactionUpdatedUser", fields: [updatedBy], references: [id])
+}
+
+model Balances {
+  id         Int       @id @default(autoincrement())
+  userId     Int
+  balances   Decimal   @default(0)
+  currencyId Int
+  updatedBy  Int?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime? @updatedAt
+  deletedAt  DateTime?
+
+  currency    Currencies @relation(fields: [currencyId], references: [id])
+  user        Users?     @relation("UserBalance", fields: [userId], references: [id])
+  updatedUser Users?     @relation("BalanceUpdatedUser", fields: [updatedBy], references: [id])
+}
+
+model Tables {
+  id          Int       @id @default(autoincrement())
+  name        String    @unique
+  permissions String    @db.LongText
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime? @updatedAt
+  deletedAt   DateTime?
+}

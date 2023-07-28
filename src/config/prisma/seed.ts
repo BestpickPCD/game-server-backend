@@ -23,6 +23,7 @@ async function main() {
       {
         name: 'admin',
         username: 'admin',
+        type: 'admin',
         password: hashedPassword,
         email: 'admin@master.com',
         roleId: 1,
@@ -31,6 +32,7 @@ async function main() {
       {
         name: 'pngyn',
         username: 'pngyn',
+        type: 'user',
         password: await bcrypt.hash('nguyen123!', 10),
         email: 'pngyn@pngyn.com',
         roleId: 1,
@@ -39,6 +41,7 @@ async function main() {
       {
         name: 'User Master',
         username: 'user',
+        type: 'user',
         password: hashedPasswordUser,
         email: 'user@master.com',
         roleId: 1,
@@ -46,17 +49,7 @@ async function main() {
       }
     ]
   });
-
-  const hashedPasswordAgent = await bcrypt.hash('agent.master.1', 10);
-  await prisma.agents.create({
-    data: {
-      name: 'Agent Master',
-      username: 'agent',
-      password: hashedPasswordAgent,
-      currencyId: 1,
-      level: 1
-    }
-  });
+ 
 }
 
 main()

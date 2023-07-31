@@ -6,24 +6,21 @@ import {
   updateUser,
   register,
   login
-} from '../controllers/userController.ts';
+} from '../controllers/userController/index.ts';
 import { authentication } from '../middleware/authentication.ts';
-import { permission } from '../middleware/permission.ts';
 
 const router = express.Router();
 
 router.get('/users', authentication, getAllUsers);
-router.get('/user/:userId', getUserById);
+router.get('/user/:userId', authentication, getUserById);
 router.put(
   '/user/:userId',
   authentication,
-  permission('admin') as any,
   updateUser
 );
 router.delete(
   '/user/:userId',
   authentication,
-  permission('admin') as any,
   deleteUser
 );
 router.post('/register', register);

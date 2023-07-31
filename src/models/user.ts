@@ -7,12 +7,8 @@ export const getParentAgentIdsByParentAgentId = async ( parentAgentId: number ) 
             id: parentAgentId
         }
     }) as any
-
-
-    let level = 1 
-    if(agent.level) {
-level = agent.level + 1
-}
+ 
+    const level = agent.level ? agent.level + 1 : 1
 
     if(!agent.parentAgentIds) { 
         const details = {

@@ -6,14 +6,11 @@ export const getParentAgentIdsByParentAgentId = async ( parentAgentId: number ) 
         where: {
             id: parentAgentId
         }
-    }) as any
- 
-    const level = agent.level ? agent.level + 1 : 1
-    const parentAgentIds = agent.parentAgentIds ? [...agent.parentAgentIds, agent.id] : [agent.id]
+    }) as any 
     
     const details = {
-        parentAgentIds,
-        level
+        parentAgentIds: agent.parentAgentIds ? [...agent.parentAgentIds, agent.id] : [agent.id],
+        level: agent.level ? agent.level + 1 : 1
     }
     
     return details 

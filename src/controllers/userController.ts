@@ -283,46 +283,31 @@ export const login = async (req: Request, res: Response): Promise<any> => {
     const { username, password } = req.body;
 
     // Check what table the username is in
-    const position = await prisma.$queryRaw<any>`SELECT
-        (SELECT COUNT(*) AS userCount FROM users WHERE username = ${username}) AS userCount,
-        (SELECT COUNT(*) AS agentCount FROM agents WHERE username = ${username}) AS agentCount`;
+    const user = await prisma.users.findUnique({
+      where:{
+        username: username
+      }
+    }); 
 
-    // Access the counts from the first object in the array
-    const userCount = position[0].userCount;
-    const agentCount = position[0].agentCount;
-
-    let response: any;
-    if (userCount) {
-      response = await prisma.users.findUnique({
-        where: { username }
-      });
-      response = { position: 'user', ...response };
-    } else if (agentCount) {
-      response = await prisma.agents.findUnique({
-        where: { username }
-      });
-      response = { position: 'agent', ...response };
-    } else {
-      return res.status(400).json({ message: message.NOT_FOUND });
-    }
-
-    if (response) {
+    if(!user) {
+return res.status(400).json({ message: message.NOT_FOUND });
+} else if (user) {
       // check Password
-      const isValid = await bcrypt.compare(password, response.password);
+      const isValid = await bcrypt.compare(password, user.password);
 
       if (isValid) {
-        const currency = await findById(response.currencyId as number);
+        const currency = await findById(user.currencyId as number);
         const currencyFrom = 'USD';
         const currencyCode = currency?.code || 'KRW';
         const currencyRate = await axios.get(
           `https://api.frankfurter.app/latest?from=${currencyFrom}&to=${currencyCode}`
         );
 
-        const tokens = getTokens(response);
+        const tokens = getTokens(user);
         const data = {
-          userId: response.id,
-          username: response.username,
-          position: response.position,
+          userId: user.id,
+          username: user.username,
+          type: user.type,
           currency: currency && currency.code,
           rate: currencyRate.data,
           tokens
@@ -335,6 +320,7 @@ export const login = async (req: Request, res: Response): Promise<any> => {
     // Neither user nor agent exists with the given username
     return res.status(400).json({ message: message.NOT_FOUND });
   } catch (error) {
+    console.log(error)
     res.status(500).json({ message: message.INTERNAL_SERVER_ERROR });
   }
 }

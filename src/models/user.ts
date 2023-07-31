@@ -22,5 +22,5 @@ export const getParentAgentIdsByParentAgentId = async ( parentAgentId: number ) 
             level
         }
         return details 
-    
+     
 }

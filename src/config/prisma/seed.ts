@@ -47,11 +47,11 @@ async function main() {
       }
     ]
   });
-
+  
   await prisma.agents.createMany({
     data:[
-      { id: 1 }, 
-      { id: 2 }
+      { id: 1, level:1, parentAgentId: null}, 
+      { id: 2, level:2, parentAgentId: 1, parentAgentIds:[1] }
     ]
   })
 

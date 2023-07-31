@@ -8,6 +8,7 @@ import { findById } from '../models/currency.ts';
 import { Response, Request } from 'express';
 import axios from 'axios';
 import { message } from '../utilities/constants/index.ts';
+import { getParentAgentIdsByParentAgentId } from '../models/user.ts'
 
 // Define your route handler to get all users
 export const getAllUsers = async (req: Request, res: Response) => {
@@ -148,28 +149,58 @@ export const updateUser = async (req: Request, res: Response): Promise<any> => {
   }
 };
 export const getUserById = async (req: Request, res: Response) => {
-  const { userId } = req.params;
+  const { userId } = req.params; 
   try {
     const user = await prisma.users.findUnique({
+      where: {
+        id: parseInt(userId),
+      },
       select: {
         id: true,
         name: true,
-        email: true,
         username: true,
-        roleId: true,
-        currencyId: true,
-        createdAt: true,
-        updatedAt: true
+        email: true,
+        type: true,
+        role: {
+          select: {
+            name: true,
+          },
+        },
+        currency: {
+          select: {
+            name: true,
+          },
+        },
+        Players: {
+          select: {
+            agent: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
       },
-      where: {
-        id: parseInt(userId)
-      }
     });
     if (!user) {
       return res.status(404).json({ message: message.NOT_FOUND });
     }
-    return res.status(200).json({ message: message.SUCCESS, data: user });
+
+    const data = {
+      id: user.id,
+      name: user.name,
+      username: user.username,
+      email: user.email,
+      type: user.type,
+      role: user.role.name,
+      currency: user.currency.name,
+      agent: user.Players[0]?.agent?.name || null,
+    };
+
+    return res.status(200).json({ message: message.SUCCESS, data:data });
   } catch (error) {
+    console.log(error)
     return res
       .status(500)
       .json({ message: message.INTERNAL_SERVER_ERROR, error });
@@ -177,7 +208,7 @@ export const getUserById = async (req: Request, res: Response) => {
 };
 export const register = async (req: Request, res: Response): Promise<any> => {
   try {
-    const { firstName, lastName, username, email, password, confirmPassword, type, agentId } =
+    const { firstName, lastName, username, email, password, confirmPassword, roleId, type, agentId, parentAgentId } =
       req.body;
 
     // Check if the user already exists
@@ -204,25 +235,21 @@ export const register = async (req: Request, res: Response): Promise<any> => {
       });
     }
     const hashedPassword = await bcrypt.hash(password, 10);
-    try {
-      const newSchema = {
+
+    try { 
+      const userSchema = {
         name: `${firstName} ${lastName}`,
         username,
         email,
         type,
+        roleId,
         password: hashedPassword,
         currencyId: 1
-      };
-
-      const newUser = await prisma.users.create({
-        data: newSchema
-      });
-
-
-      if(newUser && type == "player") {
-        return _playerInsert(newUser, agentId, res)
-      } else if(newUser && type == "agent") {
-        return _agentInsert(newUser, res)
+      } 
+      if(type == "player") {
+        return _playerInsert(userSchema, agentId, res)
+      } else if(type == "agent") {
+        return _agentInsert(userSchema, parentAgentId, res)
       }
 
     } catch (error) {
@@ -313,19 +340,19 @@ export const login = async (req: Request, res: Response): Promise<any> => {
 }
 
 
-const _playerInsert = async (user:any, agentId:number, res:Response) => {
-  try { 
-
+const _playerInsert = async (userSchema:any, agentId:number, res:Response) => {
+  try {  
+    const newUser: any  = await _userInsert(userSchema)
     const userInsert = await prisma.players.create({
       data: {
-        id: user.id,
+        id: newUser.id,
         agentId 
       }
-    });
+    }) as any
 
     const userResponse = {
       userId: userInsert.id,
-      username: user.username
+      username: newUser.username
     }; 
 
     return res.status(201).json({
@@ -340,18 +367,22 @@ const _playerInsert = async (user:any, agentId:number, res:Response) => {
   }
 }
 
-const _agentInsert = async (agent:any, res: Response) => {
+const _agentInsert = async (userSchema:any, parentAgentId:number, res: Response) => {
   try { 
-
-    const userInsert = await prisma.players.create({
+    const newUser: any = await _userInsert(userSchema)
+    const details: any = await getParentAgentIdsByParentAgentId(parentAgentId) 
+    const userInsert = await prisma.agents.create({
       data: {
-        id: agent.id 
+        id: newUser.id,
+        parentAgentId,
+        parentAgentIds: details.parentAgentIds,
+        level: details.level,
       }
-    });
+    }) as any;
 
     const userResponse = {
       userId: userInsert.id,
-      username: agent.username
+      username: newUser.username
     }; 
 
     return res.status(201).json({
@@ -364,4 +395,14 @@ const _agentInsert = async (agent:any, res: Response) => {
       message: "Internal server error"
     });
   }
+}
+
+const _userInsert = async (userSchema:any) => { 
+
+  const newUser = await prisma.users.create({
+    data: userSchema
+  }); 
+
+  return newUser
+
 }

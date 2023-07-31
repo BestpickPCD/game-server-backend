@@ -1,12 +1,12 @@
 import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 import bcrypt from 'bcrypt';
-import { getTokens } from '../utilities/getTokens.ts';
-import { findById } from '../models/currency.ts';
+import { getTokens } from '../../utilities/getTokens.ts';
+import { findById } from '../../models/currency.ts';
 import { Response, Request } from 'express';
 import axios from 'axios';
-import { message } from '../utilities/constants/index.ts';
-import { getParentAgentIdsByParentAgentId } from '../models/user.ts'
+import { message } from '../../utilities/constants/index.ts';
+import { getParentAgentIdsByParentAgentId } from './utilities.ts'
 
 // Define your route handler to get all users
 export const getAllUsers = async (req: Request, res: Response) => {

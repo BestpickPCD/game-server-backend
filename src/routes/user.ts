@@ -6,7 +6,7 @@ import {
   updateUser,
   register,
   login
-} from '../controllers/userController.ts';
+} from '../controllers/userController/index.ts';
 import { authentication } from '../middleware/authentication.ts';
 
 const router = express.Router();

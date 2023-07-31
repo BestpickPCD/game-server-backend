@@ -9,14 +9,20 @@ async function main() {
     skipDuplicates: true
   });
 
-  // await prisma.currencies.create({
-  //   data: {
-  //     name: 'Korean Won',
-  //     code: 'KRW'
-  //   }
-  // });
+  await prisma.currencies.create({
+    data: {
+      name: 'Korean Won',
+      code: 'KRW'
+    }
+  });
   const hashedPassword = await bcrypt.hash('master', 10);
   const hashedPasswordUser = await bcrypt.hash('user.master.1', 10);
+  await prisma.currencies.create({
+    data: {
+      name: 'Korean Won',
+      code: 'KRW'
+    }
+  });
 
   await prisma.users.createMany({
     data: [
@@ -40,7 +46,7 @@ async function main() {
       },
       {
         name: 'User Master',
-        username: 'user1',
+        username: 'user12',
         type: 'user',
         password: hashedPasswordUser,
         email: 'user@master.com12',
@@ -49,7 +55,7 @@ async function main() {
       },
       {
         name: 'User Master',
-        username: 'user3',
+        username: 'user32',
         type: 'user',
         password: hashedPasswordUser,
         email: 'user@master.com13',
@@ -58,37 +64,37 @@ async function main() {
       },
       {
         name: 'admin',
-        username: 'admin1',
+        username: 'admin13',
         type: 'admin',
         password: hashedPassword,
-        email: 'admin@master.com1',
+        email: 'admin@master.com14',
         roleId: 1,
         currencyId: 1
       },
       {
         name: 'pngyn',
-        username: 'pngyn1',
+        username: 'pngyn11',
         type: 'user',
         password: await bcrypt.hash('nguyen123!', 10),
-        email: 'pngyn@pngyn.com1',
+        email: 'pngyn@pngyn.com11',
         roleId: 1,
         currencyId: 1
       },
       {
         name: 'User Master',
-        username: 'user1',
+        username: 'user112',
         type: 'user',
         password: hashedPasswordUser,
-        email: 'user@master.com12',
+        email: 'user@master.com1233',
         roleId: 1,
         currencyId: 1
       },
       {
         name: 'User Master',
-        username: 'user3',
+        username: 'user333',
         type: 'user',
         password: hashedPasswordUser,
-        email: 'user@master.com13',
+        email: 'user@master.com13123',
         roleId: 1,
         currencyId: 1
       }

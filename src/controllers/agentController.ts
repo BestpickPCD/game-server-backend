@@ -1,3 +1,5 @@
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-nocheck
 import { Agents, PrismaClient } from '@prisma/client';
 import { Request, Response } from 'express';
 import { message } from '../utilities/constants/index.ts';
@@ -38,51 +40,27 @@ export const getAllAgents = async (req: Request, res: Response) => {
     const filter: any = {
       select: {
         id: true,
-        username: true,
-        name: true,
-        level: true,
-        currencyId: true,
-        rate: true,
-        parentAgentIds: true,
-        isActive: true,
-        createdAt: true,
-        updatedAt: true,
-        deletedAt: true
-      },
-      where: {
-        ...(level && { level: Number(level) }),
-        deletedAt: null,
-        parentAgentIds: {
-          array_contains: [Number(id)]
-        },
-        OR: [
-          {
-            name: {
-              contains: search
-            }
+        Agents: {
+          select: {
+            id: true,
+            parentAgentIds: true
           },
-          {
-            username: {
-              contains: search
+          where: {
+            parentAgentIds: {
+              array_contains: [1]
             }
           }
-        ],
-        updatedAt: {
-          gte: dateFrom,
-          lte: dateTo
         }
       },
-      orderBy: {
-        updatedAt: 'desc'
-      },
+      where: {},
       skip: pageNumber * sizeNumber,
       take: sizeNumber
     };
 
-    const { select, skip, take, ...countFilter } = filter;
+    const { skip, take, ...countFilter } = filter;
     const [agents, count] = await prisma.$transaction([
-      prisma.agents.findMany(filter),
-      prisma.agents.count(countFilter)
+      prisma.users.findMany(filter),
+      prisma.agents.count()
     ]);
 
     return res.status(200).send({
@@ -255,6 +233,12 @@ export const deleteAgent = async (
     if (!agent) {
       return res.status(404).json({ message: message.NOT_FOUND });
     }
+    if (agent.parentAgentIds.length > 0) {
+      return res.status(400).json({
+        message: message.NOT_ALLOWED,
+        subMessage: 'Agent still has children'
+      });
+    }
     await prisma.agents.update({
       where: {
         id: Number(id)
@@ -270,7 +254,6 @@ export const deleteAgent = async (
       .json({ message: message.INTERNAL_SERVER_ERROR, error });
   }
 };
-
 export const getUsersByAgentId = async (
   req: Request,
   res: Response

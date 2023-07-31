@@ -36,7 +36,7 @@ model Users {
 
 model Players {
   id        Int       @unique
-  agentId   Int       @unique
+  agentId   Int
   createdAt DateTime  @default(now())
   updatedAt DateTime? @updatedAt
   deletedAt DateTime?
@@ -54,7 +54,6 @@ model Agents {
   createdAt      DateTime  @default(now())
   updatedAt      DateTime? @updatedAt
   deletedAt      DateTime?
-
   user Users? @relation(fields: [id], references: [id])
 }
 

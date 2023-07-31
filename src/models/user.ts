@@ -23,5 +23,4 @@ export const getParentAgentIdsByParentAgentId = async ( parentAgentId: number ) 
         }
         return details 
     
-     
 }

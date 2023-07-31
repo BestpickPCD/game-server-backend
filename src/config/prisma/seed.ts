@@ -15,30 +15,22 @@ async function main() {
       code: 'KRW'
     }
   });
-  const hashedPassword = await bcrypt.hash('master', 10);
-  const hashedPasswordUser = await bcrypt.hash('user.master.1', 10);
-  await prisma.currencies.create({
-    data: {
-      name: 'Korean Won',
-      code: 'KRW'
-    }
-  });
 
   await prisma.users.createMany({
     data: [
       {
         name: 'admin',
-        username: 'admin1',
-        type: 'admin',
-        password: hashedPassword,
-        email: 'admin@master.com1',
+        username: 'admin',
+        type: 'agent',
+        password: await bcrypt.hash('admin.master.1', 10),
+        email: 'admin@master.com',
         roleId: 1,
         currencyId: 1
       },
       {
         name: 'pngyn',
-        username: 'pngyn1',
-        type: 'user',
+        username: 'pngyn',
+        type: 'agent',
         password: await bcrypt.hash('nguyen123!', 10),
         email: 'pngyn@pngyn.com1',
         roleId: 1,
@@ -46,55 +38,10 @@ async function main() {
       },
       {
         name: 'User Master',
-        username: 'user12',
-        type: 'user',
-        password: hashedPasswordUser,
-        email: 'user@master.com12',
-        roleId: 1,
-        currencyId: 1
-      },
-      {
-        name: 'User Master',
-        username: 'user32',
-        type: 'user',
-        password: hashedPasswordUser,
-        email: 'user@master.com13',
-        roleId: 1,
-        currencyId: 1
-      },
-      {
-        name: 'admin',
-        username: 'admin13',
-        type: 'admin',
-        password: hashedPassword,
-        email: 'admin@master.com14',
-        roleId: 1,
-        currencyId: 1
-      },
-      {
-        name: 'pngyn',
-        username: 'pngyn11',
-        type: 'user',
-        password: await bcrypt.hash('nguyen123!', 10),
-        email: 'pngyn@pngyn.com11',
-        roleId: 1,
-        currencyId: 1
-      },
-      {
-        name: 'User Master',
-        username: 'user112',
-        type: 'user',
-        password: hashedPasswordUser,
-        email: 'user@master.com1233',
-        roleId: 1,
-        currencyId: 1
-      },
-      {
-        name: 'User Master',
-        username: 'user333',
-        type: 'user',
-        password: hashedPasswordUser,
-        email: 'user@master.com13123',
+        username: 'user',
+        type: 'player',
+        password: await bcrypt.hash('user.master.1', 10),
+        email: 'user@master.com',
         roleId: 1,
         currencyId: 1
       }
@@ -103,56 +50,13 @@ async function main() {
 
   await prisma.agents.createMany({
     data: [
-      {
-        id: 1,
-        level: 1,
-        parentAgentId: null,
-        parentAgentIds: [],
-        rate: 10
-      },
-      {
-        id: 2,
-        level: 2,
-        parentAgentId: 1,
-        parentAgentIds: [1],
-        rate: 10
-      },
-      {
-        id: 3,
-        level: 2,
-        parentAgentId: 1,
-        parentAgentIds: [1],
-        rate: 10
-      },
-      {
-        id: 4,
-        level: 2,
-        parentAgentId: null,
-        parentAgentIds: [],
-        rate: 10
-      },
-      {
-        id: 5,
-        level: 2,
-        parentAgentId: 1,
-        parentAgentIds: [1],
-        rate: 10
-      },
-      {
-        id: 6,
-        level: 2,
-        parentAgentId: 1,
-        parentAgentIds: [1],
-        rate: 10
-      },
-      {
-        id: 7,
-        level: 2,
-        parentAgentId: 1,
-        parentAgentIds: [1],
-        rate: 10
-      }
+      { id: 1, level: 1, parentAgentId: null },
+      { id: 2, level: 2, parentAgentId: 1, parentAgentIds: [1] }
     ]
+  });
+
+  await prisma.players.createMany({
+    data: [{ id: 3, agentId: 1 }]
   });
 }
 

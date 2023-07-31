@@ -20,9 +20,9 @@ async function main() {
     data: [
       {
         name: 'admin',
-        username: 'admin',
+        username: 'admin01',
         type: 'agent',
-        password: await bcrypt.hash('admin.master.1', 10),
+        password: await bcrypt.hash('admin.master.01', 10),
         email: 'admin@master.com',
         roleId: 1,
         currencyId: 1
@@ -38,9 +38,9 @@ async function main() {
       },
       {
         name: 'User Master',
-        username: 'user',
+        username: 'user01',
         type: 'player',
-        password: await bcrypt.hash('user.master.1', 10),
+        password: await bcrypt.hash('user.master.01', 10),
         email: 'user@master.com',
         roleId: 1,
         currencyId: 1

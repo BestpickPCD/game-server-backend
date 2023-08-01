@@ -45,15 +45,15 @@ export const arrangeTransactionDetails = async ( transactions:any, userId:number
                     name: receiver.username,
                     type: receiver.type
                 }
-                // Agents transfer -> money out
+                // agent transfer -> money out
                 lose.from.transfer +=data.amount
             }
 
             if(data.amount >=0 ) {
-receive.total += data.amount
-} else {
-lose.total += data.amount
-}
+                receive.total += data.amount
+            } else {
+                lose.total += data.amount
+            }
         } else if(receiver?.id == userId && receiver?.type == "agent") {
             data.user = {
                 id: receiver.id,
@@ -69,15 +69,15 @@ lose.total += data.amount
                     name: sender.username,
                     type: sender.type
                 }
-                // Agents transfer -> money out
+                // Agent receives from agent -> money in
                 receive.from.agent += data.amount
             }
 
             if(data.amount >=0 ) {
-receive.total += data.amount
-} else {
-lose.total += data.amount
-}
+                receive.total += data.amount
+            } else {
+                lose.total += data.amount
+            }
         } else if(receiver?.id == userId && receiver?.type == "player" && sender?.type == "agent") {
             data.user = {
                 id: receiver.id,
@@ -93,15 +93,15 @@ lose.total += data.amount
                     name: sender.username,
                     type: sender.type
                 }
-                // Agents transfer -> money out
+                // user recieves from agent -> money in
                 receive.from.agent += data.amount
             }
 
             if(data.amount >=0 ) {
-receive.total += data.amount
-} else {
-lose.total += data.amount
-}
+                receive.total += data.amount
+            } else {
+                lose.total += data.amount
+            }
         } else if(receiver?.id == userId && receiver?.type == "player" && gameId != null) {
             data.user = {
                 id: receiver.id,
@@ -121,7 +121,7 @@ lose.total += data.amount
                         vendor: "evolution", 
                     }
                 }
-                // Agents transfer -> money out
+                // player wins from game -> money in
                 receive.from.win += data.amount
             } else if(transaction?.type == "charge" || transaction?.type == "lose") { // LOSE
                 data.amount = -parseFloat(amount)
@@ -135,15 +135,15 @@ lose.total += data.amount
                         vendor: "evolution", 
                     }
                 }
-                // Agents transfer -> money out
+                // player gets charged when lose from game -> money out
                 lose.from.charge += data.amount
             }
 
             if(data.amount >=0 ) {
-receive.total += data.amount
-} else {
-lose.total += data.amount
-}
+                receive.total += data.amount
+            } else {
+                lose.total += data.amount
+            }
         } else if(sender?.id == userId && sender?.type == "player" && gameId != null) {
             data.user = {
                 id: sender.id,
@@ -163,15 +163,15 @@ lose.total += data.amount
                         vendor: "evolution", 
                     }
                 }
-                // Agents transfer -> money out
+                // player bets on a game -> money out
                 lose.from.bet +=data.amount
             }
 
             if(data.amount >=0 ) {
-receive.total += data.amount
-} else {
-lose.total += data.amount
-}
+                receive.total += data.amount
+            } else {
+                lose.total += data.amount
+            }
         } else {
             data.error = { message: "error" }
         }

@@ -1,6 +1,6 @@
-import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcrypt';
-
+import { faker } from '@faker-js/faker';
+import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 async function main() {
@@ -8,56 +8,39 @@ async function main() {
     data: [{ name: 'admin' }, { name: 'user' }],
     skipDuplicates: true
   });
-
   await prisma.currencies.create({
     data: {
       name: 'Korean Won',
       code: 'KRW'
     }
   });
-
-  await prisma.users.createMany({
-    data: [
-      {
-        name: 'admin',
-        username: 'admin',
-        type: 'agent',
+  for (let i = 1; i <= 400; i++) {
+    await prisma.users.create({
+      data: {
+        name: faker.person.fullName(),
+        username: String(i),
+        type: i % 2 === 0 ? 'player' : 'agent',
         password: await bcrypt.hash('admin.master.1', 10),
-        email: 'admin@master.com',
-        roleId: 1,
-        currencyId: 1
-      },
-      {
-        name: 'pngyn',
-        username: 'pngyn',
-        type: 'agent',
-        password: await bcrypt.hash('nguyen123!', 10),
-        email: 'pngyn@pngyn.com1',
-        roleId: 1,
-        currencyId: 1
-      },
-      {
-        name: 'User Master',
-        username: 'user',
-        type: 'player',
-        password: await bcrypt.hash('user.master.1', 10),
-        email: 'user@master.com',
+        email: `admin@master.com${i}`,
         roleId: 1,
         currencyId: 1
       }
-    ]
-  });
-
-  await prisma.agents.createMany({
-    data: [
-      { id: 1, level: 1, parentAgentId: null },
-      { id: 2, level: 2, parentAgentId: 1, parentAgentIds: [1] }
-    ]
-  });
-
-  await prisma.players.createMany({
-    data: [{ id: 3, agentId: 1 }]
-  });
+    });
+    if (i % 2 !== 0) {
+      await prisma.agents.create({
+        data: {
+          id: i,
+          level: i === 1 ? 1 : 2,
+          parentAgentId: null,
+          parentAgentIds: i === 1 ? [] : [1]
+        }
+      });
+    } else if (i % 2 === 0) {
+      await prisma.players.createMany({
+        data: [{ id: i, agentId: 1 }]
+      });
+    }
+  }
 }
 
 main()

@@ -1,5 +1,3 @@
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-nocheck
 import { Agents, PrismaClient } from '@prisma/client';
 import { Request, Response } from 'express';
 import { message } from '../utilities/constants/index.ts';
@@ -16,6 +14,7 @@ interface AgentParams {
 
 const filterArrays = (a: any[], b: number[]) =>
   a.filter((aItem) => !b.some((bItem) => aItem === bItem));
+
 const mergeArrays = (a: any[], b: number[]) => [...a, ...b];
 
 const resultArray = (a: any[], b: number[], c: any[]) =>
@@ -31,8 +30,8 @@ export const getAllAgents = async (req: Request, res: Response) => {
       size = 10,
       search = '',
       level,
-      dateFrom = '1970-01-01T00:00:00.000Z',
-      dateTo = '2100-01-01T00:00:00.000Z',
+      dateFrom,
+      dateTo,
       id
     }: AgentParams = req.query;
     const pageNumber = Number(page);
@@ -40,35 +39,62 @@ export const getAllAgents = async (req: Request, res: Response) => {
     const filter: any = {
       select: {
         id: true,
+        username: true,
+        name: true,
+        type: true,
+        currencyId: true,
+        roleId: true,
+        createdAt: true,
+        updatedAt: true,
         Agents: {
           select: {
-            id: true,
-            parentAgentIds: true
-          },
-          where: {
-            parentAgentIds: {
-              array_contains: [1]
-            }
+            level: true
           }
         }
       },
-      where: {},
-      skip: pageNumber * sizeNumber,
-      take: sizeNumber
+      where: {
+        deletedAt: null,
+        type: 'agent',
+        Agents: {
+          parentAgentIds: {
+            array_contains: [Number(id)]
+          },
+          ...(level && { level: Number(level) })
+        },
+        OR: [
+          {
+            name: {
+              contains: search
+            }
+          },
+          {
+            username: {
+              contains: search
+            }
+          }
+        ],
+        updatedAt: {
+          gte: dateFrom || '1970-01-01T00:00:00.000Z',
+          lte: dateTo || '2100-01-01T00:00:00.000Z'
+        }
+      },
+      orderBy: {
+        updatedAt: 'desc'
+      },
+      skip: Number(page * size),
+      take: Number(size)
     };
 
-    const { skip, take, ...countFilter } = filter;
-    const [agents, count] = await prisma.$transaction([
+    const [users, totalItems] = await prisma.$transaction([
       prisma.users.findMany(filter),
-      prisma.agents.count()
+      prisma.users.count({ where: filter.where })
     ]);
-
     return res.status(200).send({
       data: {
-        data: agents,
+        data: users,
         page: pageNumber,
         size: sizeNumber,
-        totalItem: count
+        totalItems
       },
       message: message.SUCCESS
     });
@@ -86,19 +112,23 @@ export const getAgentById = async (req: Request, res: Response) => {
         .status(400)
         .json({ message: message.INVALID, subMessage: 'Invalid Id' });
     }
-    const agent = await prisma.agents.findUnique({
+    const agent = await prisma.users.findUnique({
       select: {
         id: true,
-        level: true,
-        parentAgentId: true,
-        rate: true,
-        updatedAt: true,
-        createdAt: true,
-        user: {
-          where: {}
+        username: true,
+        name: true,
+        isActive: true,
+        currencyId: true,
+        roleId: true,
+        Agents: {
+          select: {
+            level: true,
+            parentAgentId: true,
+            rate: true
+          }
         }
       },
-      where: { deletedAt: null, id: Number(id) }
+      where: { id: Number(id) }
     });
     if (!agent) {
       return res.status(404).json({ message: message.NOT_FOUND });
@@ -225,21 +255,15 @@ export const deleteAgent = async (
         .status(400)
         .json({ message: message.INVALID, subMessage: 'Invalid Id' });
     }
-    const agent = await prisma.agents.findUnique({
+    const users = await prisma.users.findUnique({
       where: {
         id: Number(id)
       }
     });
-    if (!agent) {
+    if (!users) {
       return res.status(404).json({ message: message.NOT_FOUND });
     }
-    if (agent.parentAgentIds.length > 0) {
-      return res.status(400).json({
-        message: message.NOT_ALLOWED,
-        subMessage: 'Agent still has children'
-      });
-    }
-    await prisma.agents.update({
+    await prisma.users.update({
       where: {
         id: Number(id)
       },
@@ -254,6 +278,7 @@ export const deleteAgent = async (
       .json({ message: message.INTERNAL_SERVER_ERROR, error });
   }
 };
+
 export const getUsersByAgentId = async (
   req: Request,
   res: Response

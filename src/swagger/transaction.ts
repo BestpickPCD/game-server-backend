@@ -55,20 +55,38 @@ export default {
             schema: {
               type: 'object',
               properties: {
-                amount: {
+                senderId: {
                   type: 'number'
                 },
-                action: {
+                receiverId: {
+                  type: 'number'
+                },
+                gameId: {
+                  type: 'number'
+                },
+                type: {
+                  type: 'string'
+                },
+                note: {
+                  type: 'string'
+                },
+                token: {
+                  type: 'string'
+                },
+                status: {
+                  type: 'string'
+                },
+                amount: {
                   type: 'number'
                 },
                 currencyId: {
                   type: 'number'
                 },
-                userId: {
+                updatedBy: {
                   type: 'number'
-                }
+                },
               },
-              required: ['amount', 'action', 'currencyId', 'userId']
+              required: ['senderId', 'receiverId', 'gameId', 'type', 'amount', 'currencyId']
             }
           }
         }
@@ -110,7 +128,7 @@ export default {
       }
     }
   },
-  '/transaction/{userId}': {
+  '/transaction-details/{userId}': {
     get: { 
       summary: 'Get user balance by userId',
       tags: ['Transactions'],

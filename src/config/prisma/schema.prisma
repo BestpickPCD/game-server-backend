@@ -97,7 +97,7 @@ model Transactions {
   senderId   Int
   receiverId Int?
   type       String
-  amount     Decimal   @default(0)
+  amount     Decimal   @default(0) @db.Decimal(10, 2)
   note       String    @db.Text
   token      String?
   status     String

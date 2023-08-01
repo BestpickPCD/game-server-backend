@@ -21,23 +21,29 @@ export const getTransactions = async (_: Request, res: Response) => {
 
 export const addTransaction = async (req: Request, res: Response) => {
   try {
-    const { amount, action, currencyId, userId } = req.body;
-    await prisma.transactions.create({
-      data: {
-        amount,
-        action,
-        user: {
-          connect: { id: userId }
-        },
-        currency: {
-          connect: { id: currencyId }
-        }
+    const { senderId, receiverId, type, note, token, status, amount, currencyId } = req.body; 
+    const data = {
+      type, note, token, status, amount,  
+      sender: {
+        connect: { id: senderId }
+      },
+      receiver: {
+        connect: { id: receiverId }
+      },
+      currency: {
+        connect: { id: currencyId }
+      },
+      updatedUser: {
+        connect: { id: req.userId ? req.userId : 1 }
       }
+    }
+
+    await prisma.transactions.create({
+      data: data 
     });
 
-    return res
-      .status(201)
-      .json({ message: 'Transaction created successfully' });
+    return res.status(201).json({ message: 'Transaction created successfully' });
+
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: 'Something went wrong', error });
@@ -46,7 +52,6 @@ export const addTransaction = async (req: Request, res: Response) => {
 
 export const getBalance = async (req: Request, res: Response) => {
   const userId = parseInt(req.params.userId);
-
   try {
     const depositQuery = prisma.transactions.aggregate({
       _sum: { amount: true },

@@ -80,6 +80,18 @@ export default {
                 },
                 confirmPassword: {
                   type: 'string'
+                },
+                type: {
+                  type: 'string'
+                },
+                agentId: {
+                  type: 'number'
+                },
+                roleId: {
+                  type: 'number'
+                },
+                parentAgentId: {
+                  type: 'number'
                 }
               },
               required: [
@@ -88,7 +100,11 @@ export default {
                 'username',
                 'email',
                 'password',
-                'confirmPassword'
+                'confirmPassword',
+                'type',
+                'agentId',
+                'roleId',
+                'parentAgentId'
               ]
             }
           }
@@ -278,6 +294,12 @@ export default {
                   type: 'number'
                 },
                 currencyId: {
+                  type: 'number'
+                },
+                agentId: {
+                  type: 'number'
+                },
+                parentAgentId: {
                   type: 'number'
                 }
               }

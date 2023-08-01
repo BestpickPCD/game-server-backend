@@ -4,6 +4,7 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 import { Request, Response } from 'express';
 import { arrangeTransactionDetails } from './utilities.ts'
+import { checkTransactionType } from './transactionTypes.ts'
 
 export const getTransactions = async (_: Request, res: Response) => {
   try {
@@ -52,15 +53,20 @@ export const addTransaction = async (req: Request, res: Response) => {
               id: senderId
           }
       }) 
+
       if(sender.type == "player" && type == "add") {
-return res.status(500).json({ message: 'Users cannot add or transfer money' });
-} 
+        return res.status(500).json({ message: 'Users cannot add or transfer money' });
+      } 
     } 
 
-    await prisma.transactions.create({
-      data: data 
-    });
-    return res.status(201).json({ message: 'Transaction created successfully' }); 
+    if(checkTransactionType(type)) {
+      await prisma.transactions.create({
+        data: data 
+      });
+      return res.status(201).json({ message: 'Transaction created successfully' }); 
+    }
+    return res.status(500).json({ message: 'Transaction type does not exist' }); 
+
     
   } catch (error) {
     console.error(error);

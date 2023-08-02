@@ -181,3 +181,47 @@ export const arrangeTransactionDetails = async ( transactions:any, userId:number
 
     return {details, receive, lose, balance}
 }
+
+export const arrangeTransactions = async (transactions:any) => {
+
+    const details:any = transactions.map((transaction:any) => { 
+        const data:any = {};
+        const { id, type, amount, status, createdAt, updatedUser, sender, receiver, gameId } = transaction
+ 
+        data.id = id
+        data.type = type
+        data.status = status
+        data.createdAt = createdAt
+        data.refererId = updatedUser
+        data.before = 0 
+        data.amount = parseFloat(amount)
+        if(type == 'bet' || type == 'win' || type == 'charge' || type == 'lose') {
+            data.from = {
+                id: sender ? sender.id : receiver.id,
+                name: sender ? sender.username : receiver.username,
+                type: sender ? sender.type : receiver.type,
+            }
+            data.to = {
+                id: gameId ? gameId : "",
+                title: "Speed Baccarat J",
+                type: "baccarat",
+                round: 0,
+                vendor: "evolution",
+            }
+        } else {
+            data.from = {
+                id: sender ? sender.id : "",
+                name: sender ? sender.username : "",
+                type: sender ? sender.type : "",
+            }
+            data.to = {
+                id: receiver ? receiver.id : "",
+                name: receiver ? receiver.username : "",
+                type: receiver ? receiver.type : "",
+            }
+        } 
+        return data
+    })
+         
+    return details 
+}

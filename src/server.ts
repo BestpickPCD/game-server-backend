@@ -14,6 +14,7 @@ const swaggerSpec = swaggerJSDoc(userSwagger);
 
 app.use(cors());
 app.use(express.json());
+app.set('view engine', 'ejs');
 app.use('/', router);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 

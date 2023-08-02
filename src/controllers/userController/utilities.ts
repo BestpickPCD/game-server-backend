@@ -1,7 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
-export const getParentAgentIdsByParentAgentId = async ( parentAgentId: number ) => {
+export const getParentAgentIdsByParentAgentId = async ( parentAgentId: number ): Promise<any> => {
     const agent = await prisma.agents.findUnique({
         where: {
             id: parentAgentId
@@ -15,4 +15,14 @@ export const getParentAgentIdsByParentAgentId = async ( parentAgentId: number ) 
     
     return details 
     
-}
+} 
+
+export const findCurrencyById = async (currencyId: number): Promise<any> => {
+  const currency = await prisma.currencies.findFirst({
+    where: {
+      id: currencyId,
+    },
+  });
+
+  return currency;
+};

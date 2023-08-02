@@ -1,18 +1,16 @@
 import { Request, Response, NextFunction } from 'express';
+import { Users, Roles } from '@prisma/client'
 
-interface CustomRequest extends Request {
-  user?: {
-    role: {
-      name: string;
-    };
-  };
+interface UserRole extends Users {
+  role: Roles;
+} 
+interface RequestUserRole extends Request {
+  user: UserRole 
 }
 
-export const permission =
-  (role: string) =>
-  async (req: CustomRequest, res: Response, next: NextFunction) => {
+export const permission = (role: string) => async (req: RequestUserRole, res: Response, next: NextFunction): Promise<any> => {
     try {
-      if (req.user?.role.name === role && role !== null) {
+      if ( req.user.role.name === role && role !== null ) {
         return next();
       }
       return res.status(403).json({ message: 'Unauthorized' });

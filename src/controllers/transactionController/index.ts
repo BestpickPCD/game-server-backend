@@ -1,12 +1,12 @@
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-nocheck
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Users } from '@prisma/client';
 const prisma = new PrismaClient();
 import { Request, Response } from 'express';
 import { arrangeTransactionDetails, arrangeTransactions } from './utilities.ts'
-import { checkTransactionType, } from './transactionTypes.ts' 
+import { checkTransactionType, } from './transactionTypes.ts'
+import { RequestWithUser } from "../../models/customInterfaces.ts";
 
-export const getTransactions = async (_: Request, res: Response) => {
+
+export const getTransactions = async (_: Request, res: Response): Promise<any> => { 
   try {
     const transactions = await prisma.transactions.findMany({
       where: { deletedAt: null },
@@ -22,7 +22,7 @@ export const getTransactions = async (_: Request, res: Response) => {
   }
 };
 
-export const getTransactionsView = async (_: Request, res: Response) => {
+export const getTransactionsView = async (_: Request, res: Response): Promise<any> => {
   try {
     const transactions = await prisma.transactions.findMany({
       where: { deletedAt: null },
@@ -48,7 +48,7 @@ export const getTransactionsView = async (_: Request, res: Response) => {
                   username: true,
                   type: true,
               },
-          },
+          }, 
           id: true,
           amount: true,
           gameId: true,
@@ -57,8 +57,8 @@ export const getTransactionsView = async (_: Request, res: Response) => {
           status: true,
           createdAt: true,
       },
-    });
-    const details = await arrangeTransactions(transactions) 
+    }) as any ;
+    const details = await arrangeTransactions(transactions)
     return res.render('transactions',{ data:details });
   } catch (error) {
     console.error(error);
@@ -66,10 +66,10 @@ export const getTransactionsView = async (_: Request, res: Response) => {
   }
 };
 
-export const addTransaction = async (req: Request, res: Response) => {
+export const addTransaction = async (req: RequestWithUser, res: Response): Promise<any> => {
   try {
     const { senderId, receiverId, type, note, token, status, amount, currencyId, gameId } = req.body; 
-    const data = { type, note, token, status, amount, gameId }  
+    const data: any = { type, note, token, status, amount, gameId }  
     
     if (senderId) {
       data.sender = {
@@ -86,9 +86,9 @@ export const addTransaction = async (req: Request, res: Response) => {
         connect: { id: currencyId }
       }
     }
-    if (req.userId) {
+    if (req.user?.id) {
       data.updatedUser = {
-        connect: { id: req.userId ? req.userId : 1 }
+        connect: { id: req.user.id ? req.user.id : 1 }
       }
     }
 
@@ -96,10 +96,10 @@ export const addTransaction = async (req: Request, res: Response) => {
       const sender = await prisma.users.findUnique({
           where: {
               id: senderId
-          }
+          } 
       }) 
 
-      if(sender.type == "player" && type == "add") {
+      if((sender as Users ).type == "player" && type == "add") {
         return res.status(500).json({ message: 'Users cannot add or transfer money' });
       } 
     } 
@@ -119,7 +119,7 @@ export const addTransaction = async (req: Request, res: Response) => {
   }
 }
 
-export const getTransactionDetailsByUserIdView = async (req:Request, res:Response) => {
+export const getTransactionDetailsByUserIdView = async (req:Request, res:Response): Promise<any> => {
   try {
     const userId = parseInt(req.params.userId)
     const transactions = await prisma.transactions.findMany({ 
@@ -158,19 +158,19 @@ export const getTransactionDetailsByUserIdView = async (req:Request, res:Respons
             status: true,
             createdAt: true,
         },
-    }); 
+    }) as any; 
   
     const userDetails = await arrangeTransactionDetails(transactions, userId)
     res.render('transactionDetails',{data: userDetails})
 
-} catch (error) {
-    console.log(error)
-    res.status(500).json(error) 
-}
+  } catch (error) {
+      console.log(error)
+      res.status(500).json(error) 
+  }
 }
 
 
-export const getTransactionDetailsByUserId = async (req:Request, res:Response) => {
+export const getTransactionDetailsByUserId = async (req:Request, res:Response): Promise<any> => {
 
     try {
         const userId = parseInt(req.params.userId)
@@ -210,7 +210,7 @@ export const getTransactionDetailsByUserId = async (req:Request, res:Response) =
                 status: true,
                 createdAt: true,
             },
-        }); 
+        }) as any; 
       
         const userDetails = await arrangeTransactionDetails(transactions, userId)
         res.status(200).json(userDetails) 
@@ -222,35 +222,35 @@ export const getTransactionDetailsByUserId = async (req:Request, res:Response) =
  
 }
 
-export const getBalance = async (req: Request, res: Response) => {
-  const userId = parseInt(req.params.userId);
-  try {
-    const depositQuery = prisma.transactions.aggregate({
-      _sum: { amount: true },
-      where: { action: 1, userId }
-    });
+// export const getBalance = async (req: Request, res: Response) => {
+//   const userId = parseInt(req.params.userId);
+//   try {
+//     const depositQuery = prisma.transactions.aggregate({
+//       _sum: { amount: true },
+//       where: { action: 1, userId }
+//     });
 
-    const withdrawQuery = prisma.transactions.aggregate({
-      _sum: { amount: true },
-      where: { action: 2, userId }
-    });
+//     const withdrawQuery = prisma.transactions.aggregate({
+//       _sum: { amount: true },
+//       where: { action: 2, userId }
+//     });
 
-    const [depositResult, withdrawResult] = await prisma.$transaction([
-      depositQuery,
-      withdrawQuery
-    ]);
+//     const [depositResult, withdrawResult] = await prisma.$transaction([
+//       depositQuery,
+//       withdrawQuery
+//     ]);
 
-    const depositAmount = depositResult._sum?.amount ?? 0;
-    const withdrawAmount = withdrawResult._sum?.amount ?? 0;
-    const balance = Number(depositAmount) - Number(withdrawAmount);
+//     const depositAmount = depositResult._sum?.amount ?? 0;
+//     const withdrawAmount = withdrawResult._sum?.amount ?? 0;
+//     const balance = Number(depositAmount) - Number(withdrawAmount);
 
-    return res.status(200).json({
-      totalDepositAmount: Number(depositAmount),
-      totalWithdrawAmount: Number(withdrawAmount),
-      balance
-    });
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ error: 'Unable to fetch balance' });
-  }
-};
+//     return res.status(200).json({
+//       totalDepositAmount: Number(depositAmount),
+//       totalWithdrawAmount: Number(withdrawAmount),
+//       balance
+//     });
+//   } catch (error) {
+//     console.error(error);
+//     return res.status(500).json({ error: 'Unable to fetch balance' });
+//   }
+// };

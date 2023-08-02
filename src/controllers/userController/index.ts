@@ -1,15 +1,15 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Users } from '@prisma/client';
 const prisma = new PrismaClient();
 import bcrypt from 'bcrypt';
 import { getTokens } from '../../utilities/getTokens.ts';
-import { findById } from '../../models/currency.ts';
+import { findCurrencyById } from './utilities.ts';
 import { Response, Request } from 'express';
 import axios from 'axios';
 import { message } from '../../utilities/constants/index.ts';
-import { getParentAgentIdsByParentAgentId } from './utilities.ts'
+import { getParentAgentIdsByParentAgentId } from './utilities.ts' 
 
 // Define your route handler to get all users
-export const getAllUsers = async (req: Request, res: Response) => {
+export const getAllUsers = async (req: Request, res: Response): Promise<any> => {
   try {
     const {
       page = 0,
@@ -153,7 +153,7 @@ return _updateAgent(newUser, parentAgentId, res)
       .json({ message: message.INTERNAL_SERVER_ERROR, error });
   }
 };
-export const getUserById = async (req: Request, res: Response) => {
+export const getUserById = async (req: Request, res: Response): Promise<any> => {
   const { userId } = req.params; 
   try {
     const user = await prisma.users.findUnique({
@@ -200,7 +200,7 @@ export const getUserById = async (req: Request, res: Response) => {
       type: user.type,
       role: user.role?.name,
       currency: user.currency?.name,
-      agent: user.Players[0]?.agent?.name || null,
+      agent: user.Players[0]?.agent?.name ?? null,
     };
 
     return res.status(200).json({ message: message.SUCCESS, data:data });
@@ -307,19 +307,19 @@ return res.status(400).json({ message: message.NOT_FOUND });
       const isValid = await bcrypt.compare(password, user.password);
 
       if (isValid) {
-        const currency = await findById(user.currencyId as number);
+        const currency = await findCurrencyById(user.currencyId as number);
         const currencyFrom = 'USD';
-        const currencyCode = currency?.code || 'KRW';
+        const currencyCode = currency?.code ?? 'KRW';
         const currencyRate = await axios.get(
           `https://api.frankfurter.app/latest?from=${currencyFrom}&to=${currencyCode}`
         );
 
-        const tokens = getTokens(user);
+        const tokens = getTokens(user as Users);
         const data = {
           userId: user.id,
           username: user.username,
           type: user.type,
-          currency: currency && currency.code,
+          currency: currency as number && currency.code,
           rate: currencyRate.data,
           tokens
         };

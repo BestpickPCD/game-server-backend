@@ -21,6 +21,7 @@
                   <th scope="col">action</th>
                   <th scope="col">Action from</th>
                   <th scope="col">Amount</th>
+                  <th scope="col">createdAt</th>
               </tr>
           </thead>
           <tbody>
@@ -38,6 +39,7 @@
                     <% } %>
                   </td>
                   <td><%= data.details[i].amount %></td>
+                  <td><%= data.details[i].createdAt %></td>
               </tr> 
             <% } %>
           </tbody>

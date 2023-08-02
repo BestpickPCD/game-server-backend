@@ -1,9 +1,10 @@
 import jwt from "jsonwebtoken";
+import { Users } from "@prisma/client";
 
 const refreshHours = "72"; // 3 days
 const accessHours = "2"; // 2 hrs
 
-export const getTokens = (user: any) => {
+export const getTokens = (user: Users): any => {
   // gen access token
   const accessKey = process.env.ACCESS_TOKEN_KEY as string;
   const accessToken = jwt.sign(
@@ -32,3 +33,5 @@ export const getTokens = (user: any) => {
 
   return { accessToken, refreshToken };
 };
+
+

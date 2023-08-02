@@ -1,6 +1,11 @@
 export default { 
   '/transactions': {
     get: {
+      security: [
+        {
+          bearerAuth: []
+        }
+      ],
       summary: 'Get all transactions',
       tags: ['Transactions'],
       responses: {
@@ -46,6 +51,11 @@ export default {
   },
   '/transaction': {
     post: { 
+      security: [
+        {
+          bearerAuth: []
+        }
+      ],
       summary: 'Add a new transaction',
       tags: ['Transactions'],
       requestBody: {
@@ -130,6 +140,11 @@ export default {
   },
   '/transaction-details/{userId}': {
     get: { 
+      security: [
+        {
+          bearerAuth: []
+        }
+      ],
       summary: 'Get user balance by userId',
       tags: ['Transactions'],
       parameters: [

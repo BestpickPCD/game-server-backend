@@ -21,6 +21,7 @@
                   <th scope="col">action</th>
                   <th scope="col">To</th>
                   <th scope="col">Amount</th>
+                  <th scope="col">createdAt</th>
               </tr>
           </thead>
           <tbody>
@@ -30,6 +31,7 @@
                   <td><%= data[i].type %></td>
                   <td><%= data[i].to.name ? data[i].to.name : data[i].to.title %></td>
                   <td><%= data[i].amount %></td>
+                  <td><%= data[i].createdAt %></td>
               </tr> 
             <% } %>
           </tbody>

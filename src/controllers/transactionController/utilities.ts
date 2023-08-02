@@ -1,4 +1,6 @@
-export const arrangeTransactionDetails = async ( transactions:any, userId:number) => {
+import { Transactions } from "@prisma/client";
+
+export const arrangeTransactionDetails = async ( transactions:Transactions[], userId:number): Promise<any> => {
 
     let balance = 0
     const receive = {
@@ -18,7 +20,7 @@ export const arrangeTransactionDetails = async ( transactions:any, userId:number
     }
     
 
-    const details:any = transactions.map((transaction:any) => {
+    const details = transactions.map((transaction:any) => {
 
         const data:any = {};
         const { id, type, amount, status, createdAt, updatedUser, sender, receiver, gameId } = transaction
@@ -177,14 +179,14 @@ export const arrangeTransactionDetails = async ( transactions:any, userId:number
         }
         balance += data.amount
         return data
-    })  
+    }) as any
 
     return {details, receive, lose, balance}
 }
 
-export const arrangeTransactions = async (transactions:any) => {
-
-    const details:any = transactions.map((transaction:any) => { 
+export const arrangeTransactions = async (transactions:Transactions[]): Promise<any> => { 
+    
+    const details = transactions.map((transaction:any) => { 
         const data:any = {};
         const { id, type, amount, status, createdAt, updatedUser, sender, receiver, gameId } = transaction
  
@@ -219,9 +221,9 @@ export const arrangeTransactions = async (transactions:any) => {
                 name: receiver ? receiver.username : "",
                 type: receiver ? receiver.type : "",
             }
-        } 
+        }
         return data
-    })
+    }) as any
          
     return details 
 }

@@ -1,4 +1,4 @@
-import { PrismaClient, Users } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 import { Response, NextFunction } from 'express';
 import jwt, { JwtPayload } from 'jsonwebtoken';
 import { RequestWithUser } from "../models/customInterfaces.ts";
@@ -23,19 +23,31 @@ export const authentication = async (
     }
     
     try {
-      const decoded = await jwt.verify(token, ACCESS_TOKEN_KEY) as JwtPayload;
-
-      const user = await prisma.users.findUnique({
-        select: {
-          id: true,
-          name: true,
-          type: true,
-          username: true,
-          createdAt: true,
-          updatedAt: true
-        },
-        where: { id: decoded.userId }
-      }) as Users;
+      const decoded = await jwt.verify(token, ACCESS_TOKEN_KEY) as JwtPayload; 
+      const rawQuery = Prisma.sql`
+        SELECT users.*, sender.\`out\`, receiver.\`in\`, gameResult.gameOut, (receiver.\`in\` - sender.\`out\` - gameResult.gameOut) AS balance
+        FROM users
+        LEFT JOIN (
+            SELECT SUM(amount) AS \`out\`, senderId AS id
+            FROM transactions
+            WHERE TYPE IN ('add', 'lose', 'charge', 'bet') AND senderId = ${decoded.userId}
+            GROUP BY senderId
+        ) AS sender ON sender.id = users.id
+        LEFT JOIN (
+            SELECT SUM(amount) AS \`in\`, receiverId AS id
+            FROM transactions
+            WHERE TYPE IN ('add', 'win') AND receiverId = ${decoded.userId}
+            GROUP BY receiverId
+        ) AS receiver ON receiver.id = users.id
+        LEFT JOIN (
+            SELECT SUM(amount) AS gameOut, receiverId AS id
+            FROM transactions
+            WHERE TYPE IN ('lose', 'charge') AND receiverId = ${decoded.userId}
+            GROUP BY receiverId
+        ) AS gameResult ON gameResult.id = users.id
+        WHERE users.id = ${decoded.userId};`;
+  
+      const user = await prisma.$queryRaw(rawQuery) as any;
 
       if (!user) {
         return res.status(401).json({ message: 'User not found' });
@@ -45,10 +57,13 @@ export const authentication = async (
       req.user = user;
       
       return next();
+
     } catch (error) {
+      console.log(error)
       return res.status(401).json({ message: 'Invalid token' });
     }
   } catch (error) {
+    console.log(error)
     return res.status(500).json({ message: 'No token ' });
   }
 };

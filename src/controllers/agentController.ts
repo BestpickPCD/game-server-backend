@@ -62,10 +62,12 @@ export const getAllAgents = async (req: Request, res: Response) => {
           updatedAt: true,
           Agents: {
             select: {
+              id: true,
               level: true,
-              user: {
+              parentAgent: {
                 select: {
-                  name: true
+                  name: true,
+                  id: true
                 }
               }
             }
@@ -250,24 +252,29 @@ export const updateAgent = async (req: Request, res: Response) => {
       ...(parentAgent?.parentAgentIds as any),
       parentAgent.id
     ];
-    const updatedAgent: Agents = await prisma.agents.update({
-      where: { id: agentId },
-      data: {
-        parentAgentId: parentAgentId || agent.parentAgentId,
-        parentAgentIds: parentAgent
-          ? (updatedAgentParentIds as any)
-          : agent.parentAgentIds,
-        level: parentAgent
-          ? (updatedAgentParentIds as any)?.length + 1
-          : agent.level,
-        user: {
-          update: {
-            name,
-            roleId: role?.id
-          }
+
+    const [updatedAgent] = await prisma.$transaction([
+      prisma.agents.update({
+        where: { id: agentId },
+        data: {
+          parentAgentId: parentAgentId || agent.parentAgentId,
+          parentAgentIds: parentAgent
+            ? (updatedAgentParentIds as any)
+            : agent.parentAgentIds,
+          level: parentAgent
+            ? (updatedAgentParentIds as any)?.length + 1
+            : agent.level
         }
-      }
-    });
+      }),
+      prisma.users.update({
+        where: { id: agentId },
+        data: {
+          name,
+          roleId: role?.id
+        }
+      })
+    ]);
+
     const agentChildren: Agents[] = await prisma.agents.findMany({
       where: {
         parentAgentIds: {
@@ -363,7 +370,8 @@ export const getUsersByAgentId = async (
         .json({ message: message.INVALID, subMessage: 'Invalid Id' });
     }
 
-    // const redisKey = `${defaultKey}:${userId}:${id}`;
+    // const redisKey = `users:${agentId}`;
+    // const redisData = await redisClient.get(redisKey);
     const users = await prisma.players.findMany({
       where: { agentId },
       include: {

@@ -23,9 +23,11 @@ redisClient
   .then(() => {
     console.log('Redis Connected');
   })
-  .catch((err:any) => {
+  .catch((err: any) => {
     console.log('Redis connection failed', err);
+    redisClient.quit();
   });
+
 app.listen(port, () => {
   console.log(`Server started on port ${port}`);
 });

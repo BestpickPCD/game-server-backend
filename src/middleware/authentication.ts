@@ -29,19 +29,19 @@ export const authentication = async (
         FROM Users
         LEFT JOIN (
             SELECT SUM(amount) AS \`out\`, senderId AS id
-            FROM transactions
+            FROM Transactions
             WHERE TYPE IN ('add', 'lose', 'charge', 'bet') AND senderId = ${decoded.userId}
             GROUP BY senderId
         ) AS sender ON sender.id = Users.id
         LEFT JOIN (
             SELECT SUM(amount) AS \`in\`, receiverId AS id
-            FROM transactions
+            FROM Transactions
             WHERE TYPE IN ('add', 'win') AND receiverId = ${decoded.userId}
             GROUP BY receiverId
         ) AS receiver ON receiver.id = Users.id
         LEFT JOIN (
             SELECT SUM(amount) AS gameOut, receiverId AS id
-            FROM transactions
+            FROM Transactions
             WHERE TYPE IN ('lose', 'charge') AND receiverId = ${decoded.userId}
             GROUP BY receiverId
         ) AS gameResult ON gameResult.id = Users.id

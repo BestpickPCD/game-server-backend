@@ -47,7 +47,12 @@ export const getAllAgents = async (req: Request, res: Response) => {
         updatedAt: true,
         Agents: {
           select: {
-            level: true
+            level: true,
+            user: {
+              select: {
+                name: true
+              }
+            }
           }
         }
       },
@@ -127,7 +132,7 @@ export const getAgentById = async (req: Request, res: Response) => {
           }
         }
       },
-      where: { id: Number(id) }
+      where: { id: Number(id), deletedAt: null }
     });
     let parentAgent;
     if (agent?.Agents?.parentAgentId) {
@@ -162,12 +167,12 @@ export const getAgentById = async (req: Request, res: Response) => {
 export const updateAgent = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { parentAgentId, currencyId } = req.body;
+    const { parentAgentId, currencyId, name, roleId } = req.body;
 
     const agentId = Number(id);
     const parentAgentIdNumber = parentAgentId && Number(parentAgentId);
     const currencyIdNumber = currencyId && Number(currencyId);
-
+    const roleIdNumber = roleId && Number(roleId);
     const agent = await prisma.agents.findUnique({
       where: {
         id: agentId
@@ -181,6 +186,7 @@ export const updateAgent = async (req: Request, res: Response) => {
     }
     let parentAgent;
     let currency;
+    let role;
 
     if (parentAgentIdNumber) {
       parentAgent = await prisma.agents.findUnique({
@@ -204,6 +210,17 @@ export const updateAgent = async (req: Request, res: Response) => {
         });
       }
     }
+    if (roleIdNumber) {
+      role = await prisma.roles.findUnique({
+        where: { id: roleIdNumber }
+      });
+      if (!role) {
+        return res.status(404).json({
+          message: message.NOT_FOUND,
+          subMessage: 'Role not found'
+        });
+      }
+    }
     const updatedAgentParentIds = parentAgent && [
       ...(parentAgent?.parentAgentIds as any),
       parentAgent.id
@@ -217,7 +234,13 @@ export const updateAgent = async (req: Request, res: Response) => {
           : agent.parentAgentIds,
         level: parentAgent
           ? (updatedAgentParentIds as any)?.length + 1
-          : agent.level
+          : agent.level,
+        user: {
+          update: {
+            name,
+            roleId: role?.id
+          }
+        }
       }
     });
     const agentChildren: Agents[] = await prisma.agents.findMany({
@@ -251,7 +274,8 @@ export const updateAgent = async (req: Request, res: Response) => {
       data: {
         id: updatedAgent.id,
         level: updatedAgent.level,
-        parentAgentIds: updatedAgent.parentAgentIds
+        parentAgentIds: updatedAgent.parentAgentIds,
+        name
       },
       message: message.UPDATED
     });
@@ -276,7 +300,8 @@ export const deleteAgent = async (
     }
     const users = await prisma.users.findUnique({
       where: {
-        id: Number(id)
+        id: Number(id),
+        deletedAt: null
       }
     });
     if (!users) {
@@ -290,7 +315,7 @@ export const deleteAgent = async (
         deletedAt: new Date()
       }
     });
-    return res.status(200).json({ message: message.UPDATED });
+    return res.status(200).json({ message: message.DELETED });
   } catch (error) {
     return res
       .status(500)

@@ -95,6 +95,92 @@ export default {
     }
   },
   '/agents/{agentId}': {
+    get: {
+      security: [
+        {
+          bearerAuth: []
+        }
+      ],
+      summary: 'Get agent detail by agentId',
+      tags: ['Agents'],
+      parameters: [
+        {
+          name: 'agentId',
+          in: 'path',
+          description: 'ID of the user to retrieve',
+          required: true,
+          type: 'number'
+        }
+      ],
+      responses: {
+        '200': {
+          description: 'Success',
+          schema: {
+            type: 'object',
+            properties: {
+              data: {
+                type: 'object'
+              },
+              messages: {
+                type: 'string'
+              }
+            }
+          }
+        },
+        '401': {
+          description: 'Unauthorized'
+        },
+        '404': {
+          description: 'NOT_FOUND'
+        },
+        '500': {
+          description: 'Internal server error'
+        }
+      }
+    },
+    delete: {
+      security: [
+        {
+          bearerAuth: []
+        }
+      ],
+      summary: 'Delete agent by agentId',
+      tags: ['Agents'],
+      parameters: [
+        {
+          name: 'agentId',
+          in: 'path',
+          description: 'ID of the agent to retrieve',
+          required: true,
+          type: 'number'
+        }
+      ],
+      responses: {
+        '200': {
+          description: 'Success',
+          schema: {
+            type: 'object',
+            properties: {
+              data: {
+                type: 'object'
+              },
+              messages: {
+                type: 'string'
+              }
+            }
+          }
+        },
+        '401': {
+          description: 'Unauthorized'
+        },
+        '404': {
+          description: 'NOT_FOUND'
+        },
+        '500': {
+          description: 'Internal server error'
+        }
+      }
+    },
     put: {
       security: [
         {
@@ -122,8 +208,8 @@ export default {
                 name: {
                   type: 'string'
                 },
-                email: {
-                  type: 'string'
+                parentAgentId: {
+                  type: 'number'
                 },
                 roleId: {
                   type: 'number'

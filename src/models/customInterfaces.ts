@@ -3,7 +3,8 @@ import { Request } from 'express'
 
 export interface RequestWithUser extends Request {
     user?: Users | null
-}
+    transaction?: Transactions | null
+} 
 
 export interface UserAll extends Users {
     role?: Roles | null

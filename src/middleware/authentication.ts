@@ -25,27 +25,27 @@ export const authentication = async (
     try {
       const decoded = await jwt.verify(token, ACCESS_TOKEN_KEY) as JwtPayload; 
       const rawQuery = Prisma.sql`
-        SELECT users.*, sender.\`out\`, receiver.\`in\`, gameResult.gameOut, (receiver.\`in\` - sender.\`out\` - gameResult.gameOut) AS balance
-        FROM users
+        SELECT Users.*, sender.\`out\`, receiver.\`in\`, gameResult.gameOut, (receiver.\`in\` - sender.\`out\` - gameResult.gameOut) AS balance
+        FROM Users
         LEFT JOIN (
             SELECT SUM(amount) AS \`out\`, senderId AS id
             FROM transactions
             WHERE TYPE IN ('add', 'lose', 'charge', 'bet') AND senderId = ${decoded.userId}
             GROUP BY senderId
-        ) AS sender ON sender.id = users.id
+        ) AS sender ON sender.id = Users.id
         LEFT JOIN (
             SELECT SUM(amount) AS \`in\`, receiverId AS id
             FROM transactions
             WHERE TYPE IN ('add', 'win') AND receiverId = ${decoded.userId}
             GROUP BY receiverId
-        ) AS receiver ON receiver.id = users.id
+        ) AS receiver ON receiver.id = Users.id
         LEFT JOIN (
             SELECT SUM(amount) AS gameOut, receiverId AS id
             FROM transactions
             WHERE TYPE IN ('lose', 'charge') AND receiverId = ${decoded.userId}
             GROUP BY receiverId
-        ) AS gameResult ON gameResult.id = users.id
-        WHERE users.id = ${decoded.userId};`;
+        ) AS gameResult ON gameResult.id = Users.id
+        WHERE Users.id = ${decoded.userId};`;
   
       const user = await prisma.$queryRaw(rawQuery) as any;
 

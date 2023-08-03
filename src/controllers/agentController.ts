@@ -322,13 +322,18 @@ export const deleteAgent = async (
       .json({ message: message.INTERNAL_SERVER_ERROR, error });
   }
 };
-
 export const getUsersByAgentId = async (
   req: Request,
   res: Response
 ): Promise<any> => {
   try {
     const agentId = parseInt(req.params.id);
+    if (!agentId && Number(agentId)) {
+      return res
+        .status(400)
+        .json({ message: message.INVALID, subMessage: 'Invalid Id' });
+    }
+
     const users = await prisma.players.findMany({
       where: { agentId },
       include: {
@@ -366,9 +371,8 @@ export const getUsersByAgentId = async (
       return { name, email, username, currencyName, roleName, permissions };
     });
 
-    res.status(200).json(usersList);
+    return res.status(200).json(usersList);
   } catch (error) {
-    console.log(error);
     return res.status(500).json({ message: error });
   }
 };

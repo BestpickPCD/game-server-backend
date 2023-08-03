@@ -1,10 +1,6 @@
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-nocheck
-import { PrismaClient } from '@prisma/client';
-import bcrypt from 'bcrypt';
+import { Agents, PrismaClient } from '@prisma/client';
 import { Request, Response } from 'express';
 import { message } from '../utilities/constants/index.ts';
-import { Agent } from '../models/type.ts';
 const prisma = new PrismaClient();
 interface AgentParams {
   page?: number;
@@ -15,18 +11,10 @@ interface AgentParams {
   dateTo?: string;
   id?: number;
 }
-interface AgentBody {
-  username: string;
-  password: string;
-  confirmPassword: string;
-  name: string;
-  currencyId: number;
-  parentAgentId: number;
-  rate: number;
-}
 
 const filterArrays = (a: any[], b: number[]) =>
   a.filter((aItem) => !b.some((bItem) => aItem === bItem));
+
 const mergeArrays = (a: any[], b: number[]) => [...a, ...b];
 
 const resultArray = (a: any[], b: number[], c: any[]) =>
@@ -34,7 +22,6 @@ const resultArray = (a: any[], b: number[], c: any[]) =>
 
 // const { id } = req.user;
 // !id && res.status(400).json({ message: message.INVALID });
-
 export const getAllAgents = async (req: Request, res: Response) => {
   try {
     const {
@@ -42,8 +29,8 @@ export const getAllAgents = async (req: Request, res: Response) => {
       size = 10,
       search = '',
       level,
-      dateFrom = '1970-01-01T00:00:00.000Z',
-      dateTo = '2100-01-01T00:00:00.000Z',
+      dateFrom,
+      dateTo,
       id
     }: AgentParams = req.query;
     const pageNumber = Number(page);
@@ -53,20 +40,25 @@ export const getAllAgents = async (req: Request, res: Response) => {
         id: true,
         username: true,
         name: true,
-        level: true,
+        type: true,
         currencyId: true,
-        rate: true,
-        parentAgentIds: true,
-        isActive: true,
+        roleId: true,
         createdAt: true,
         updatedAt: true,
-        deletedAt: true
+        Agents: {
+          select: {
+            level: true
+          }
+        }
       },
       where: {
-        ...(level && { level: Number(level) }),
         deletedAt: null,
-        parentAgentIds: {
-          array_contains: [Number(id)]
+        type: 'agent',
+        Agents: {
+          parentAgentIds: {
+            array_contains: [Number(id)]
+          },
+          ...(level && { level: Number(level) })
         },
         OR: [
           {
@@ -81,29 +73,27 @@ export const getAllAgents = async (req: Request, res: Response) => {
           }
         ],
         updatedAt: {
-          gte: dateFrom,
-          lte: dateTo
+          gte: dateFrom || '1970-01-01T00:00:00.000Z',
+          lte: dateTo || '2100-01-01T00:00:00.000Z'
         }
       },
       orderBy: {
-        updatedAt: 'desc'
+        id: 'desc'
       },
-      skip: pageNumber * sizeNumber,
-      take: sizeNumber
+      skip: Number(page * size),
+      take: Number(size)
     };
 
-    const { select, skip, take, ...countFilter } = filter;
-    const [agents, count] = await prisma.$transaction([
-      prisma.agents.findMany(filter),
-      prisma.agents.count(countFilter)
+    const [users, totalItems] = await prisma.$transaction([
+      prisma.users.findMany(filter),
+      prisma.users.count({ where: filter.where })
     ]);
-
     return res.status(200).send({
       data: {
-        data: agents,
+        data: users,
         page: pageNumber,
         size: sizeNumber,
-        totalItem: count
+        totalItems
       },
       message: message.SUCCESS
     });
@@ -121,134 +111,58 @@ export const getAgentById = async (req: Request, res: Response) => {
         .status(400)
         .json({ message: message.INVALID, subMessage: 'Invalid Id' });
     }
-    const agent = await prisma.agents.findUnique({
+    const agent = await prisma.users.findUnique({
       select: {
         id: true,
         username: true,
-        isActive: true,
-        level: true,
         name: true,
-        parentAgentId: true,
-        rate: true,
-        updatedAt: true
+        isActive: true,
+        currencyId: true,
+        roleId: true,
+        Agents: {
+          select: {
+            level: true,
+            parentAgentId: true,
+            rate: true
+          }
+        }
       },
       where: { id: Number(id) }
     });
+    let parentAgent;
+    if (agent?.Agents?.parentAgentId) {
+      parentAgent = await prisma.users.findUnique({
+        select: {
+          name: true,
+          username: true
+        },
+        where: {
+          deletedAt: null,
+          id: Number(agent.Agents.parentAgentId) || 0
+        }
+      });
+    }
+
     if (!agent) {
       return res.status(404).json({ message: message.NOT_FOUND });
     }
-    return res.status(200).json({ data: agent, message: message.SUCCESS });
+    return res.status(200).json({
+      data: {
+        ...agent,
+        Agents: { ...agent.Agents, ...parentAgent }
+      },
+      message: message.SUCCESS
+    });
   } catch (error) {
     return res
       .status(500)
       .json({ message: message.INTERNAL_SERVER_ERROR, error: error });
   }
 };
-export const createAgent = async (req: Request, res: Response) => {
-  const {
-    username,
-    password,
-    confirmPassword,
-    name,
-    currencyId = 1,
-    parentAgentId,
-    rate = 0
-  }: AgentBody = req.body;
-  if (!username || !password || !confirmPassword || !name) {
-    return res.status(400).json({
-      message: message.INVALID,
-      subMessage: 'Missing required fields.'
-    });
-  }
-  if (password !== confirmPassword) {
-    return res.status(400).json({
-      message: message.INVALID,
-      subMessage: "Password and Confirm Password didn't match."
-    });
-  }
-
-  try {
-    const [existingUser, existingAgent] = await prisma.$transaction([
-      prisma.users.findUnique({
-        where: {
-          username
-        }
-      }),
-      prisma.agents.findUnique({
-        where: {
-          username
-        }
-      })
-    ]);
-    if (existingUser || existingAgent) {
-      return res.status(400).json({
-        message: message.DUPLICATE,
-        subMessage: 'Username already exists'
-      });
-    }
-    const parentAgent = await prisma.agents.findUnique({
-      where: {
-        id: Number(parentAgentId) || 0
-      }
-    });
-    if (!parentAgent) {
-      return res.status(404).json({
-        message: message.NOT_FOUND,
-        subMessage: 'Parent agent not found'
-      });
-    }
-    const currency = await prisma.currencies.findUnique({
-      where: {
-        id: Number(currencyId)
-      }
-    });
-    if (!currency) {
-      return res.status(404).json({
-        message: message.NOT_FOUND,
-        subMessage: 'Currency not found'
-      });
-    }
-    const hashedPassword = await bcrypt.hash(password, 10);
-    if (rate < 0 || rate > 100) {
-      return res
-        .status(400)
-        .json({ message: message.INVALID, subMessage: 'Invalid rate' });
-    }
-    const newAgent = await prisma.agents.create({
-      data: {
-        username,
-        password: hashedPassword,
-        name,
-        level: (parentAgent?.level || 0) + 1 || 1,
-        currencyId,
-        parentAgentId: parentAgentId || 0,
-        parentAgentIds: [
-          ((parentAgent.parentAgentIds || []) as number[]).push(
-            Number(parentAgent.id)
-          ) || []
-        ],
-        rate
-      }
-    });
-    return res.status(201).send({
-      data: {
-        id: newAgent.id,
-        username: newAgent.username,
-        level: newAgent.level
-      },
-      message: message.CREATED
-    });
-  } catch (error) {
-    return res.status(500).json({
-      message: message.INTERNAL_SERVER_ERROR,
-      error
-    });
-  }
-};
 export const updateAgent = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { name, parentAgentId, currencyId } = req.body;
+    const { parentAgentId, currencyId } = req.body;
 
     const agentId = Number(id);
     const parentAgentIdNumber = parentAgentId && Number(parentAgentId);
@@ -290,22 +204,23 @@ export const updateAgent = async (req: Request, res: Response) => {
         });
       }
     }
-    const updatedAgentParentIds =
-      parentAgent &&
-      ([...(parentAgent?.parentAgentIds as any), parentAgent.id] as any);
-    const updatedAgent: Agent = await prisma.agents.update({
+    const updatedAgentParentIds = parentAgent && [
+      ...(parentAgent?.parentAgentIds as any),
+      parentAgent.id
+    ];
+    const updatedAgent: Agents = await prisma.agents.update({
       where: { id: agentId },
       data: {
-        name: name || agent.name,
         parentAgentId: parentAgentId || agent.parentAgentId,
         parentAgentIds: parentAgent
-          ? updatedAgentParentIds
+          ? (updatedAgentParentIds as any)
           : agent.parentAgentIds,
-        currencyId: currencyId || agent.currencyId,
-        level: parentAgent ? updatedAgentParentIds.length + 1 : agent.level
+        level: parentAgent
+          ? (updatedAgentParentIds as any)?.length + 1
+          : agent.level
       }
     });
-    const agentChildren: Agent[] = await prisma.agents.findMany({
+    const agentChildren: Agents[] = await prisma.agents.findMany({
       where: {
         parentAgentIds: {
           array_contains: [agentId]
@@ -335,9 +250,7 @@ export const updateAgent = async (req: Request, res: Response) => {
     return res.status(200).json({
       data: {
         id: updatedAgent.id,
-        username: updatedAgent.username,
         level: updatedAgent.level,
-        name: updatedAgent.name,
         parentAgentIds: updatedAgent.parentAgentIds
       },
       message: message.UPDATED
@@ -361,15 +274,15 @@ export const deleteAgent = async (
         .status(400)
         .json({ message: message.INVALID, subMessage: 'Invalid Id' });
     }
-    const agent = await prisma.agents.findUnique({
+    const users = await prisma.users.findUnique({
       where: {
         id: Number(id)
       }
     });
-    if (!agent) {
+    if (!users) {
       return res.status(404).json({ message: message.NOT_FOUND });
     }
-    await prisma.agents.update({
+    await prisma.users.update({
       where: {
         id: Number(id)
       },
@@ -391,8 +304,8 @@ export const getUsersByAgentId = async (
 ): Promise<any> => {
   try {
     const agentId = parseInt(req.params.id);
-    const users = await prisma.agent_user.findMany({
-      where: { agentId: agentId },
+    const users = await prisma.players.findMany({
+      where: { agentId },
       include: {
         user: {
           select: {

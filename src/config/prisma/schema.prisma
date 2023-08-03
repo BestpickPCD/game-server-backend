@@ -23,14 +23,13 @@ model Users {
 
   role                    Roles?         @relation(fields: [roleId], references: [id])
   Agents                  Agents?
-  playerAgents            Players[]      @relation("PlayerAgent")
+  Players                 Players?        
   currency                Currencies?    @relation(fields: [currencyId], references: [id])
   transactionSenders      Transactions[] @relation("TransactionSender")
   transactionReceivers    Transactions[] @relation("TransactionReceiver")
   transactionUpdatedUsers Transactions[] @relation("TransactionUpdatedUser")
   BalancesUser            Balances[]     @relation("UserBalance")
   BalanceUpdatedUsers     Balances[]     @relation("BalanceUpdatedUser")
-  Players                 Players[]
   ip_user                 ip_user[]
 }
 
@@ -41,8 +40,9 @@ model Players {
   updatedAt DateTime? @updatedAt
   deletedAt DateTime?
 
-  user  Users? @relation(fields: [id], references: [id])
-  agent Users? @relation("PlayerAgent", fields: [agentId], references: [id])
+  agent     Agents?   @relation(fields: [agentId], references: [id])
+  user      Users? @relation(fields: [id], references: [id])
+
 }
 
 model Agents {
@@ -56,6 +56,8 @@ model Agents {
   deletedAt      DateTime?
 
   user Users? @relation(fields: [id], references: [id])
+  user           Users?    @relation(fields: [id], references: [id])
+  Players        Players[]
 }
 
 model Roles {

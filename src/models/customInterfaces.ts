@@ -1,9 +1,16 @@
 import { Users, Roles, Agents, Transactions } from '@prisma/client'
 import { Request } from 'express'
 
+export interface balanceSummary {
+    out?: number | null
+    in?: number | null 
+    gameOut?: number | null
+    balance?: number | null
+}
+
 export interface RequestWithUser extends Request {
     user?: Users | null
-    transaction?: Transactions | null
+    balanceSummary?: balanceSummary | null
 } 
 
 export interface UserAll extends Users {

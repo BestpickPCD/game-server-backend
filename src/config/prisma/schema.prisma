@@ -117,7 +117,7 @@ model Transactions {
 model Balances {
   id         Int       @id @default(autoincrement())
   userId     Int
-  balances   Decimal   @default(0)
+  balances   Decimal   @default(0) @db.Decimal(10, 2)
   currencyId Int
   updatedBy  Int?
   createdAt  DateTime  @default(now())

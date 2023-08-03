@@ -22,7 +22,6 @@ const resultArray = (a: any[], b: number[], c: any[]) =>
 
 // const { id } = req.user;
 // !id && res.status(400).json({ message: message.INVALID });
-
 export const getAllAgents = async (req: Request, res: Response) => {
   try {
     const {
@@ -79,7 +78,7 @@ export const getAllAgents = async (req: Request, res: Response) => {
         }
       },
       orderBy: {
-        updatedAt: 'desc'
+        id: 'desc'
       },
       skip: Number(page * size),
       take: Number(size)
@@ -130,10 +129,30 @@ export const getAgentById = async (req: Request, res: Response) => {
       },
       where: { id: Number(id) }
     });
+    let parentAgent;
+    if (agent?.Agents?.parentAgentId) {
+      parentAgent = await prisma.users.findUnique({
+        select: {
+          name: true,
+          username: true
+        },
+        where: {
+          deletedAt: null,
+          id: Number(agent.Agents.parentAgentId) || 0
+        }
+      });
+    }
+
     if (!agent) {
       return res.status(404).json({ message: message.NOT_FOUND });
     }
-    return res.status(200).json({ data: agent, message: message.SUCCESS });
+    return res.status(200).json({
+      data: {
+        ...agent,
+        Agents: { ...agent.Agents, ...parentAgent }
+      },
+      message: message.SUCCESS
+    });
   } catch (error) {
     return res
       .status(500)

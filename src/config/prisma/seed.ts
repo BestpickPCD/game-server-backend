@@ -31,13 +31,13 @@ async function main() {
         data: {
           id: i,
           level: i === 1 ? 1 : 2,
-          parentAgentId: null,
+          parentAgentId: i === 1 ? null : 1,
           parentAgentIds: i === 1 ? [] : [1]
         }
       });
-    } else if (i % 2 === 0) {
-      await prisma.players.createMany({
-        data: [{ id: i, agentId: 1 }]
+    } else {
+      await prisma.players.create({
+        data: { id: i, agentId: i - 1 }
       });
     }
   }

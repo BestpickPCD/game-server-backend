@@ -23,14 +23,13 @@ model Users {
 
   role                    Roles?         @relation(fields: [roleId], references: [id])
   Agents                  Agents?
-  playerAgents            Players[]      @relation("PlayerAgent")
+  Players                 Players?        
   currency                Currencies?    @relation(fields: [currencyId], references: [id])
   transactionSenders      Transactions[] @relation("TransactionSender")
   transactionReceivers    Transactions[] @relation("TransactionReceiver")
   transactionUpdatedUsers Transactions[] @relation("TransactionUpdatedUser")
   BalancesUser            Balances[]     @relation("UserBalance")
   BalanceUpdatedUsers     Balances[]     @relation("BalanceUpdatedUser")
-  Players                 Players[]
   ip_user                 ip_user[]
 }
 
@@ -39,9 +38,9 @@ model Players {
   agentId   Int
   createdAt DateTime  @default(now())
   updatedAt DateTime? @updatedAt
+  agent     Agents?   @relation(fields: [agentId], references: [id])
+  user      Users? @relation(fields: [id], references: [id])
 
-  user  Users? @relation(fields: [id], references: [id])
-  agent Users? @relation("PlayerAgent", fields: [agentId], references: [id])
 }
 
 model Agents {
@@ -52,7 +51,8 @@ model Agents {
   rate           Decimal?  @default(0) @db.Decimal(10, 2)
   createdAt      DateTime  @default(now())
   updatedAt      DateTime? @updatedAt
-  user Users? @relation(fields: [id], references: [id])
+  user           Users?    @relation(fields: [id], references: [id])
+  Players        Players[]
 }
 
 model Roles {

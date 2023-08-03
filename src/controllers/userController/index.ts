@@ -7,7 +7,7 @@ import { Response, Request } from 'express';
 import axios from 'axios';
 import { message } from '../../utilities/constants/index.ts';
 import { getParentAgentIdsByParentAgentId } from './utilities.ts' 
-
+ 
 // Define your route handler to get all users
 export const getAllUsers = async (req: Request, res: Response): Promise<any> => {
   try {
@@ -181,13 +181,14 @@ export const getUserById = async (req: Request, res: Response): Promise<any> => 
             agent: {
               select: {
                 id: true,
-                name: true
+                user: true
               }
             }
           }
         }
       }
     });
+
     if (!user) {
       return res.status(404).json({ message: message.NOT_FOUND });
     }
@@ -200,7 +201,7 @@ export const getUserById = async (req: Request, res: Response): Promise<any> => 
       type: user.type,
       role: user.role?.name,
       currency: user.currency?.name,
-      agent: user.Players[0]?.agent?.name ?? null,
+      agent: user.Players?.agent?.user?.name ?? null,
     };
 
     return res.status(200).json({ message: message.SUCCESS, data: data });

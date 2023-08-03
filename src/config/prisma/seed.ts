@@ -18,7 +18,7 @@ async function main() {
     await prisma.users.create({
       data: {
         name: faker.person.fullName(),
-        username: String(i),
+        username: `user.master.${String(i)}`,
         type: i % 2 === 0 ? 'player' : 'agent',
         password: await bcrypt.hash('admin.master.1', 10),
         email: `admin@master.com${i}`,

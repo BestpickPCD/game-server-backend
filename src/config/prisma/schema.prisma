@@ -42,7 +42,6 @@ model Players {
 
   agent     Agents?   @relation(fields: [agentId], references: [id])
   user      Users? @relation(fields: [id], references: [id])
-
 }
 
 model Agents {

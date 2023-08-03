@@ -2,6 +2,7 @@ import { Agents, PrismaClient } from '@prisma/client';
 import { Request, Response } from 'express';
 import { message } from '../utilities/constants/index.ts';
 const prisma = new PrismaClient();
+import redisClient, { removeRedisKeys } from '../config/redis/index.ts';
 interface AgentParams {
   page?: number;
   size?: number;
@@ -11,7 +12,6 @@ interface AgentParams {
   dateTo?: string;
   id?: number;
 }
-
 const filterArrays = (a: any[], b: number[]) =>
   a.filter((aItem) => !b.some((bItem) => aItem === bItem));
 
@@ -20,8 +20,18 @@ const mergeArrays = (a: any[], b: number[]) => [...a, ...b];
 const resultArray = (a: any[], b: number[], c: any[]) =>
   mergeArrays(filterArrays(a, b), c);
 
-// const { id } = req.user;
-// !id && res.status(400).json({ message: message.INVALID });
+const getUserId = (req: Request) =>
+  Number((req as any).user.id || (req as any).user[0].id);
+
+const defaultKey = 'agents';
+
+const removedKey = (req: Request | number) => {
+  if (typeof req === 'number') {
+    return `${defaultKey}:${req}`;
+  }
+  return `${defaultKey}:${getUserId(req)}`;
+};
+
 export const getAllAgents = async (req: Request, res: Response) => {
   try {
     const {
@@ -33,75 +43,84 @@ export const getAllAgents = async (req: Request, res: Response) => {
       dateTo,
       id
     }: AgentParams = req.query;
-    const pageNumber = Number(page);
-    const sizeNumber = Number(size);
-    const filter: any = {
-      select: {
-        id: true,
-        username: true,
-        name: true,
-        type: true,
-        currencyId: true,
-        roleId: true,
-        createdAt: true,
-        updatedAt: true,
-        Agents: {
-          select: {
-            level: true,
-            user: {
-              select: {
-                name: true
+    const userId = getUserId(req);
+    const redisKey = `${defaultKey}:${userId}:${id}:${page}:${size}:${search}:${level}:${dateFrom}:${dateTo}`;
+    const redisData = await redisClient.get(redisKey);
+
+    if (!redisData) {
+      const pageNumber = Number(page);
+      const sizeNumber = Number(size);
+      const filter: any = {
+        select: {
+          id: true,
+          username: true,
+          name: true,
+          type: true,
+          currencyId: true,
+          roleId: true,
+          createdAt: true,
+          updatedAt: true,
+          Agents: {
+            select: {
+              level: true,
+              user: {
+                select: {
+                  name: true
+                }
               }
             }
           }
-        }
-      },
-      where: {
-        deletedAt: null,
-        type: 'agent',
-        Agents: {
-          parentAgentIds: {
-            array_contains: [Number(id)]
-          },
-          ...(level && { level: Number(level) })
         },
-        OR: [
-          {
-            name: {
-              contains: search
-            }
+        where: {
+          deletedAt: null,
+          type: 'agent',
+          Agents: {
+            parentAgentIds: {
+              array_contains: [Number(id)]
+            },
+            ...(level && { level: Number(level) })
           },
-          {
-            username: {
-              contains: search
+          OR: [
+            {
+              name: {
+                contains: search
+              }
+            },
+            {
+              username: {
+                contains: search
+              }
             }
+          ],
+          updatedAt: {
+            gte: dateFrom || '1970-01-01T00:00:00.000Z',
+            lte: dateTo || '2100-01-01T00:00:00.000Z'
           }
-        ],
-        updatedAt: {
-          gte: dateFrom || '1970-01-01T00:00:00.000Z',
-          lte: dateTo || '2100-01-01T00:00:00.000Z'
-        }
-      },
-      orderBy: {
-        id: 'desc'
-      },
-      skip: Number(page * size),
-      take: Number(size)
-    };
+        },
+        orderBy: {
+          id: 'desc'
+        },
+        skip: Number(page * size),
+        take: Number(size)
+      };
 
-    const [users, totalItems] = await prisma.$transaction([
-      prisma.users.findMany(filter),
-      prisma.users.count({ where: filter.where })
-    ]);
-    return res.status(200).send({
-      data: {
-        data: users,
-        page: pageNumber,
-        size: sizeNumber,
-        totalItems
-      },
-      message: message.SUCCESS
-    });
+      const [users, totalItems] = await prisma.$transaction([
+        prisma.users.findMany(filter),
+        prisma.users.count({ where: filter.where })
+      ]);
+      const response = {
+        data: {
+          data: users,
+          page: pageNumber,
+          size: sizeNumber,
+          totalItems
+        },
+        message: message.SUCCESS
+      };
+      await redisClient.setEx(redisKey, 300, JSON.stringify(response));
+      return res.status(200).send(response);
+    }
+    return res.status(200).json({ ...JSON.parse(redisData) });
   } catch (error) {
     return res
       .status(500)
@@ -116,48 +135,54 @@ export const getAgentById = async (req: Request, res: Response) => {
         .status(400)
         .json({ message: message.INVALID, subMessage: 'Invalid Id' });
     }
-    const agent = await prisma.users.findUnique({
-      select: {
-        id: true,
-        username: true,
-        name: true,
-        isActive: true,
-        currencyId: true,
-        roleId: true,
-        Agents: {
-          select: {
-            level: true,
-            parentAgentId: true,
-            rate: true
-          }
-        }
-      },
-      where: { id: Number(id), deletedAt: null }
-    });
-    let parentAgent;
-    if (agent?.Agents?.parentAgentId) {
-      parentAgent = await prisma.users.findUnique({
+    const userId = getUserId(req);
+    const redisKey = `${defaultKey}:${userId}:${id}`;
+    const redisData = await redisClient.get(redisKey);
+    if (!redisData) {
+      const agent = await prisma.users.findUnique({
         select: {
+          id: true,
+          username: true,
           name: true,
-          username: true
+          isActive: true,
+          currencyId: true,
+          roleId: true,
+          Agents: {
+            select: {
+              level: true,
+              parentAgentId: true,
+              rate: true
+            }
+          }
         },
-        where: {
-          deletedAt: null,
-          id: Number(agent.Agents.parentAgentId) || 0
-        }
+        where: { id: Number(id), deletedAt: null }
+      });
+      let parentAgent;
+      if (agent?.Agents?.parentAgentId) {
+        parentAgent = await prisma.users.findUnique({
+          select: {
+            name: true,
+            username: true
+          },
+          where: {
+            deletedAt: null,
+            id: Number(agent.Agents.parentAgentId) || 0
+          }
+        });
+      }
+      if (!agent) {
+        return res.status(404).json({ message: message.NOT_FOUND });
+      }
+      return res.status(200).json({
+        data: {
+          ...agent,
+          Agents: { ...agent.Agents, ...parentAgent }
+        },
+        message: message.SUCCESS
       });
     }
-
-    if (!agent) {
-      return res.status(404).json({ message: message.NOT_FOUND });
-    }
-    return res.status(200).json({
-      data: {
-        ...agent,
-        Agents: { ...agent.Agents, ...parentAgent }
-      },
-      message: message.SUCCESS
-    });
+    redisClient.quit();
+    return res.status(200).json({ ...JSON.parse(redisData) });
   } catch (error) {
     return res
       .status(500)
@@ -270,6 +295,8 @@ export const updateAgent = async (req: Request, res: Response) => {
         });
       }
     }
+    await removeRedisKeys(removedKey(req));
+    await removeRedisKeys(removedKey(Number(id)));
     return res.status(200).json({
       data: {
         id: updatedAgent.id,
@@ -315,6 +342,8 @@ export const deleteAgent = async (
         deletedAt: new Date()
       }
     });
+    await removeRedisKeys(removedKey(req));
+    await removeRedisKeys(removedKey(Number(id)));
     return res.status(200).json({ message: message.DELETED });
   } catch (error) {
     return res
@@ -334,6 +363,7 @@ export const getUsersByAgentId = async (
         .json({ message: message.INVALID, subMessage: 'Invalid Id' });
     }
 
+    // const redisKey = `${defaultKey}:${userId}:${id}`;
     const users = await prisma.players.findMany({
       where: { agentId },
       include: {

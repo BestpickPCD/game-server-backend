@@ -9,10 +9,11 @@ import {
     getTransactionsView
 } from "../controllers/transactionController/index.ts"; 
 import { authentication } from "../middleware/authentication.ts";
+import { Transaction } from "../middleware/transaction.ts";
 
 const router = express.Router()
 
-    router.get("/transactions", authentication, getTransactions)
+    router.get("/transactions", authentication, Transaction, getTransactions)
     // router.get("/transaction/:userId", getBalance)
     router.post("/transaction", authentication, addTransaction)
     router.get("/transaction-details/:userId", getTransactionDetailsByUserId)

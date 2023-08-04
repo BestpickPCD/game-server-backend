@@ -1,4 +1,4 @@
-import { PrismaClient, Prisma } from '@prisma/client';
+import { PrismaClient, Users } from '@prisma/client';
 import { Response, NextFunction } from 'express';
 import jwt, { JwtPayload } from 'jsonwebtoken';
 import { RequestWithUser } from '../models/customInterfaces.ts';
@@ -23,30 +23,12 @@ export const authentication = async (
 
     try {
       const decoded = (await jwt.verify(token, ACCESS_TOKEN_KEY)) as JwtPayload;
-      const rawQuery = Prisma.sql`
-        SELECT Users.*, sender.\`out\`, receiver.\`in\`, gameResult.gameOut, (receiver.\`in\` - sender.\`out\` - gameResult.gameOut) AS balance
-        FROM Users
-        LEFT JOIN (
-            SELECT SUM(amount) AS \`out\`, senderId AS id
-            FROM Transactions
-            WHERE TYPE IN ('add', 'lose', 'charge', 'bet') AND senderId = ${decoded.userId}
-            GROUP BY senderId
-        ) AS sender ON sender.id = Users.id
-        LEFT JOIN (
-            SELECT SUM(amount) AS \`in\`, receiverId AS id
-            FROM Transactions
-            WHERE TYPE IN ('add', 'win') AND receiverId = ${decoded.userId}
-            GROUP BY receiverId
-        ) AS receiver ON receiver.id = Users.id
-        LEFT JOIN (
-            SELECT SUM(amount) AS gameOut, receiverId AS id
-            FROM Transactions
-            WHERE TYPE IN ('lose', 'charge') AND receiverId = ${decoded.userId}
-            GROUP BY receiverId
-        ) AS gameResult ON gameResult.id = Users.id
-        WHERE Users.id = ${decoded.userId};`;
 
-      const user = (await prisma.$queryRaw(rawQuery)) as any;
+      const user = (await prisma.users.findUnique({
+        where: {
+          id: decoded.userId
+        }
+      })) as Users;
 
       if (!user) {
         return res.status(401).json({ message: 'User not found' });

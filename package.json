@@ -53,6 +53,9 @@
     "schema": "./src/config/prisma/schema.prisma"
   },
   "lint-staged": {
+    "**/*.{js,jsx,json}": [
+      "prettier --write ."
+    ],
     "*.ts": [
       "npm run lint"
     ]

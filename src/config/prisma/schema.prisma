@@ -99,13 +99,13 @@ model Transactions {
   senderId   Int?
   receiverId Int?
   gameId     Int?
+  updatedId  Int?
   type       String
   amount     Decimal   @default(0) @db.Decimal(10, 2)
   note       String    @db.Text
   token      String?
   status     String
   currencyId Int
-  updatedBy  Int?
   createdAt  DateTime  @default(now())
   updatedAt  DateTime? @updatedAt
   deletedAt  DateTime?
@@ -113,7 +113,7 @@ model Transactions {
   currency    Currencies? @relation(fields: [currencyId], references: [id])
   sender      Users?      @relation("TransactionSender", fields: [senderId], references: [id])
   receiver    Users?      @relation("TransactionReceiver", fields: [receiverId], references: [id])
-  updatedUser Users?      @relation("TransactionUpdatedUser", fields: [updatedBy], references: [id])
+  updatedUser Users?      @relation("TransactionUpdatedUser", fields: [updatedId], references: [id])
 }
 
 model Balances {

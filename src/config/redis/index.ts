@@ -2,6 +2,17 @@ import { createClient } from 'redis';
 const redisClient = createClient({
   url: process.env.REDIS_URL
 });
+redisClient
+  .connect()
+  .then(() => {
+    console.log('Redis Connected');
+  })
+  .catch((err: any) => {
+    console.log('Redis connection failed', err);
+    redisClient.quit();
+  });
+
+export default redisClient;
 export const removeRedisKeys = async (key: string): Promise<any> => {
   try {
     const matchKeys = [];
@@ -18,4 +29,3 @@ export const removeRedisKeys = async (key: string): Promise<any> => {
     return Promise.reject(error);
   }
 };
-export default redisClient;

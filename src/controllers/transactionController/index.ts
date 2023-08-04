@@ -122,8 +122,8 @@ export const addTransaction = async (
           ...data,
           currencyId,
           updatedId: Number(req?.user?.id),
-          ...(senderId && senderId),
-          ...(receiverId && receiverId)
+          ...(senderId && { senderId }),
+          ...(receiverId && { receiverId })
         }
       });
 

@@ -48,7 +48,6 @@ export const getAllAgents = async (
     }: AgentParams = req.query;
     const userId = getUserId(req);
     const redisKey = `${defaultKey}:${userId}:${id}:${page}:${size}:${search}:${level}:${dateFrom}:${dateTo}`;
-    await redisClient.connect();
     const redisData = await redisClient.get(redisKey);
 
     if (!redisData) {
@@ -124,13 +123,10 @@ export const getAllAgents = async (
         message: message.SUCCESS
       };
       await redisClient.setEx(redisKey, 300, JSON.stringify(response));
-      redisClient.quit();
       return res.status(200).send(response);
     }
-    redisClient.quit();
     return res.status(200).json({ ...JSON.parse(redisData) });
   } catch (error) {
-    redisClient.quit();
     return res
       .status(500)
       .json({ message: message.INTERNAL_SERVER_ERROR, error });
@@ -190,7 +186,6 @@ export const getAgentById = async (req: Request, res: Response) => {
         message: message.SUCCESS
       });
     }
-    redisClient.quit();
     return res.status(200).json({ ...JSON.parse(redisData) });
   } catch (error) {
     return res

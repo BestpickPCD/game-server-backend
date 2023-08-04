@@ -1,71 +1,78 @@
 import { PrismaClient, Users } from '@prisma/client';
-const prisma = new PrismaClient();
 import { Request, Response } from 'express';
-import { arrangeTransactionDetails, arrangeTransactions } from './utilities.ts';
-import { checkTransactionType } from './transactionTypes.ts';
 import { RequestWithUser } from '../../models/customInterfaces.ts';
 import { message } from '../../utilities/constants/index.ts';
+import { checkTransactionType } from './transactionTypes.ts';
+import { arrangeTransactionDetails, arrangeTransactions } from './utilities.ts';
+const prisma = new PrismaClient();
 
-export const getTransactions = async (
-  _: Request,
-  res: Response
-): Promise<any> => {
+export const getTransactions = async (req: Request, res: Response) => {
   try {
+    const {
+      page = 0,
+      size = 10,
+      dateFrom,
+      dateTo,
+      agentId,
+      type,
+      gameId
+    } = req.query;
+    const { id } = (req as any).user;
+    const orFilter: any = {
+      Agents: {
+        ...(!agentId && !Number(agentId)
+          ? { id: agentId }
+          : { parentAgentIds: { array_contains: [Number(id)] } })
+      }
+    };
     const transactions = await prisma.transactions.findMany({
-      where: { deletedAt: null },
-      orderBy: { createdAt: 'asc' }
+      select: {
+        id: true,
+        senderId: true,
+        receiverId: true,
+        amount: true,
+        type: true,
+        sender: {
+          select: {
+            name: true,
+            username: true
+          }
+        },
+        receiver: {
+          select: {
+            name: true,
+            username: true
+          }
+        }
+      },
+      where: {
+        deletedAt: null,
+        OR: [
+          {
+            sender: orFilter
+          },
+          {
+            receiver: orFilter
+          }
+        ],
+        AND: {
+          ...(type && { type: String(type) }),
+          ...(gameId && { gameId: Number(gameId) })
+        },
+        updatedAt: {
+          gte: (dateFrom as string) || '1970-01-01T00:00:00.000Z',
+          lte: (dateTo as string) || '2100-01-01T00:00:00.000Z'
+        }
+      },
+      orderBy: {
+        updatedAt: 'desc'
+      },
+      skip: Number(page) * Number(size),
+      take: Number(size)
     });
-
     return res
       .status(200)
       .json({ message: 'Transactions retrieved successfully', transactions });
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: 'Something went wrong', error });
-  }
-};
-
-export const getTransactionsView = async (
-  _: Request,
-  res: Response
-): Promise<any> => {
-  try {
-    const transactions = (await prisma.transactions.findMany({
-      where: { deletedAt: null },
-      orderBy: { createdAt: 'asc' },
-      select: {
-        receiver: {
-          select: {
-            id: true,
-            username: true,
-            type: true
-          }
-        },
-        sender: {
-          select: {
-            id: true,
-            username: true,
-            type: true
-          }
-        },
-        updatedUser: {
-          select: {
-            id: true,
-            username: true,
-            type: true
-          }
-        },
-        id: true,
-        amount: true,
-        gameId: true,
-        type: true,
-        note: true,
-        status: true,
-        createdAt: true
-      }
-    })) as any;
-    const details = await arrangeTransactions(transactions);
-    return res.render('transactions', { data: details });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: 'Something went wrong', error });
@@ -138,58 +145,6 @@ export const addTransaction = async (
   }
 };
 
-export const getTransactionDetailsByUserIdView = async (
-  req: Request,
-  res: Response
-): Promise<any> => {
-  try {
-    const userId = parseInt(req.params.userId);
-    const transactions = (await prisma.transactions.findMany({
-      where: {
-        OR: [{ senderId: userId }, { receiverId: userId }]
-      },
-      orderBy: {
-        createdAt: 'asc'
-      },
-      select: {
-        receiver: {
-          select: {
-            id: true,
-            username: true,
-            type: true
-          }
-        },
-        sender: {
-          select: {
-            id: true,
-            username: true,
-            type: true
-          }
-        },
-        updatedUser: {
-          select: {
-            id: true,
-            username: true,
-            type: true
-          }
-        },
-        amount: true,
-        gameId: true,
-        type: true,
-        note: true,
-        status: true,
-        createdAt: true
-      }
-    })) as any;
-
-    const userDetails = await arrangeTransactionDetails(transactions, userId);
-    res.render('transactionDetails', { data: userDetails });
-  } catch (error) {
-    console.log(error);
-    res.status(500).json(error);
-  }
-};
-
 export const getTransactionDetailsByUserId = async (
   req: Request,
   res: Response
@@ -236,6 +191,105 @@ export const getTransactionDetailsByUserId = async (
 
     const userDetails = await arrangeTransactionDetails(transactions, userId);
     res.status(200).json(userDetails);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json(error);
+  }
+};
+
+export const getTransactionsView = async (
+  _: Request,
+  res: Response
+): Promise<any> => {
+  try {
+    const transactions = (await prisma.transactions.findMany({
+      where: { deletedAt: null },
+      orderBy: { createdAt: 'asc' },
+      select: {
+        receiver: {
+          select: {
+            id: true,
+            username: true,
+            type: true
+          }
+        },
+        sender: {
+          select: {
+            id: true,
+            username: true,
+            type: true
+          }
+        },
+        updatedUser: {
+          select: {
+            id: true,
+            username: true,
+            type: true
+          }
+        },
+        id: true,
+        amount: true,
+        gameId: true,
+        type: true,
+        note: true,
+        status: true,
+        createdAt: true
+      }
+    })) as any;
+    const details = await arrangeTransactions(transactions);
+    return res.render('transactions', { data: details });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Something went wrong', error });
+  }
+};
+
+export const getTransactionDetailsByUserIdView = async (
+  req: Request,
+  res: Response
+): Promise<any> => {
+  try {
+    const userId = parseInt(req.params.userId);
+    const transactions = (await prisma.transactions.findMany({
+      where: {
+        OR: [{ senderId: userId }, { receiverId: userId }]
+      },
+      orderBy: {
+        createdAt: 'asc'
+      },
+      select: {
+        receiver: {
+          select: {
+            id: true,
+            username: true,
+            type: true
+          }
+        },
+        sender: {
+          select: {
+            id: true,
+            username: true,
+            type: true
+          }
+        },
+        updatedUser: {
+          select: {
+            id: true,
+            username: true,
+            type: true
+          }
+        },
+        amount: true,
+        gameId: true,
+        type: true,
+        note: true,
+        status: true,
+        createdAt: true
+      }
+    })) as any;
+
+    const userDetails = await arrangeTransactionDetails(transactions, userId);
+    res.render('transactionDetails', { data: userDetails });
   } catch (error) {
     console.log(error);
     res.status(500).json(error);

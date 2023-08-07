@@ -13,7 +13,7 @@ model Users {
   email      String    @unique
   username   String    @unique
   password   String
-  type       String
+  type       String?
   roleId     Int?
   currencyId Int?
   isActive   Boolean   @default(true)
@@ -56,6 +56,7 @@ model Agents {
 
   user Users? @relation(fields: [id], references: [id]) 
   Players        Players[]
+  vendorTokens        AgentVendorTokens[]
 }
 
 model Roles {
@@ -136,4 +137,32 @@ model Tables {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime? @updatedAt
   deletedAt   DateTime?
+}
+
+model AgentVendorTokens {
+  id          Int       @id @default(autoincrement())
+  agentId     Int
+  vendorId    Int
+  startDate   DateTime?
+  endDate     DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime? @updatedAt
+  deletedAt   DateTime?
+
+  agent     Agents?   @relation(fields: [agentId], references: [id])
+  vendor     Vendors?   @relation(fields: [vendorId], references: [id])
+}
+
+model Vendors { 
+  id          Int       @id @default(autoincrement())
+  name        String    @unique
+  url         String?   @unique
+  contract    String?
+  startDate   DateTime?
+  endDate     DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime? @updatedAt
+  deletedAt   DateTime?
+
+  token   AgentVendorTokens[]
 }

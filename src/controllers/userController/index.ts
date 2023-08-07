@@ -26,8 +26,7 @@ export const getAllUsersByAgentId = async (req: RequestWithUser, res: Response):
       isActive?: true | false | null;
     } = req.query;
 
-    const agentId = req.user?.id
-    console.log(agentId)
+    const agentId = req.user?.id 
 
     const usersData = await prisma.$transaction([
       prisma.users.count({

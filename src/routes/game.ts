@@ -5,7 +5,7 @@ import {
   
   const router = express.Router();
    
-  router.get("/game-list/:vendors", getGameVendors);
+  router.get("/game-list", getGameVendors);
   
   export default router;
   

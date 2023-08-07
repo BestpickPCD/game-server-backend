@@ -15,7 +15,8 @@ export const getTransactions = async (req: Request, res: Response) => {
       dateTo,
       agentId,
       type,
-      gameId
+      gameId,
+      search
     } = req.query;
     const { id } = (req as any).user;
     const orFilter: any = {
@@ -25,56 +26,104 @@ export const getTransactions = async (req: Request, res: Response) => {
           : { parentAgentIds: { array_contains: [Number(id)] } })
       }
     };
-    const transactions = await prisma.transactions.findMany({
-      select: {
-        id: true,
-        senderId: true,
-        receiverId: true,
-        amount: true,
-        type: true,
-        sender: {
-          select: {
-            name: true,
-            username: true
-          }
-        },
-        receiver: {
-          select: {
-            name: true,
-            username: true
-          }
-        }
-      },
-      where: {
-        deletedAt: null,
-        OR: [
-          {
-            sender: orFilter
+    const [transactions, count] = await prisma.$transaction([
+      prisma.transactions.findMany({
+        select: {
+          id: true,
+          senderId: true,
+          receiverId: true,
+          amount: true,
+          type: true,
+          updatedAt: true,
+          sender: {
+            select: {
+              name: true,
+              username: true
+            }
           },
-          {
-            receiver: orFilter
+          receiver: {
+            select: {
+              name: true,
+              username: true
+            }
           }
-        ],
-        AND: {
-          ...(type && { type: String(type) }),
-          ...(gameId && { gameId: Number(gameId) })
         },
-        updatedAt: {
-          gte: (dateFrom as string) || '1970-01-01T00:00:00.000Z',
-          lte: (dateTo as string) || '2100-01-01T00:00:00.000Z'
+        where: {
+          deletedAt: null,
+          OR: [
+            {
+              sender: orFilter
+            },
+            {
+              receiver: orFilter
+            }
+          ],
+          AND: {
+            ...(type && { type: String(type) }),
+            ...(gameId && { gameId: Number(gameId) }),
+            OR: [
+              {
+                receiver: {
+                  name: {
+                    contains: String(search)
+                  }
+                }
+              },
+              {
+                sender: {
+                  name: {
+                    contains: String(search)
+                  }
+                }
+              }
+            ]
+          },
+          updatedAt: {
+            gte: (dateFrom as string) || '1970-01-01T00:00:00.000Z',
+            lte: (dateTo as string) || '2100-01-01T00:00:00.000Z'
+          }
+        },
+        orderBy: {
+          updatedAt: 'desc'
+        },
+        skip: Number(page) * Number(size),
+        take: Number(size)
+      }),
+      prisma.transactions.count({
+        where: {
+          deletedAt: null,
+          OR: [
+            {
+              sender: orFilter
+            },
+            {
+              receiver: orFilter
+            }
+          ],
+          AND: {
+            ...(type && { type: String(type) }),
+            ...(gameId && { gameId: Number(gameId) })
+          },
+          updatedAt: {
+            gte: (dateFrom as string) || '1970-01-01T00:00:00.000Z',
+            lte: (dateTo as string) || '2100-01-01T00:00:00.000Z'
+          }
+        },
+        orderBy: {
+          updatedAt: 'desc'
         }
-      },
-      orderBy: {
-        updatedAt: 'desc'
-      },
-      skip: Number(page) * Number(size),
-      take: Number(size)
+      })
+    ]);
+    return res.status(200).json({
+      message: message.SUCCESS,
+      data: {
+        data: transactions,
+        page: Number(page),
+        size: Number(size),
+        totalItems: Number(count)
+      }
     });
-    return res
-      .status(200)
-      .json({ message: 'Transactions retrieved successfully', transactions });
   } catch (error) {
-    console.error(error);
     return res.status(500).json({ message: 'Something went wrong', error });
   }
 };
@@ -85,7 +134,7 @@ export const addTransaction = async (
 ): Promise<any> => {
   try {
     const {
-      senderId,
+      // senderId,
       receiverId,
       type,
       note,
@@ -95,20 +144,20 @@ export const addTransaction = async (
       currencyId,
       gameId
     } = req.body;
+    const { id: senderId } = (req as any).user;
     const data: any = { type, note, token, status, amount, gameId };
 
-    if (senderId) {
-      const sender = await prisma.users.findUnique({
-        where: {
-          id: senderId
-        }
-      });
-      if ((sender as Users).type == 'player' && type == 'add') {
-        return res
-          .status(400)
-          .json({ message: 'Users cannot add or transfer money' });
+    const sender = await prisma.users.findUnique({
+      where: {
+        id: (req as any).user.id
       }
+    });
+    if ((sender as Users).type == 'player' && type == 'add') {
+      return res
+        .status(400)
+        .json({ message: 'Users cannot add or transfer money' });
     }
+
     if (currencyId) {
       const currency = await prisma.currencies.findUnique({
         where: {
@@ -195,6 +244,48 @@ export const getTransactionDetailsByUserId = async (
     console.log(error);
     res.status(500).json(error);
   }
+};
+
+export const getTransactionDetail = async (
+  req: Request,
+  res: Response
+): Promise<any> => {
+  const { id } = req.params;
+  const { id: userId } = (req as any).user;
+  //* check userId of transaction is in senderId or receiverId to avoid exceptions
+  const transaction = await prisma.transactions.findUnique({
+    select: {
+      id: true,
+      amount: true,
+      token: true,
+      receiverId: true,
+      senderId: true,
+      note: true,
+      type: true,
+      status: true,
+      updatedAt: true,
+      createdAt: true,
+      currencyId: true,
+      receiver: {
+        select: {
+          name: true
+        }
+      },
+      sender: {
+        select: {
+          name: true
+        }
+      }
+    },
+    where: {
+      id: Number(id),
+      OR: [{ senderId: userId }, { receiverId: userId }]
+    }
+  });
+  if (!transaction) {
+    return res.status(404).json({ message: message.NOT_FOUND });
+  }
+  return res.status(200).json({ message: message.SUCCESS, data: transaction });
 };
 
 export const getTransactionsView = async (

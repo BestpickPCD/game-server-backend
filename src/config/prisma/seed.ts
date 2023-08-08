@@ -19,7 +19,7 @@ async function main() {
       name: 'evolution',
       url: `https://api.honorlink.org`
     }
-  })
+  });
   for (let i = 1; i <= 400; i++) {
     await prisma.users.create({
       data: {
@@ -44,11 +44,10 @@ async function main() {
 
       await prisma.agentVendorTokens.create({
         data: {
-          agentId:i,
-          vendorId:1,
+          agentId: i,
+          vendorId: 1
         }
-      })
-
+      });
     } else {
       await prisma.players.create({
         data: { id: i, agentId: i - 1 }

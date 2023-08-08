@@ -34,6 +34,7 @@ export const getTransactions = async (req: Request, res: Response) => {
           receiverId: true,
           amount: true,
           type: true,
+          status: true,
           updatedAt: true,
           sender: {
             select: {

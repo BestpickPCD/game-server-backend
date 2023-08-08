@@ -7,7 +7,7 @@ const prisma = new PrismaClient();
 export const getGameVendors = async (req: Request, res: Response): Promise<any> => {
   try { 
     const queryParams = req.query; 
-    const vendorStr = queryParams.vendors as string; 
+    const vendorStr = queryParams.vendors as string ?? `evolution`; 
     const vendors = vendorStr.split(',');
     const games = await prisma.vendors.findMany({
       where: {

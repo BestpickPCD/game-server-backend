@@ -4,3 +4,4 @@
 /.env
 /prisma/seed.ts
 /src/config/prisma/migrations
+**/.env

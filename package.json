@@ -27,6 +27,7 @@
     "jsonwebtoken": "^9.0.1",
     "mysql": "^2.18.1",
     "nodemon": "^3.0.1",
+    "prettier": "^3.0.1",
     "prisma": "^5.0.0",
     "redis": "^4.6.7",
     "swagger-jsdoc": "^6.2.8",
@@ -53,6 +54,9 @@
     "schema": "./src/config/prisma/schema.prisma"
   },
   "lint-staged": {
+    "**/*.{js,jsx,json}": [
+      "prettier --write ."
+    ],
     "*.ts": [
       "npm run lint"
     ]

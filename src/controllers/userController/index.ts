@@ -6,10 +6,13 @@ import { findCurrencyById } from './utilities.ts';
 import { Response, Request } from 'express';
 import axios from 'axios';
 import { message } from '../../utilities/constants/index.ts';
-import { getParentAgentIdsByParentAgentId } from './utilities.ts' 
-import { RequestWithUser } from "../../models/customInterfaces.ts";
- 
-export const getAllUsersByAgentId = async (req: RequestWithUser, res: Response): Promise<any> => {
+import { getParentAgentIdsByParentAgentId } from './utilities.ts';
+import { RequestWithUser } from '../../models/customInterfaces.ts';
+
+export const getAllUsersByAgentId = async (
+  req: RequestWithUser,
+  res: Response
+): Promise<any> => {
   try {
     const {
       page = 0,
@@ -26,7 +29,7 @@ export const getAllUsersByAgentId = async (req: RequestWithUser, res: Response):
       isActive?: true | false | null;
     } = req.query;
 
-    const agentId = req.user?.id 
+    const agentId = req.user?.id;
 
     const usersData = await prisma.$transaction([
       prisma.users.count({
@@ -55,7 +58,7 @@ export const getAllUsersByAgentId = async (req: RequestWithUser, res: Response):
             }
           }
         },
-        where: { 
+        where: {
           Players: { agentId },
           deletedAt: null,
           OR: [
@@ -102,7 +105,10 @@ export const getAllUsersByAgentId = async (req: RequestWithUser, res: Response):
   }
 };
 // Define your route handler to get all users
-export const getAllUsers = async (req: Request, res: Response): Promise<any> => {
+export const getAllUsers = async (
+  req: Request,
+  res: Response
+): Promise<any> => {
   try {
     const {
       page = 0,
@@ -246,8 +252,11 @@ export const updateUser = async (req: Request, res: Response): Promise<any> => {
       .json({ message: message.INTERNAL_SERVER_ERROR, error });
   }
 };
-export const getUserById = async (req: Request, res: Response): Promise<any> => {
-  const { userId } = req.params; 
+export const getUserById = async (
+  req: Request,
+  res: Response
+): Promise<any> => {
+  const { userId } = req.params;
   try {
     const user = await prisma.users.findUnique({
       where: {
@@ -294,7 +303,7 @@ export const getUserById = async (req: Request, res: Response): Promise<any> => 
       type: user.type,
       role: user.role?.name,
       currency: user.currency?.name,
-      agent: user.Players?.agent?.user?.name ?? null,
+      agent: user.Players?.agent?.user?.name ?? null
     };
 
     return res.status(200).json({ message: message.SUCCESS, data: data });
@@ -422,7 +431,7 @@ export const login = async (req: Request, res: Response): Promise<any> => {
           userId: user.id,
           username: user.username,
           type: user.type,
-          currency: currency as number && currency.code,
+          currency: (currency as number) && currency.code,
           rate: currencyRate.data,
           tokens
         };

@@ -26,8 +26,8 @@ export const getParentAgentIdsByParentAgentId = async (
 export const findCurrencyById = async (currencyId: number): Promise<any> => {
   const currency = await prisma.currencies.findFirst({
     where: {
-      id: currencyId,
-    },
+      id: currencyId
+    }
   });
 
   return currency;

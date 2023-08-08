@@ -1,4 +1,4 @@
-export default { 
+export default {
   '/transactions': {
     get: {
       security: [
@@ -21,7 +21,7 @@ export default {
                   },
                   transactions: {
                     type: 'array',
-                    items: { }
+                    items: {}
                   }
                 }
               }
@@ -50,7 +50,7 @@ export default {
     }
   },
   '/transaction': {
-    post: { 
+    post: {
       security: [
         {
           bearerAuth: []
@@ -94,9 +94,16 @@ export default {
                 },
                 updatedBy: {
                   type: 'number'
-                },
+                }
               },
-              required: ['senderId', 'receiverId', 'gameId', 'type', 'amount', 'currencyId']
+              required: [
+                'senderId',
+                'receiverId',
+                'gameId',
+                'type',
+                'amount',
+                'currencyId'
+              ]
             }
           }
         }
@@ -139,7 +146,7 @@ export default {
     }
   },
   '/transaction-details/{userId}': {
-    get: { 
+    get: {
       security: [
         {
           bearerAuth: []
@@ -198,5 +205,5 @@ export default {
         }
       }
     }
-  } 
+  }
 };

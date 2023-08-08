@@ -1,15 +1,19 @@
 import { Response, NextFunction } from 'express';
-import { PrismaClient, Prisma } from '@prisma/client'
-import { RequestWithUser, balanceSummary } from "../models/customInterfaces.ts";
+import { PrismaClient, Prisma } from '@prisma/client';
+import { RequestWithUser, balanceSummary } from '../models/customInterfaces.ts';
 const prisma = new PrismaClient();
 
-export const Transaction = async (req:RequestWithUser, res:Response, next: NextFunction): Promise<any> => {
-    try {
-        if(!req.user) {
-            return res.status(404).json({message:'User not found'})
-        }
+export const Transaction = async (
+  req: RequestWithUser,
+  res: Response,
+  next: NextFunction
+): Promise<any> => {
+  try {
+    if (!req.user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
 
-        const rawQuery = Prisma.sql`
+    const rawQuery = Prisma.sql`
         SELECT
           IFNULL(sender.out, 0) AS \`out\`,
           IFNULL(receiver.in, 0) AS \`in\`,
@@ -35,15 +39,15 @@ export const Transaction = async (req:RequestWithUser, res:Response, next: NextF
           GROUP BY receiverId
         ) AS gameResult ON gameResult.id = Users.id
         WHERE Users.id = ${req.user.id};`;
-  
-        const balanceSummary = await prisma.$queryRaw(rawQuery) as balanceSummary;
 
-        // eslint-disable-next-line no-param-reassign
-        req.balanceSummary = balanceSummary
+    const balanceSummary = (await prisma.$queryRaw(rawQuery)) as balanceSummary;
 
-        return next()
-    } catch (error) {
-        console.log(error)
-        return res.status(500).json({message: error})
-    }
-}
+    // eslint-disable-next-line no-param-reassign
+    req.balanceSummary = balanceSummary;
+
+    return next();
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ message: error });
+  }
+};

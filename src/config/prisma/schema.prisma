@@ -23,7 +23,8 @@ model Users {
 
   role                    Roles?         @relation(fields: [roleId], references: [id])
   Agents                  Agents?
-  Players                 Players?        
+  parentAgent             Agents[]       @relation("ParentAgent")
+  Players                 Players?
   currency                Currencies?    @relation(fields: [currencyId], references: [id])
   transactionSenders      Transactions[] @relation("TransactionSender")
   transactionReceivers    Transactions[] @relation("TransactionReceiver")
@@ -40,22 +41,23 @@ model Players {
   updatedAt DateTime? @updatedAt
   deletedAt DateTime?
 
-  agent     Agents?   @relation(fields: [agentId], references: [id])
-  user      Users? @relation(fields: [id], references: [id])
+  agent Agents? @relation(fields: [agentId], references: [id])
+  user  Users?  @relation(fields: [id], references: [id])
 }
 
 model Agents {
   id             Int       @unique
   level          Int?
-  parentAgentId  Int?
+  parentAgentId  Int?      
   parentAgentIds Json?
   rate           Decimal?  @default(0) @db.Decimal(10, 2)
   createdAt      DateTime  @default(now())
   updatedAt      DateTime? @updatedAt
   deletedAt      DateTime?
 
-  user Users? @relation(fields: [id], references: [id]) 
-  Players        Players[]
+  user        Users?    @relation(fields: [id], references: [id])
+  Players     Players[]
+  parentAgent Users?    @relation("ParentAgent", fields: [parentAgentId], references: [id])
   vendorTokens        AgentVendorTokens[]
 }
 
@@ -98,13 +100,13 @@ model Transactions {
   senderId   Int?
   receiverId Int?
   gameId     Int?
+  updatedId  Int?
   type       String
   amount     Decimal   @default(0) @db.Decimal(10, 2)
   note       String    @db.Text
   token      String?
   status     String
   currencyId Int
-  updatedBy  Int?
   createdAt  DateTime  @default(now())
   updatedAt  DateTime? @updatedAt
   deletedAt  DateTime?
@@ -112,7 +114,7 @@ model Transactions {
   currency    Currencies? @relation(fields: [currencyId], references: [id])
   sender      Users?      @relation("TransactionSender", fields: [senderId], references: [id])
   receiver    Users?      @relation("TransactionReceiver", fields: [receiverId], references: [id])
-  updatedUser Users?      @relation("TransactionUpdatedUser", fields: [updatedBy], references: [id])
+  updatedUser Users?      @relation("TransactionUpdatedUser", fields: [updatedId], references: [id])
 }
 
 model Balances {

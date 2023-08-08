@@ -6,7 +6,10 @@ import { checkTransactionType } from './transactionTypes.ts';
 import { arrangeTransactionDetails, arrangeTransactions } from './utilities.ts';
 const prisma = new PrismaClient();
 
-export const getTransactions = async (req: Request, res: Response):Promise<any> => {
+export const getTransactions = async (
+  req: Request,
+  res: Response
+): Promise<any> => {
   try {
     const {
       page = 0,

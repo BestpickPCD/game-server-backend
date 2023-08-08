@@ -9,8 +9,8 @@ import { authentication } from '../middleware/authentication.ts';
 
 const router = express.Router();
 
-router.get('/get-refresh-token', authentication, refreshToken); 
-router.post('/get-api-key', authentication, apiToken); 
+router.get('/get-refresh-token', authentication, refreshToken);
+router.post('/get-api-key', authentication, apiToken);
 router.post('/register', register);
 router.post('/login', login);
 

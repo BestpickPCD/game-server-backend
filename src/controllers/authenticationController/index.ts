@@ -1,18 +1,24 @@
 import { Response, Request } from 'express';
-import jwt from 'jsonwebtoken'; 
-import bcrypt from 'bcrypt'; 
+import jwt from 'jsonwebtoken';
+import bcrypt from 'bcrypt';
 import { message } from '../../utilities/constants/index.ts';
-import { PrismaClient, Users } from "@prisma/client"
-const prisma = new PrismaClient()
-import { RequestWithUser } from "../../models/customInterfaces.ts";
-import { getTokens } from "../../utilities/getTokens.ts" 
-import { generateApiKey } from "./utilities.ts";
-import { findCurrencyById, getParentAgentIdsByParentAgentId } from '../userController/utilities.ts';
+import { PrismaClient, Users } from '@prisma/client';
+const prisma = new PrismaClient();
+import { RequestWithUser } from '../../models/customInterfaces.ts';
+import { getTokens } from '../../utilities/getTokens.ts';
+import { generateApiKey } from './utilities.ts';
+import {
+  findCurrencyById,
+  getParentAgentIdsByParentAgentId
+} from '../userController/utilities.ts';
 import axios from 'axios';
- 
+
 const REFRESH_TOKEN_KEY = process.env.REFRESH_TOKEN_KEY ?? '';
 
-export const refreshToken = async (req: RequestWithUser, res: Response): Promise<any> => {
+export const refreshToken = async (
+  req: RequestWithUser,
+  res: Response
+): Promise<any> => {
   try {
     const refreshToken = localStorage.getItem('refreshToken');
 
@@ -27,93 +33,98 @@ export const refreshToken = async (req: RequestWithUser, res: Response): Promise
       return res.status(401).json({ message: 'Invalid refresh token' });
     }
 
-    if(req.user?.id === decoded.userId) {
-        try {
-            const tokens = await getTokens(req.user as Users)
-            return res.status(200).json({ message: 'New refresh token generated successfully', tokens }); 
-        } catch (error) {
-            console.log(error)
-            return res.status(500).json(error)
-        }
-    } 
+    if (req.user?.id === decoded.userId) {
+      try {
+        const tokens = await getTokens(req.user as Users);
+        return res
+          .status(200)
+          .json({
+            message: 'New refresh token generated successfully',
+            tokens
+          });
+      } catch (error) {
+        console.log(error);
+        return res.status(500).json(error);
+      }
+    }
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: 'Something went wrong', error });
   }
 };
 
-
-export const apiToken = async (req:RequestWithUser, res:Response): Promise<any> => {
+export const apiToken = async (
+  req: RequestWithUser,
+  res: Response
+): Promise<any> => {
   try {
-
-    if(!req.user) {
-      return res.status(404).json({message: message.UNAUTHORIZED})
+    if (!req.user) {
+      return res.status(404).json({ message: message.UNAUTHORIZED });
     }
-    
-    const token = await generateApiKey(req.user.id)
 
-    try { 
-      await prisma.users.update({
-        where: {id: req.user?.id},
+    const token = await generateApiKey(req.user.id);
+
+    try {
+      (await prisma.users.update({
+        where: { id: req.user?.id },
         data: {
           apiKey: token
         }
-      }) as Users
-      return res.status(200).json({token})  
+      })) as Users;
+      return res.status(200).json({ token });
     } catch (error) {
-      console.log(error)
-      return res.status(500).json({message: "cannot update API key" ,error})
+      console.log(error);
+      return res.status(500).json({ message: 'cannot update API key', error });
     }
   } catch (error) {
-    console.log(error)
-    return res.status(500).json(error)
+    console.log(error);
+    return res.status(500).json(error);
   }
-}
-
+};
 
 export const login = async (req: Request, res: Response): Promise<any> => {
-    try {
-        const { username, password } = req.body as any;
-        const user = await prisma.users.findUnique({
-            where: {
-                username: username
-            }
-        });
+  try {
+    const { username, password } = req.body as any;
+    const user = await prisma.users.findUnique({
+      where: {
+        username: username
+      }
+    });
 
-        if (!user) {
-            return res.status(400).json({ message: message.NOT_FOUND });
-        } else if (user) {
-            // check Password
-            const isValid = await bcrypt.compare(password, user.password);
+    if (!user) {
+      return res.status(400).json({ message: message.NOT_FOUND });
+    } else if (user) {
+      // check Password
+      const isValid = await bcrypt.compare(password, user.password);
 
-            if (isValid) {
-                const currency = await findCurrencyById(user.currencyId as number);
-                const currencyFrom = 'USD';
-                const currencyCode = currency?.code ?? 'KRW';
-                const currencyRate = await axios.get(
-                `https://api.frankfurter.app/latest?from=${currencyFrom}&to=${currencyCode}`
-                );
+      if (isValid) {
+        const currency = await findCurrencyById(user.currencyId as number);
+        const currencyFrom = 'USD';
+        const currencyCode = currency?.code ?? 'KRW';
+        const currencyRate = await axios.get(
+          `https://api.frankfurter.app/latest?from=${currencyFrom}&to=${currencyCode}`
+        );
 
-                const tokens = getTokens(user as Users);
-                const data = {
-                userId: user.id,
-                username: user.username,
-                type: user.type,
-                currency: (currency as number) && currency.code,
-                rate: currencyRate.data,
-                tokens
-                };
-                return res.status(200).json({ message: message.SUCCESS, data });
-            }
-        // Password is incorrect
-            return res.status(401).json({ message: message.INVALID_CREDENTIALS });
-        }
-        // Neither user nor agent exists with the given username
-        return res.status(400).json({ message: message.NOT_FOUND });
-    } catch (error) {
-        console.log(error);
-        res.status(500).json({ message: message.INTERNAL_SERVER_ERROR });
+        const tokens = getTokens(user as Users);
+        const data = {
+          userId: user.id,
+          username: user.username,
+          type: user.type,
+          currency: (currency as number) && currency.code,
+          rate: currencyRate.data,
+          tokens
+        };
+        return res.status(200).json({ message: message.SUCCESS, data });
+      }
+      // Password is incorrect
+      return res.status(401).json({ message: message.INVALID_CREDENTIALS });
     }
+    // Neither user nor agent exists with the given username
+    return res.status(400).json({ message: message.NOT_FOUND });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: message.INTERNAL_SERVER_ERROR });
+  }
 };
 
 export const register = async (req: Request, res: Response): Promise<any> => {
@@ -249,14 +260,14 @@ const _userInsert = async (userSchema: any) => {
     data: userSchema
   });
 
-  const token = await generateApiKey(newUser.id)
+  const token = await generateApiKey(newUser.id);
   try {
     await prisma.users.update({
-      where: {id:newUser.id },
-      data: {apiKey: token}
-    })
+      where: { id: newUser.id },
+      data: { apiKey: token }
+    });
   } catch (error) {
-    console.log(error)
+    console.log(error);
   }
 
   return newUser;

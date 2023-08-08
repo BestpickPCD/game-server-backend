@@ -1,6 +1,6 @@
 import { Response, NextFunction } from 'express';
 import { PrismaClient, Prisma } from '@prisma/client';
-import { RequestWithUser } from '../models/customInterfaces.ts';
+import { RequestWithUser, balanceSummary } from '../models/customInterfaces.ts';
 const prisma = new PrismaClient();
 
 export const Transaction = async (
@@ -14,36 +14,40 @@ export const Transaction = async (
     }
 
     const rawQuery = Prisma.sql`
-        SELECT sender.\`out\`, receiver.\`in\`, gameResult.gameOut, (receiver.\`in\` - sender.\`out\` - gameResult.gameOut) AS balance
+        SELECT
+          IFNULL(sender.out, 0) AS \`out\`,
+          IFNULL(receiver.in, 0) AS \`in\`,
+          IFNULL(gameResult.gameOut, 0) AS gameOut,
+          IFNULL((IFNULL(receiver.in, 0) - IFNULL(sender.out, 0) - IFNULL(gameResult.gameOut, 0)), 0) AS balance
         FROM Users
         LEFT JOIN (
-            SELECT SUM(amount) AS \`out\`, senderId AS id
-            FROM Transactions
-            WHERE TYPE IN ('add', 'lose', 'charge', 'bet') AND senderId = ${req.user.id}
-            GROUP BY senderId
+          SELECT SUM(IFNULL(amount, 0)) AS \`out\`, senderId AS id
+          FROM Transactions
+          WHERE TYPE IN ('add', 'lose', 'charge', 'bet') AND senderId = ${req.user.id}
+          GROUP BY senderId
         ) AS sender ON sender.id = Users.id
         LEFT JOIN (
-            SELECT SUM(amount) AS \`in\`, receiverId AS id
-            FROM Transactions
-            WHERE TYPE IN ('add', 'win') AND receiverId = ${req.user.id}
-            GROUP BY receiverId
+          SELECT SUM(IFNULL(amount, 0)) AS \`in\`, receiverId AS id
+          FROM Transactions
+          WHERE TYPE IN ('add', 'win') AND receiverId = ${req.user.id}
+          GROUP BY receiverId
         ) AS receiver ON receiver.id = Users.id
         LEFT JOIN (
-            SELECT SUM(amount) AS gameOut, receiverId AS id
-            FROM Transactions
-            WHERE TYPE IN ('lose', 'charge') AND receiverId = ${req.user.id}
-            GROUP BY receiverId
+          SELECT SUM(IFNULL(amount, 0)) AS gameOut, receiverId AS id
+          FROM Transactions
+          WHERE TYPE IN ('lose', 'charge') AND receiverId = ${req.user.id}
+          GROUP BY receiverId
         ) AS gameResult ON gameResult.id = Users.id
         WHERE Users.id = ${req.user.id};`;
 
-    const transactions = (await prisma.$queryRaw(rawQuery)) as any;
+    const balanceSummary = (await prisma.$queryRaw(rawQuery)) as balanceSummary;
 
     // eslint-disable-next-line no-param-reassign
-    req.transaction = transactions;
+    req.balanceSummary = balanceSummary;
 
     return next();
   } catch (error) {
     console.log(error);
-    return res.status(500).json({});
+    return res.status(500).json({ message: error });
   }
 };

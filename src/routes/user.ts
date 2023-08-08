@@ -4,9 +4,7 @@ import {
   getAllUsersByAgentId,
   getAllUsers,
   deleteUser,
-  updateUser,
-  register,
-  login
+  updateUser
 } from '../controllers/userController/index.ts';
 import { authentication } from '../middleware/authentication.ts';
 
@@ -17,7 +15,5 @@ router.get('/users-by-agent', authentication, getAllUsersByAgentId);
 router.get('/user/:userId', authentication, getUserById);
 router.put('/user/:userId', authentication, updateUser);
 router.delete('/user/:userId', authentication, deleteUser);
-router.post('/register', register);
-router.post('/login', login);
 
 export default router;

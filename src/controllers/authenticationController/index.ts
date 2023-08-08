@@ -36,12 +36,10 @@ export const refreshToken = async (
     if (req.user?.id === decoded.userId) {
       try {
         const tokens = await getTokens(req.user as Users);
-        return res
-          .status(200)
-          .json({
-            message: 'New refresh token generated successfully',
-            tokens
-          });
+        return res.status(200).json({
+          message: 'New refresh token generated successfully',
+          tokens
+        });
       } catch (error) {
         console.log(error);
         return res.status(500).json(error);

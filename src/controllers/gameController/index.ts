@@ -64,9 +64,12 @@ export const getGameVendors = async (
   }
 };
 
-export const getGameContractByAgentId = async (req:RequestWithUser, res:Response): Promise<any> => {
+export const getGameContractByAgentId = async (
+  req: RequestWithUser,
+  res: Response
+): Promise<any> => {
   try {
-    const agentId = parseInt(req.params.agentId)
+    const agentId = parseInt(req.params.agentId);
     const contracts = await prisma.agentVendorTokens.findMany({
       where: {
         agentId
@@ -81,15 +84,14 @@ export const getGameContractByAgentId = async (req:RequestWithUser, res:Response
           }
         }
       }
-    })
+    });
 
-    return res.status(200).json(contracts)
-    
+    return res.status(200).json(contracts);
   } catch (error) {
-    console.log(error)
-    return res.status(500).json({message: error})
+    console.log(error);
+    return res.status(500).json({ message: error });
   }
-}
+};
 
 export const gameContract = async (
   req: RequestWithUser,

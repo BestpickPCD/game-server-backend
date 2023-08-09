@@ -149,7 +149,7 @@ export default {
           required: true,
           type: 'string'
         }
-      ], 
+      ],
       responses: {
         '200': {
           description: 'Success',
@@ -175,6 +175,6 @@ export default {
           description: 'Internal server error'
         }
       }
-    } 
+    }
   }
 };

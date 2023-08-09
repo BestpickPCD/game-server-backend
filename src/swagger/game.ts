@@ -131,5 +131,50 @@ export default {
         }
       }
     }
+  },
+  '/game-contract/{agentId}': {
+    get: {
+      security: [
+        {
+          bearerAuth: []
+        }
+      ],
+      summary: 'Get vendor contract and details by agentId',
+      tags: ['Games'],
+      parameters: [
+        {
+          name: 'agentId',
+          in: 'path',
+          description: 'ID of the agent to see the contract',
+          required: true,
+          type: 'string'
+        }
+      ], 
+      responses: {
+        '200': {
+          description: 'Success',
+          schema: {
+            type: 'object',
+            properties: {
+              data: {
+                type: 'object'
+              },
+              messages: {
+                type: 'string'
+              }
+            }
+          }
+        },
+        '401': {
+          description: 'Unauthorized'
+        },
+        '404': {
+          description: 'NOT_FOUND'
+        },
+        '500': {
+          description: 'Internal server error'
+        }
+      }
+    } 
   }
 };

@@ -2,6 +2,7 @@ import { PrismaClient, Vendors } from '@prisma/client';
 // import axios from 'axios';
 import { Response } from 'express';
 import { RequestWithUser } from '../../models/customInterfaces';
+// import agent from 'src/swagger/agent';
 const prisma = new PrismaClient();
 
 export const getGameVendors = async (
@@ -62,6 +63,33 @@ export const getGameVendors = async (
     return res.status(500).json({ message: 'Something went wrong', error });
   }
 };
+
+export const getGameContractByAgentId = async (req:RequestWithUser, res:Response): Promise<any> => {
+  try {
+    const agentId = parseInt(req.params.agentId)
+    const contracts = await prisma.agentVendorTokens.findMany({
+      where: {
+        agentId
+      },
+      select: {
+        vendor: {
+          select: {
+            id: true,
+            name: true,
+            fetchGames: true,
+            createdAt: true
+          }
+        }
+      }
+    })
+
+    return res.status(200).json(contracts)
+    
+  } catch (error) {
+    console.log(error)
+    return res.status(500).json({message: error})
+  }
+}
 
 export const gameContract = async (
   req: RequestWithUser,

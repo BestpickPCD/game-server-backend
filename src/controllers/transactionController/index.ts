@@ -106,7 +106,23 @@ export const getTransactions = async (
           ],
           AND: {
             ...(type && { type: String(type) }),
-            ...(gameId && { gameId: Number(gameId) })
+            ...(gameId && { gameId: Number(gameId) }),
+            OR: [
+              {
+                receiver: {
+                  name: {
+                    contains: String(search)
+                  }
+                }
+              },
+              {
+                sender: {
+                  name: {
+                    contains: String(search)
+                  }
+                }
+              }
+            ]
           },
           updatedAt: {
             gte: (dateFrom as string) || '1970-01-01T00:00:00.000Z',

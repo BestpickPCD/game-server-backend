@@ -1,117 +1,23 @@
-import { PrismaClient } from '@prisma/client';
-const prisma = new PrismaClient();
-import { Response, Request } from 'express';
+import { Prisma, PrismaClient } from '@prisma/client';
+import { Request, Response } from 'express';
 import { message } from '../../utilities/constants/index.ts';
 import { getParentAgentIdsByParentAgentId } from './utilities.ts';
-import { RequestWithUser } from '../../models/customInterfaces.ts';
+const prisma = new PrismaClient();
 
-export const getAllUsersByAgentId = async (
-  req: RequestWithUser,
-  res: Response
-): Promise<any> => {
-  try {
-    const {
-      page = 0,
-      size = 10,
-      search = '',
-      dateFrom = '1970-01-01T00:00:00.000Z',
-      dateTo = '2100-01-01T00:00:00.000Z'
-    }: {
-      page?: number;
-      size?: number;
-      search?: string;
-      dateFrom?: string;
-      dateTo?: string;
-      isActive?: true | false | null;
-    } = req.query;
-
-    const agentId = req.user?.id;
-
-    const usersData = await prisma.$transaction([
-      prisma.users.count({
-        where: {
-          deletedAt: null
-        }
-      }),
-      prisma.users.findMany({
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          username: true,
-          roleId: true,
-          createdAt: true,
-          updatedAt: true,
-          currency: {
-            select: {
-              code: true
-            }
-          },
-          role: {
-            select: {
-              id: true,
-              name: true
-            }
-          }
-        },
-        where: {
-          Players: { agentId },
-          deletedAt: null,
-          OR: [
-            {
-              name: {
-                contains: search
-              }
-            },
-            {
-              email: {
-                contains: search
-              }
-            },
-            {
-              username: {
-                contains: search
-              }
-            }
-          ],
-          updatedAt: {
-            gte: dateFrom,
-            lte: dateTo
-          }
-        },
-        orderBy: {
-          updatedAt: 'desc'
-        },
-        skip: Number(page * size),
-        take: Number(size)
-      })
-    ]);
-
-    return res.status(200).json({
-      data: {
-        data: usersData[1],
-        totalItems: usersData[0],
-        page: Number(page),
-        size: Number(size)
-      },
-      message: message.SUCCESS
-    });
-  } catch (error) {
-    return res.status(500).json({ message: message.INTERNAL_SERVER_ERROR });
-  }
-};
 // Define your route handler to get all users
 export const getAllUsers = async (
   req: Request,
   res: Response
 ): Promise<any> => {
+  const { id } = (req as any).user;
   try {
     const {
       page = 0,
       size = 10,
       search = '',
-      dateFrom = '1970-01-01T00:00:00.000Z',
-      dateTo = '2100-01-01T00:00:00.000Z'
+      dateFrom,
+      dateTo,
+      agentId
     }: {
       page?: number;
       size?: number;
@@ -119,71 +25,88 @@ export const getAllUsers = async (
       dateFrom?: string;
       dateTo?: string;
       isActive?: true | false | null;
+      agentId?: number;
     } = req.query;
 
-    const usersData = await prisma.$transaction([
-      prisma.users.count({
-        where: {
-          deletedAt: null
-        }
-      }),
-      prisma.users.findMany({
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          username: true,
-          roleId: true,
-          createdAt: true,
-          updatedAt: true,
-          currency: {
-            select: {
-              code: true
-            }
-          },
-          role: {
-            select: {
-              id: true,
-              name: true
-            }
+    const filter: Prisma.PlayersFindManyArgs = {
+      select: {
+        id: true,
+        agentId: true,
+        user: {
+          select: {
+            email: true,
+            name: true,
+            currency: {
+              select: {
+                id: true,
+                code: true,
+                name: true
+              }
+            },
+            username: true,
+            createdAt: true,
+            updatedAt: true
           }
-        },
-        where: {
-          deletedAt: null,
+        }
+      },
+      where: {
+        deletedAt: null,
+        AND: {
+          user: {
+            OR: [
+              {
+                name: {
+                  contains: search
+                }
+              },
+              {
+                email: {
+                  contains: search
+                }
+              },
+              {
+                username: {
+                  contains: search
+                }
+              }
+            ]
+          },
           OR: [
             {
-              name: {
-                contains: search
+              agent: {
+                parentAgentIds: {
+                  array_contains: [Number(agentId || id)]
+                }
               }
             },
             {
-              email: {
-                contains: search
-              }
-            },
-            {
-              username: {
-                contains: search
-              }
+              agentId: Number(agentId || id)
             }
-          ],
-          updatedAt: {
-            gte: dateFrom,
-            lte: dateTo
-          }
+          ]
         },
-        orderBy: {
-          updatedAt: 'desc'
-        },
-        skip: Number(page * size),
-        take: Number(size)
-      })
+        updatedAt: {
+          gte: dateFrom || '1970-01-01T00:00:00.000Z',
+          lte: dateTo || '2100-01-01T00:00:00.000Z'
+        }
+      },
+      orderBy: {
+        updatedAt: 'desc'
+      },
+      skip: Number(page * size),
+      take: Number(size)
+    };
+
+    const [totalItems, data] = await prisma.$transaction([
+      prisma.players.count({
+        where: filter.where
+      }),
+      prisma.players.findMany(filter)
     ]);
 
     return res.status(200).json({
       data: {
-        data: usersData[1],
-        totalItems: usersData[0],
+        data,
+        totalItems,
         page: Number(page),
         size: Number(size)
       },
@@ -193,6 +116,7 @@ export const getAllUsers = async (
     return res.status(500).json({ message: message.INTERNAL_SERVER_ERROR });
   }
 };
+
 export const updateUser = async (req: Request, res: Response): Promise<any> => {
   try {
     const userId = parseInt(req.params.userId);
@@ -248,6 +172,7 @@ export const updateUser = async (req: Request, res: Response): Promise<any> => {
       .json({ message: message.INTERNAL_SERVER_ERROR, error });
   }
 };
+
 export const getUserById = async (
   req: Request,
   res: Response

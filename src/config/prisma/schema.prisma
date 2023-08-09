@@ -48,7 +48,7 @@ model Players {
 model Agents {
   id             Int       @unique
   level          Int?
-  parentAgentId  Int?      
+  parentAgentId  Int?
   parentAgentIds Json?
   rate           Decimal?  @default(0) @db.Decimal(10, 2)
   createdAt      DateTime  @default(now())
@@ -159,6 +159,7 @@ model Vendors {
   id          Int       @id @default(autoincrement())
   name        String    @unique
   url         String?   @unique
+  fetchGames  Json?
   contract    String?
   startDate   DateTime?
   endDate     DateTime?

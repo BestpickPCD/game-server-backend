@@ -4,7 +4,7 @@ import {
   getGameUrl
 } from '../controllers/gameController/index.ts';
 import express from 'express';
-import { authentication } from "../middleware/authentication.ts";
+import { authentication } from '../middleware/authentication.ts';
 
 const router = express.Router();
 

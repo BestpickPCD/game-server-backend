@@ -24,18 +24,19 @@ export const getGameVendors = async (
       select: {
         vendor: true
       }
-    }); 
+    });
 
-    if(!games.length) {
-      return res.status(400).json({message: "No contract with the vendors selected"})
+    if (!games.length) {
+      return res
+        .status(400)
+        .json({ message: 'No contract with the vendors selected' });
     }
 
     const gamesDetails = await Promise.all(
       games.map(async (game) => {
-
         if (!game) {
           return null;
-        } 
+        }
 
         // const gameUrl = `${game.url}/api/game-list`;
         // const bearerToken = `SN5VfYimhHZ5mzYxC2h9TeePNOo7YzsU6SOlmsld`;
@@ -44,12 +45,12 @@ export const getGameVendors = async (
         //     Authorization: `Bearer ${bearerToken}`
         //   }
         // };
-        
+
         try {
           // const response = await axios.get(gameUrl, config);
           return game.vendor?.fetchGames;
         } catch (error) {
-          console.log(error)
+          console.log(error);
           return null;
         }
       })

@@ -51,5 +51,85 @@ export default {
         }
       }
     }
-  }
+  },
+  '/game-contract': {
+    post: {
+      security: [
+        {
+          bearerAuth: []
+        }
+      ],
+      summary: 'Add a new contract',
+      tags: ['Games'],
+      requestBody: {
+        required: true,
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                agentId: {
+                  type: 'number'
+                },
+                vendorId: {
+                  type: 'number'
+                }
+              },
+              required: ['name', 'code']
+            }
+          }
+        }
+      },
+      responses: {
+        '201': {
+          description: 'Contract created',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  message: {
+                    type: 'string'
+                  }
+                }
+              }
+            }
+          }
+        },
+        '400': {
+          description: 'Contract exists',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  message: {
+                    type: 'string'
+                  }
+                }
+              }
+            }
+          }
+        },
+        '500': {
+          description: 'Internal server error',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  message: {
+                    type: 'string'
+                  },
+                  error: {
+                    type: 'object'
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
 };

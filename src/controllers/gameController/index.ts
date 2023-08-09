@@ -63,6 +63,21 @@ export const getGameVendors = async (
   }
 };
 
+export const gameContract = async (req:RequestWithUser, res:Response): Promise<any> => {
+  try {
+    const { agentId, vendorId } = req.body
+    const data = { agentId, vendorId }
+    await prisma.agentVendorTokens.create({
+      data
+    })
+    return res.status(200).json({message: "Contract created"})
+
+  } catch (error) {
+    console.log(error)
+    return res.status(500).json(error)
+  }
+}
+
 export const gameLaunchLink = async (
   req: RequestWithUser,
   res: Response

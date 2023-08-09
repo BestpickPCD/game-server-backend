@@ -1,12 +1,12 @@
 export default {
   '/game-list': {
     get: {
-      // security: [
-      //   {
-      //     bearerAuth: []
-      //   }
-      // ],
-      summary: 'Get games',
+      security: [
+        {
+          bearerAuth: []
+        }
+      ],
+      summary: 'Get games by Vendors',
       tags: ['Games'],
       parameters: [
         {

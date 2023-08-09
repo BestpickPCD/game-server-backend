@@ -1,8 +1,8 @@
-import { Prisma, PrismaClient, Users } from '@prisma/client';
-const prisma = new PrismaClient();
-import { Response, Request } from 'express';
+import { Prisma, PrismaClient } from '@prisma/client';
+import { Request, Response } from 'express';
 import { message } from '../../utilities/constants/index.ts';
 import { getParentAgentIdsByParentAgentId } from './utilities.ts';
+const prisma = new PrismaClient();
 
 // Define your route handler to get all users
 export const getAllUsers = async (

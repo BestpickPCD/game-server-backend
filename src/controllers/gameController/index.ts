@@ -1,42 +1,55 @@
 import { PrismaClient, Vendors } from '@prisma/client';
-import axios from 'axios';
-import { Request, Response } from 'express';
+// import axios from 'axios';
+import { Response } from 'express';
 import { RequestWithUser } from '../../models/customInterfaces';
 const prisma = new PrismaClient();
 
 export const getGameVendors = async (
-  req: Request,
+  req: RequestWithUser,
   res: Response
 ): Promise<any> => {
   try {
     const queryParams = req.query;
-    const vendorStr = (queryParams.vendors as string) ?? `evolution`;
-    const vendors = vendorStr.split(',');
-    const games = await prisma.vendors.findMany({
+    const vendorStr = queryParams.vendors as string;
+    const vendors: string[] = vendorStr.split(',');
+    const games = await prisma.agentVendorTokens.findMany({
       where: {
-        name: {
-          in: vendors
+        agentId: req.user?.id,
+        vendor: {
+          name: {
+            in: vendors
+          }
         }
+      },
+      select: {
+        vendor: true
       }
-    });
+    }); 
+
+    if(!games.length) {
+      return res.status(400).json({message: "No contract with the vendors selected"})
+    }
 
     const gamesDetails = await Promise.all(
       games.map(async (game) => {
-        if (game.url === null) {
-          return null; // Skip this iteration
-        }
-        const gameUrl = `${game.url}/api/game-list`;
-        const bearerToken = `SN5VfYimhHZ5mzYxC2h9TeePNOo7YzsU6SOlmsld`;
-        const config = {
-          headers: {
-            Authorization: `Bearer ${bearerToken}`
-          }
-        };
+
+        if (!game) {
+          return null;
+        } 
+
+        // const gameUrl = `${game.url}/api/game-list`;
+        // const bearerToken = `SN5VfYimhHZ5mzYxC2h9TeePNOo7YzsU6SOlmsld`;
+        // const config = {
+        //   headers: {
+        //     Authorization: `Bearer ${bearerToken}`
+        //   }
+        // };
+        
         try {
-          const response = await axios.get(gameUrl, config);
-          return response.data;
+          // const response = await axios.get(gameUrl, config);
+          return game.vendor?.fetchGames;
         } catch (error) {
-          console.error(`Error fetching game details for URL: ${gameUrl}`);
+          console.log(error)
           return null;
         }
       })

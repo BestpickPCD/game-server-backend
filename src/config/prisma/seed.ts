@@ -5,7 +5,7 @@ const prisma = new PrismaClient();
 
 async function main() {
   await prisma.roles.createMany({
-    data: [{ name: 'admin' }, { name: 'user' }],
+    data: [{ name: 'admin' }, { name: 'operator' }, { name: 'distributor' }],
     skipDuplicates: true
   });
   await prisma.currencies.create({

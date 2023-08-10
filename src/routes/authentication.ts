@@ -1,9 +1,9 @@
 import express from 'express';
 import {
-  refreshToken,
-  register,
   apiToken,
-  login
+  login,
+  refreshToken,
+  register
 } from '../controllers/authenticationController/index.ts';
 import { authentication } from '../middleware/authentication.ts';
 

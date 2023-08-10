@@ -1,5 +1,5 @@
-import { PrismaClient, Users } from '@prisma/client';
-import { Response, NextFunction } from 'express';
+import { PrismaClient } from '@prisma/client';
+import { NextFunction, Response } from 'express';
 import jwt, { JwtPayload } from 'jsonwebtoken';
 import { RequestWithUser } from '../models/customInterfaces.ts';
 
@@ -24,18 +24,30 @@ export const authentication = async (
     try {
       const decoded = (await jwt.verify(token, ACCESS_TOKEN_KEY)) as JwtPayload;
 
-      const user = (await prisma.users.findUnique({
+      const user = await prisma.users.findUnique({
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          username: true,
+          type: true,
+          apiKey: true,
+          roleId: true,
+          currencyId: true,
+          isActive: true,
+          role: true
+        },
         where: {
           id: decoded.userId
         }
-      })) as Users;
+      });
 
       if (!user) {
         return res.status(401).json({ message: 'User not found' });
       }
 
       // eslint-disable-next-line no-param-reassign
-      req.user = user;
+      (req as any).user = user;
 
       return next();
     } catch (error) {

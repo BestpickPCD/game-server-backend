@@ -1,25 +1,65 @@
-import { Request, Response, NextFunction } from 'express';
-import { Users, Roles } from '@prisma/client';
-
-interface UserRole extends Users {
-  role: Roles;
-}
-interface RequestUserRole extends Request {
-  user: UserRole;
-}
+import { Roles } from '@prisma/client';
+import { NextFunction, Response } from 'express';
+import { message } from '../utilities/constants/index.ts';
+import {
+  Permissions,
+  commonPermissions,
+  RouteType,
+  PermissionType,
+  roles,
+  RoleType
+} from '../models/customInterfaces.ts';
+export const permissions: Permissions = {
+  admin: {
+    users: [...commonPermissions],
+    permissions: [...commonPermissions],
+    agents: [...commonPermissions],
+    roles: [...commonPermissions],
+    transactions: [...commonPermissions],
+    players: [...commonPermissions],
+    currencies: [...commonPermissions],
+    games: [...commonPermissions]
+  },
+  distributor: {
+    users: ['get', 'getById'],
+    permissions: ['get', 'getById'],
+    agents: ['get', 'getById'],
+    roles: ['get', 'getById'],
+    transactions: [...commonPermissions],
+    players: ['get', 'getById'],
+    currencies: ['get', 'getById'],
+    games: ['get', 'getById']
+  },
+  operator: {
+    users: [...commonPermissions],
+    permissions: [...commonPermissions],
+    agents: [...commonPermissions],
+    roles: [...commonPermissions],
+    transactions: ['get', 'getById'],
+    players: [...commonPermissions],
+    currencies: [...commonPermissions],
+    games: [...commonPermissions]
+  }
+};
 
 export const permission =
-  (role: string) =>
-  async (
-    req: RequestUserRole,
-    res: Response,
-    next: NextFunction
-  ): Promise<any> => {
+  (router: RouteType, method: PermissionType): any =>
+  async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     try {
-      if (req.user.role.name === role && role !== null) {
-        return next();
+      if (!(req as any).user) {
+        return res.status(401).json({ message: message.UNAUTHORIZED });
       }
-      return res.status(403).json({ message: 'Unauthorized' });
+      const { role }: { role: Roles } = (req as any).user;
+      const hasRoles = roles.indexOf(role.name as RoleType);
+      if (hasRoles === -1 && roles[hasRoles]) {
+        return res.status(401).json({ message: message.UNAUTHORIZED });
+      }
+      const hasPermission =
+        permissions[roles[hasRoles]][router].includes(method);
+      if (!hasPermission) {
+        return res.status(403).json({ message: message.FORBIDDEN });
+      }
+      return next();
     } catch (error) {
       return res.status(500).json({ message: 'An error occurred' });
     }

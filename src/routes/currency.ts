@@ -1,34 +1,45 @@
+import express from 'express';
 import {
   addCurrency,
   deleteCurrency,
   getCurrencies,
-  updateCurrency,
-  getCurrencyById
+  getCurrencyById,
+  updateCurrency
 } from '../controllers/currencyController.ts';
-import express from 'express';
 import { authentication } from '../middleware/authentication.ts';
 import { permission } from '../middleware/permission.ts';
 
 const router = express.Router();
 
-router.get('/currencies', getCurrencies);
-router.get('/currency/:currencyId', getCurrencyById);
+router.get(
+  '/currencies',
+  authentication,
+  permission('currencies', 'get'),
+  getCurrencies
+);
+router.get(
+  '/currency/:currencyId',
+  authentication,
+  permission('currencies', 'getById'),
+  getCurrencyById
+);
 router.post(
   '/currency',
   authentication,
-  permission('admin') as any,
+  permission('currencies', 'create'),
+
   addCurrency
 );
 router.put(
   '/currency/:currencyId',
   authentication,
-  permission('admin') as any,
+  permission('currencies', 'update'),
   updateCurrency
 );
 router.delete(
   '/currency/:currencyId',
   authentication,
-  permission('admin') as any,
+  permission('currencies', 'delete'),
   deleteCurrency
 );
 

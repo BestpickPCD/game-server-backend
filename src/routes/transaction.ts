@@ -1,23 +1,45 @@
 import express from 'express';
 import {
-  getTransactions,
   addTransaction,
+  getTransactionDetail,
   // getBalance,
   getTransactionDetailsByUserId,
   getTransactionDetailsByUserIdView,
-  getTransactionsView,
-  getTransactionDetail
+  getTransactions,
+  getTransactionsView
 } from '../controllers/transactionController/index.ts';
 import { authentication } from '../middleware/authentication.ts';
+import { permission } from '../middleware/permission.ts';
 import { Transaction } from '../middleware/transaction.ts';
 
 const router = express.Router();
 
-router.get('/transactions', authentication, Transaction, getTransactions);
-router.get('/transactions/:id', authentication, getTransactionDetail);
+router.get(
+  '/transactions',
+  authentication,
+  permission('transactions', 'get'),
+  Transaction,
+  getTransactions
+);
+router.get(
+  '/transactions/:id',
+  authentication,
+  permission('transactions', 'getById'),
+  getTransactionDetail
+);
 // router.get("/transaction/:userId", getBalance)
-router.post('/transaction', authentication, addTransaction);
-router.get('/transaction-details/:userId', getTransactionDetailsByUserId);
+router.post(
+  '/transaction',
+  authentication,
+  permission('transactions', 'create'),
+  addTransaction
+);
+router.get(
+  '/transaction-details/:userId',
+  authentication,
+  permission('transactions', 'get'),
+  getTransactionDetailsByUserId
+);
 router.get(
   '/transaction-details/view/:userId',
   getTransactionDetailsByUserIdView

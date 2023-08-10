@@ -5,6 +5,26 @@ import { RequestWithUser } from '../../models/customInterfaces';
 // import agent from 'src/swagger/agent';
 const prisma = new PrismaClient();
 
+export const getVendors = async (_:RequestWithUser, res:Response): Promise<any> => {
+  try {
+    const vendors = await prisma.vendors.findMany({
+      where: {
+        deletedAt: null
+      }
+    })
+
+    const rearrangedVendors = vendors.map((vendor) => { 
+      const { fetchGames, deletedAt, createdAt, updatedAt , ...data } = { ...vendor, gamesTotal: (vendor.fetchGames as [])?.length ?? 0 } 
+      return data
+    }) 
+
+    return res.status(200).json(rearrangedVendors)
+  } catch (error) {
+    console.log(error)
+    return res.status(500).json(error)
+  }
+}
+
 export const getGameVendors = async (
   req: RequestWithUser,
   res: Response

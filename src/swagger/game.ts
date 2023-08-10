@@ -10,7 +10,7 @@ export default {
       tags: ['Games'],
       responses: {
         '200': {
-          description: 'Success',
+          description: 'Success'
         },
         '401': {
           description: 'Unauthorized'

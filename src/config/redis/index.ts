@@ -2,19 +2,39 @@ import { createClient } from 'redis';
 const redisClient = createClient({
   url: process.env.REDIS_URL
 });
+redisClient.on('connect', () => {
+  console.log('Connected to Redis server');
+});
+
+redisClient.on('error', (err) => {
+  console.log(err.message);
+});
+
+redisClient.on('ready', () => {
+  console.log('Redis is ready');
+});
+
+redisClient.on('end', () => {
+  console.log('Redis connection ended');
+});
+
+process.on('SIGINT', () => {
+  redisClient.quit();
+});
+
 redisClient
   .connect()
   .then(() => {
-    console.log('Redis Connected');
+    console.log('Connected to Redis');
   })
-  .catch((err: any) => {
-    console.log('Redis connection failed', err);
-    redisClient.quit();
+  .catch((err) => {
+    console.log(err.message);
   });
 
 export default redisClient;
 export const removeRedisKeys = async (key: string): Promise<any> => {
   try {
+    await redisClient.connect();
     const matchKeys = [];
     for await (const redisKey of redisClient.scanIterator({
       TYPE: 'string', // `SCAN` only
@@ -27,5 +47,7 @@ export const removeRedisKeys = async (key: string): Promise<any> => {
     }
   } catch (error) {
     return Promise.reject(error);
+  } finally {
+    await redisClient.quit();
   }
 };

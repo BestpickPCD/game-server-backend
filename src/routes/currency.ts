@@ -11,12 +11,7 @@ import { permission } from '../middleware/permission.ts';
 
 const router = express.Router();
 
-router.get(
-  '/currencies',
-  authentication,
-  permission('currencies', 'get'),
-  getCurrencies
-);
+router.get('/currencies', getCurrencies);
 router.get(
   '/currency/:currencyId',
   authentication,

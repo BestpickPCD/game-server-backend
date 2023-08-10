@@ -18,6 +18,6 @@ router.use('', userRouter);
 router.use('', transactionRouter);
 router.use('', gameRouter);
 router.use('/agents', authentication, agentRouter);
-router.use('/permission', permissionRouter);
+router.use('/permissions', permissionRouter);
 
 export default router;

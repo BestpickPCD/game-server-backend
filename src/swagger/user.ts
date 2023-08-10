@@ -376,5 +376,35 @@ export default {
         }
       }
     }
+  },
+  '/permissions': {
+    get: {
+      security: [
+        {
+          bearerAuth: []
+        }
+      ],
+      summary: 'Permissions',
+      tags: ['Permissions'],
+      responses: {
+        '200': {
+          description: 'Success',
+          schema: {
+            type: 'object',
+            properties: {
+              data: {
+                type: 'object'
+              },
+              messages: {
+                type: 'string'
+              }
+            }
+          }
+        },
+        '401': {
+          description: 'Unauthorized'
+        }
+      }
+    }
   }
 };

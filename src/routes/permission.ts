@@ -6,13 +6,35 @@ import {
   getPermissionById,
   updatePermission
 } from '../controllers/permissionController.ts';
+import { permission } from '../middleware/permission.ts';
+import { authentication } from '../middleware/authentication.ts';
 
 const router = express.Router();
-router.get('/list', getAllPermission);
-router.get('/detail/:id', getPermissionById);
-router.post('/create', createPermission);
-router.put('/update/:id', updatePermission);
-router.delete('/delete/:id', deletePermission);
+router.get('', authentication, getAllPermission);
+router.get(
+  '/:id',
+  authentication,
+  permission('permissions', 'getById'),
+  getPermissionById
+);
+router.post(
+  '',
+  authentication,
+  permission('permissions', 'create'),
+  createPermission
+);
+router.put(
+  '/:id',
+  authentication,
+  permission('permissions', 'update'),
+  updatePermission
+);
+router.delete(
+  '/:id',
+  authentication,
+  permission('permissions', 'delete'),
+  deletePermission
+);
 
 export default router;
 

@@ -2,23 +2,34 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 import { Request, Response } from 'express';
 import { message } from '../utilities/constants/index.ts';
+import redisClient from '../config/redis/index.ts';
+import { permissions } from '../middleware/permission.ts';
+import { RoleType } from '../models/customInterfaces.ts';
 
 export const getAllPermission = async (
-  _: Request,
+  req: Request,
   res: Response
 ): Promise<any> => {
-  console.log('vao day');
-
   try {
-    const getAllTable = await prisma.tables.findMany({
-      where: {
-        deletedAt: null
-      }
-    });
-    res.status(200).json(getAllTable);
+    await redisClient.connect();
+    const roleName = (req as any)?.user?.role?.name as RoleType;
+    const data = await redisClient.get(`${roleName}-permissions`);
+    if (!data) {
+      const userPermission = permissions[roleName];
+      await redisClient.set(
+        `${roleName}-permissions`,
+        JSON.stringify(userPermission)
+      );
+      return res.status(200).json({ data: userPermission });
+    }
+    return res.status(200).json({ data: JSON.parse(data) });
   } catch (error) {
-    console.log(error);
-    res.status(200).json(error);
+    return res.status(500).json({
+      message: message.INTERNAL_SERVER_ERROR,
+      error
+    });
+  } finally {
+    await redisClient.quit();
   }
 };
 

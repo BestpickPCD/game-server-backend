@@ -1,4 +1,26 @@
 export default {
+  '/game-vendors': {
+    get: {
+      security: [
+        {
+          bearerAuth: []
+        }
+      ],
+      summary: 'Get vendors',
+      tags: ['Games'],
+      responses: {
+        '200': {
+          description: 'Success',
+        },
+        '401': {
+          description: 'Unauthorized'
+        },
+        '500': {
+          description: 'Internal server error'
+        }
+      }
+    }
+  },
   '/game-list': {
     get: {
       security: [

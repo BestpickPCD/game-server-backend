@@ -1,2 +1,7 @@
 .env
 /node_modules
+/src/config/prisma/migrations/
+/.env
+/prisma/seed.ts
+/src/config/prisma/migrations
+**/.env

@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+<<<<<<< HEAD
     "target": "ES2018", // Set the target ECMAScript version
     "module": "ESNext", // Specify the module system (Node.js uses commonjs)1
     "outDir": "./dist", // Output directory for compiled files
@@ -12,10 +13,40 @@
     "allowImportingTsExtensions": true,
     "declaration": true,
     // "moduleResolution": "NodeNext"
+=======
+    "target": "es2017",
+    "module": "ESNext",
+    "lib": ["dom", "es6", "es2017", "esnext.asynciterable"],
+    "skipLibCheck": true,
+    "sourceMap": true,
+    "outDir": "./dist",
+    "moduleResolution": "node",
+    "removeComments": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "noImplicitThis": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "resolveJsonModule": true,
+    "baseUrl": ".",
+    "noEmit": true,
+    "allowImportingTsExtensions": true
+>>>>>>> 8ca57df4c581a5c9e179ec6f415f0a61574ee243
   },
-  "include": ["src/**/*.ts", "src/server.ts"], // Include TypeScript files from the 'src' directory
-  "exclude": ["node_modules"], // Exclude 'node_modules' from compilation
+  "exclude": ["node_modules"],
+  "include": ["./src/**/*.ts"],
   "ts-node": {
+    // Tell ts-node CLI to install the --loader automatically
     "esm": true
+  },
+  "resolve": {
+    "extensions": [".js", ".jsx", ".ts", ".tsx"]
   }
 }

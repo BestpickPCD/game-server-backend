@@ -21,9 +21,22 @@ export const getTransactions = async (_: Request, res: Response) => {
 
 export const addTransaction = async (req: Request, res: Response) => {
   try {
-    const { senderId, receiverId, type, note, token, status, amount, currencyId } = req.body; 
+    const {
+      senderId,
+      receiverId,
+      type,
+      note,
+      token,
+      status,
+      amount,
+      currencyId
+    } = req.body;
     const data = {
-      type, note, token, status, amount,  
+      type,
+      note,
+      token,
+      status,
+      amount,
       sender: {
         connect: { id: senderId }
       },
@@ -36,34 +49,37 @@ export const addTransaction = async (req: Request, res: Response) => {
       updatedUser: {
         connect: { id: req.userId ? req.userId : 1 }
       }
-    }
+    };
 
     await prisma.transactions.create({
-      data: data 
+      data: data
     });
 
-    return res.status(201).json({ message: 'Transaction created successfully' });
-
+    return res
+      .status(201)
+      .json({ message: 'Transaction created successfully' });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: 'Something went wrong', error });
   }
 };
 
-export const getTransactionDetailsByUserId =async (req:Request, res:Response) => {
+export const getTransactionDetailsByUserId = async (
+  req: Request,
+  res: Response
+) => {
   const transactions = await prisma.transactions.findMany({
     where: {
-      OR:[
-        {senderId : parseInt(req.params.userId)},
-        {receiverId : parseInt(req.params.userId)},
+      OR: [
+        { senderId: parseInt(req.params.userId) },
+        { receiverId: parseInt(req.params.userId) }
       ]
     },
-    orderBy: {id:'asc'}
-  })
+    orderBy: { id: 'asc' }
+  });
 
-  res.json(transactions) 
- 
-}
+  res.json(transactions);
+};
 
 export const getBalance = async (req: Request, res: Response) => {
   const userId = parseInt(req.params.userId);

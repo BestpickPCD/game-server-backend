@@ -6,7 +6,7 @@ import { findById } from '../models/currency.ts';
 import { Response, Request } from 'express';
 import axios from 'axios';
 import { message } from '../utilities/constants/index.ts';
-import { getParentAgentIdsByParentAgentId } from '../models/user.ts'
+import { getParentAgentIdsByParentAgentId } from '../models/user.ts';
 
 // Define your route handler to get all users
 export const getAllUsers = async (req: Request, res: Response) => {
@@ -109,25 +109,25 @@ export const updateUser = async (req: Request, res: Response): Promise<any> => {
     if (!user) {
       return res.status(404).json({ message: message.NOT_FOUND });
     }
-    const { name, email, roleId, currencyId, agentId, parentAgentId } = req.body;
+    const { name, email, roleId, currencyId, agentId, parentAgentId } =
+      req.body;
     const updatedUser = {
       ...(name && { name }),
       ...(email && { email }),
       ...(roleId && { roleId }),
       ...(currencyId && { currencyId })
-    }; 
+    };
     const newUser = await prisma.users.update({
       where: { id: userId },
       data: { ...user, ...updatedUser }
     });
- 
-    if(newUser && newUser.type == "player") {
-return _updatePlayer(newUser, agentId, res)
-} else if(newUser && newUser.type == "agent") {
-return _updateAgent(newUser, parentAgentId, res)
-} 
-    return res.status(404).json({ message: message.USER_TYPE_NOT_FOUND }); 
 
+    if (newUser && newUser.type == 'player') {
+      return _updatePlayer(newUser, agentId, res);
+    } else if (newUser && newUser.type == 'agent') {
+      return _updateAgent(newUser, parentAgentId, res);
+    }
+    return res.status(404).json({ message: message.USER_TYPE_NOT_FOUND });
   } catch (error) {
     if (error.code === 'P2002') {
       return res.status(400).json({
@@ -154,11 +154,11 @@ return _updateAgent(newUser, parentAgentId, res)
   }
 };
 export const getUserById = async (req: Request, res: Response) => {
-  const { userId } = req.params; 
+  const { userId } = req.params;
   try {
     const user = await prisma.users.findUnique({
       where: {
-        id: parseInt(userId),
+        id: parseInt(userId)
       },
       select: {
         id: true,
@@ -168,25 +168,25 @@ export const getUserById = async (req: Request, res: Response) => {
         type: true,
         role: {
           select: {
-            name: true,
-          },
+            name: true
+          }
         },
         currency: {
           select: {
-            name: true,
-          },
+            name: true
+          }
         },
         Players: {
           select: {
             agent: {
               select: {
                 id: true,
-                name: true,
-              },
-            },
-          },
-        },
-      },
+                name: true
+              }
+            }
+          }
+        }
+      }
     });
     if (!user) {
       return res.status(404).json({ message: message.NOT_FOUND });
@@ -200,12 +200,12 @@ export const getUserById = async (req: Request, res: Response) => {
       type: user.type,
       role: user.role?.name,
       currency: user.currency?.name,
-      agent: user.Players[0]?.agent?.name || null,
+      agent: user.Players[0]?.agent?.name || null
     };
 
-    return res.status(200).json({ message: message.SUCCESS, data:data });
+    return res.status(200).json({ message: message.SUCCESS, data: data });
   } catch (error) {
-    console.log(error)
+    console.log(error);
     return res
       .status(500)
       .json({ message: message.INTERNAL_SERVER_ERROR, error });
@@ -213,8 +213,18 @@ export const getUserById = async (req: Request, res: Response) => {
 };
 export const register = async (req: Request, res: Response): Promise<any> => {
   try {
-    const { firstName, lastName, username, email, password, confirmPassword, roleId, type, agentId, parentAgentId } =
-      req.body;
+    const {
+      firstName,
+      lastName,
+      username,
+      email,
+      password,
+      confirmPassword,
+      roleId,
+      type,
+      agentId,
+      parentAgentId
+    } = req.body;
 
     // Check if the user already exists
     const existingUser = await prisma.users.findMany({
@@ -241,7 +251,7 @@ export const register = async (req: Request, res: Response): Promise<any> => {
     }
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    try { 
+    try {
       const userSchema = {
         name: `${firstName} ${lastName}`,
         username,
@@ -250,13 +260,12 @@ export const register = async (req: Request, res: Response): Promise<any> => {
         roleId,
         password: hashedPassword,
         currencyId: 1
-      } 
-      if(type == "player") {
-        return _playerInsert(userSchema, agentId, res)
-      } else if(type == "agent") {
-        return _agentInsert(userSchema, parentAgentId, res)
+      };
+      if (type == 'player') {
+        return _playerInsert(userSchema, agentId, res);
+      } else if (type == 'agent') {
+        return _agentInsert(userSchema, parentAgentId, res);
       }
-
     } catch (error) {
       return res
         .status(500)
@@ -269,20 +278,20 @@ export const register = async (req: Request, res: Response): Promise<any> => {
 export const deleteUser = async (req: Request, res: Response): Promise<any> => {
   try {
     const userId = parseInt(req.params.userId);
-    
+
     const deleteUser = await prisma.users.findUnique({
-      where: {id: userId}
-    })
-    if(deleteUser?.deletedAt == null) { 
+      where: { id: userId }
+    });
+    if (deleteUser?.deletedAt == null) {
       await prisma.users.update({
         where: { id: userId },
         data: { deletedAt: new Date() }
-      }); 
+      });
       return res.status(200).json({ message: message.DELETED });
-    } return res.status(400).json({ message: "User was already deleted" });
-    
+    }
+    return res.status(400).json({ message: 'User was already deleted' });
   } catch (error) {
-    console.log(error)
+    console.log(error);
     if (error.code === 'P2025') {
       return res.status(404).json({ message: message.NOT_FOUND });
     }
@@ -293,16 +302,16 @@ export const deleteUser = async (req: Request, res: Response): Promise<any> => {
 };
 export const login = async (req: Request, res: Response): Promise<any> => {
   try {
-    const { username, password } = req.body; 
+    const { username, password } = req.body;
     const user = await prisma.users.findUnique({
-      where:{
+      where: {
         username: username
       }
-    })
+    });
 
-    if(!user) {
-return res.status(400).json({ message: message.NOT_FOUND });
-} else if (user) {
+    if (!user) {
+      return res.status(400).json({ message: message.NOT_FOUND });
+    } else if (user) {
       // check Password
       const isValid = await bcrypt.compare(password, user.password);
 
@@ -319,7 +328,7 @@ return res.status(400).json({ message: message.NOT_FOUND });
           userId: user.id,
           username: user.username,
           type: user.type,
-          currency: currency && currency.code,
+          currency: currency?.code,
           rate: currencyRate.data,
           tokens
         };
@@ -331,61 +340,70 @@ return res.status(400).json({ message: message.NOT_FOUND });
     // Neither user nor agent exists with the given username
     return res.status(400).json({ message: message.NOT_FOUND });
   } catch (error) {
-    console.log(error)
+    console.log(error);
     res.status(500).json({ message: message.INTERNAL_SERVER_ERROR });
   }
-}
+};
 
-const _updateAgent = async (user:any, parentAgentId:number, res:Response) => {
-  try { 
-    if(parentAgentId == user.id) {
-return res.status(400).json({ message: "Parent agent cannot be yourself" });
-}
-    
-    const details: any = await getParentAgentIdsByParentAgentId(parentAgentId)
+const _updateAgent = async (
+  user: any,
+  parentAgentId: number,
+  res: Response
+) => {
+  try {
+    if (parentAgentId == user.id) {
+      return res
+        .status(400)
+        .json({ message: 'Parent agent cannot be yourself' });
+    }
+
+    const details: any = await getParentAgentIdsByParentAgentId(parentAgentId);
     const agent = await prisma.agents.update({
-      where:{ id: user.id },
+      where: { id: user.id },
       data: {
         parentAgentId,
         parentAgentIds: details.parentAgentIds,
         level: details.level
       }
-    })
-    return res.status(200).json({ message: message.SUCCESS, data:agent });
-
+    });
+    return res.status(200).json({ message: message.SUCCESS, data: agent });
   } catch (error) {
     console.log(error);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: 'Internal server error' });
   }
-}
+};
 
-const _updatePlayer = async (user:any, agentId:number, res:Response) => {
+const _updatePlayer = async (user: any, agentId: number, res: Response) => {
   try {
     const player = await prisma.players.update({
       where: { id: user.id },
-      data: {agentId}
-    }) 
+      data: { agentId }
+    });
     return res.status(200).json({ data: player, message: message.UPDATED });
   } catch (error) {
     console.log(error);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: 'Internal server error' });
   }
-}
+};
 
-const _playerInsert = async (userSchema:any, agentId:number, res:Response) => {
-  try {  
-    const newUser: any  = await _userInsert(userSchema)
-    const userInsert = await prisma.players.create({
+const _playerInsert = async (
+  userSchema: any,
+  agentId: number,
+  res: Response
+) => {
+  try {
+    const newUser: any = await _userInsert(userSchema);
+    const userInsert = (await prisma.players.create({
       data: {
         id: newUser.id,
-        agentId 
+        agentId
       }
-    }) as any
+    })) as any;
 
     const userResponse = {
       userId: userInsert.id,
       username: newUser.username
-    }; 
+    };
 
     return res.status(201).json({
       data: userResponse,
@@ -394,28 +412,32 @@ const _playerInsert = async (userSchema:any, agentId:number, res:Response) => {
   } catch (error) {
     console.log(error);
     return res.status(500).json({
-      message: "Internal server error"
+      message: 'Internal server error'
     });
   }
-}
+};
 
-const _agentInsert = async (userSchema:any, parentAgentId:number, res: Response) => {
-  try { 
-    const newUser: any = await _userInsert(userSchema)
-    const details: any = await getParentAgentIdsByParentAgentId(parentAgentId) 
-    const userInsert = await prisma.agents.create({
+const _agentInsert = async (
+  userSchema: any,
+  parentAgentId: number,
+  res: Response
+) => {
+  try {
+    const newUser: any = await _userInsert(userSchema);
+    const details: any = await getParentAgentIdsByParentAgentId(parentAgentId);
+    const userInsert = (await prisma.agents.create({
       data: {
         id: newUser.id,
         parentAgentId,
         parentAgentIds: details.parentAgentIds,
-        level: details.level,
+        level: details.level
       }
-    }) as any;
+    })) as any;
 
     const userResponse = {
       userId: userInsert.id,
       username: newUser.username
-    }; 
+    };
 
     return res.status(201).json({
       data: userResponse,
@@ -424,17 +446,15 @@ const _agentInsert = async (userSchema:any, parentAgentId:number, res: Response)
   } catch (error) {
     console.log(error);
     return res.status(500).json({
-      message: "Internal server error"
+      message: 'Internal server error'
     });
   }
-}
+};
 
-const _userInsert = async (userSchema:any) => { 
-
+const _userInsert = async (userSchema: any) => {
   const newUser = await prisma.users.create({
     data: userSchema
-  }); 
+  });
 
-  return newUser
-
-}
+  return newUser;
+};

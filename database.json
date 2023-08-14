@@ -1,0 +1,11 @@
+{
+    "dev": {
+      "driver": "mysql",
+      "user": "ojymhpzu_bestpick_admin",
+      "password": "?g6V,&vj8JP!",
+      "host": "103.221.221.70",
+      "port": "3306",
+      "database": "ojymhpzu_bestpick_db",
+      "multipleStatements": true
+    }
+  }

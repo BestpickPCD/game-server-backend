@@ -1,9 +1,12 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
-import bcrypt from "bcrypt";
-import { getTokens } from "../utilities/getTokens.ts";
-import { findById } from "../models/currency.ts";
-import { Response, Request } from "express";
+import bcrypt from 'bcrypt';
+import { getTokens } from '../utilities/getTokens.ts';
+import { findById } from '../models/currency.ts';
+import { Response, Request } from 'express';
+import axios from 'axios';
+import { message } from '../utilities/constants/index.ts';
+import { getParentAgentIdsByParentAgentId } from '../models/user.ts'
 
 // Define your route handler to get all users
 export const getAllUsers = async (req: Request, res: Response) => {
@@ -11,17 +14,27 @@ export const getAllUsers = async (req: Request, res: Response) => {
     const {
       page = 0,
       size = 10,
-      search = "",
+      search = '',
+      dateFrom = '1970-01-01T00:00:00.000Z',
+      dateTo = '2100-01-01T00:00:00.000Z'
     }: {
       page?: number;
       size?: number;
       search?: string;
+      dateFrom?: string;
+      dateTo?: string;
+      isActive?: true | false | null;
     } = req.query;
 
     const usersData = await prisma.$transaction([
-      prisma.users.count(),
+      prisma.users.count({
+        where: {
+          deletedAt: null
+        }
+      }),
       prisma.users.findMany({
         select: {
+          id: true,
           name: true,
           email: true,
           username: true,
@@ -30,203 +43,398 @@ export const getAllUsers = async (req: Request, res: Response) => {
           updatedAt: true,
           currency: {
             select: {
-              code: true,
-            },
+              code: true
+            }
           },
           role: {
             select: {
-              name: true,
-            },
-          },
+              id: true,
+              name: true
+            }
+          }
         },
         where: {
           deletedAt: null,
-          name: {
-            contains: search,
-          },
-          email: {
-            contains: search,
-          },
-          username: {
-            contains: search,
-          },
+          OR: [
+            {
+              name: {
+                contains: search
+              }
+            },
+            {
+              email: {
+                contains: search
+              }
+            },
+            {
+              username: {
+                contains: search
+              }
+            }
+          ],
+          updatedAt: {
+            gte: dateFrom,
+            lte: dateTo
+          }
         },
         orderBy: {
-          updatedAt: "desc",
+          updatedAt: 'desc'
         },
         skip: Number(page * size),
-        take: Number(size),
-      }),
+        take: Number(size)
+      })
     ]);
 
-    res.status(200).json({
+    return res.status(200).json({
       data: {
         data: usersData[1],
-        totalItem: usersData[0],
-        page,
-        size,
+        totalItems: usersData[0],
+        page: Number(page),
+        size: Number(size)
       },
-      message: "SUCCESS",
+      message: message.SUCCESS
     });
   } catch (error) {
-    console.error("Error retrieving users:", error);
-    res
-      .status(500)
-      .json({ error: "An error occurred while retrieving users." });
+    return res.status(500).json({ message: message.INTERNAL_SERVER_ERROR });
   }
 };
-
-export const updateUser = async (req: Request, res: Response) => {
+export const updateUser = async (req: Request, res: Response): Promise<any> => {
   try {
     const userId = parseInt(req.params.userId);
-    const { name, email, username, roleId, currencyId } = req.body;
-
     const user = await prisma.users.findUnique({
       where: {
-        id: userId,
+        id: userId
+      }
+    });
+    if (!user) {
+      return res.status(404).json({ message: message.NOT_FOUND });
+    }
+    const { name, email, roleId, currencyId, agentId, parentAgentId } = req.body;
+    const updatedUser = {
+      ...(name && { name }),
+      ...(email && { email }),
+      ...(roleId && { roleId }),
+      ...(currencyId && { currencyId })
+    }; 
+    const newUser = await prisma.users.update({
+      where: { id: userId },
+      data: { ...user, ...updatedUser }
+    });
+ 
+    if(newUser && newUser.type == "player") {
+return _updatePlayer(newUser, agentId, res)
+} else if(newUser && newUser.type == "agent") {
+return _updateAgent(newUser, parentAgentId, res)
+} 
+    return res.status(404).json({ message: message.USER_TYPE_NOT_FOUND }); 
+
+  } catch (error) {
+    if (error.code === 'P2002') {
+      return res.status(400).json({
+        message: message.DUPLICATE,
+        subMessage: 'Email already exists'
+      });
+    } else if (error.code === 'P2003') {
+      if (error.meta.field_name === 'roleId') {
+        return res.status(404).json({
+          message: message.NOT_FOUND,
+          subMessage: 'RoleId not found'
+        });
+      }
+      if (error.meta.field_name === 'currencyId') {
+        return res.status(404).json({
+          message: message.NOT_FOUND,
+          subMessage: 'CurrencyId not found'
+        });
+      }
+    }
+    return res
+      .status(500)
+      .json({ message: message.INTERNAL_SERVER_ERROR, error });
+  }
+};
+export const getUserById = async (req: Request, res: Response) => {
+  const { userId } = req.params; 
+  try {
+    const user = await prisma.users.findUnique({
+      where: {
+        id: parseInt(userId),
+      },
+      select: {
+        id: true,
+        name: true,
+        username: true,
+        email: true,
+        type: true,
+        role: {
+          select: {
+            name: true,
+          },
+        },
+        currency: {
+          select: {
+            name: true,
+          },
+        },
+        Players: {
+          select: {
+            agent: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
       },
     });
+    if (!user) {
+      return res.status(404).json({ message: message.NOT_FOUND });
+    }
 
-    // if cant find user
-    if (!user) return res.status(404).json({ message: "User not found" });
-
-    const updateUser = {
-      ...user,
-      email: email || user.email,
-      name: name || user.name,
-      username: username || user.username,
-      roleId: roleId || user.roleId,
-      currencyId: currencyId || user.currencyId,
+    const data = {
+      id: user.id,
+      name: user.name,
+      username: user.username,
+      email: user.email,
+      type: user.type,
+      role: user.role?.name,
+      currency: user.currency?.name,
+      agent: user.Players[0]?.agent?.name || null,
     };
 
-    try {
-      // Save the updated user
-      const updatedUser = await prisma.users.update({
-        where: {
-          id: userId,
-        },
-        data: updateUser,
-      });
-      res.status(200).json({ message: "user updated", user: updatedUser });
-    } catch (error) {
-      console.log(error);
-      res.status(500).json({ message: "something went wrong", error });
-    }
+    return res.status(200).json({ message: message.SUCCESS, data:data });
   } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: "something went wrong", error });
+    console.log(error)
+    return res
+      .status(500)
+      .json({ message: message.INTERNAL_SERVER_ERROR, error });
   }
 };
-
-export const register = async (req: Request, res: Response) => {
+export const register = async (req: Request, res: Response): Promise<any> => {
   try {
-    const {
-      name,
-      username,
-      email,
-      roleId,
-      password,
-      confirmPassword,
-      currencyId,
-    } = req.body;
+    const { firstName, lastName, username, email, password, confirmPassword, roleId, type, agentId, parentAgentId } =
+      req.body;
 
     // Check if the user already exists
-    const existingUser = await prisma.users.findUnique({
-      where: {
-        email: email,
-        username: username,
+    const existingUser = await prisma.users.findMany({
+      select: {
+        email: true,
+        username: true
       },
+      where: {
+        OR: [{ email }, { username }]
+      }
     });
 
-    if (existingUser)
-      return res.status(400).json({ message: "User already exists" });
-
-    // Check if password and confirm password match
-    if (password !== confirmPassword)
-      return res
-        .status(400)
-        .json({ message: "Password and confirm password do not match" });
-
-    // Hash the password
+    if (existingUser.length > 0) {
+      return res.status(400).json({
+        message: message.DUPLICATE,
+        subMessage: 'Email or Username already exists'
+      });
+    }
+    if (password !== confirmPassword) {
+      return res.status(400).json({
+        message: message.INVALID,
+        subMessage: "Password and Confirm Password did't match"
+      });
+    }
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    try {
-      // Create the new user
-      const newUser = await prisma.users.create({
-        data: {
-          name: name,
-          username: username,
-          email: email,
-          roleId: roleId,
-          password: hashedPassword,
-          currencyId: currencyId,
-        },
-      });
+    try { 
+      const userSchema = {
+        name: `${firstName} ${lastName}`,
+        username,
+        email,
+        type,
+        roleId,
+        password: hashedPassword,
+        currencyId: 1
+      } 
+      if(type == "player") {
+        return _playerInsert(userSchema, agentId, res)
+      } else if(type == "agent") {
+        return _agentInsert(userSchema, parentAgentId, res)
+      }
 
-      const userResponse = {
-        userId: newUser.id,
-        username: newUser.username,
-      };
-      res
-        .status(201)
-        .json({ message: "User registered successfully", data: userResponse });
     } catch (error) {
-      console.log(error);
-      res.status(500).json({ message: "something went wrong", error });
+      return res
+        .status(500)
+        .json({ message: message.INTERNAL_SERVER_ERROR, error });
     }
   } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: "something went wrong", error });
+    res.status(500).json({ message: message.INTERNAL_SERVER_ERROR, error });
   }
 };
-
-export const deleteUser = async (req: Request, res: Response) => {
+export const deleteUser = async (req: Request, res: Response): Promise<any> => {
   try {
     const userId = parseInt(req.params.userId);
-    const findUser = await prisma.users.findUnique({
-      where: { id: userId },
-    });
-
-    if (findUser) {
-      const user = await prisma.users.update({
+    
+    const deleteUser = await prisma.users.findUnique({
+      where: {id: userId}
+    })
+    if(deleteUser?.deletedAt == null) { 
+      await prisma.users.update({
         where: { id: userId },
-        data: { deletedAt: new Date() },
-      });
-
-      // if there is user -> delete
-      user && res.status(200).json({ message: "user deleted" });
-    } else res.status(400).json({ message: "cant find the user" });
+        data: { deletedAt: new Date() }
+      }); 
+      return res.status(200).json({ message: message.DELETED });
+    } return res.status(400).json({ message: "User was already deleted" });
+    
   } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: "something went wrong", error });
+    console.log(error)
+    if (error.code === 'P2025') {
+      return res.status(404).json({ message: message.NOT_FOUND });
+    }
+    return res
+      .status(500)
+      .json({ message: message.INTERNAL_SERVER_ERROR, error });
   }
 };
-
-export const login = async (req: Request, res: Response) => {
+export const login = async (req: Request, res: Response): Promise<any> => {
   try {
-    const { username, password } = req.body;
+    const { username, password } = req.body; 
     const user = await prisma.users.findUnique({
-      where: {
-        username: username,
-      },
-    });
-    if (user) {
+      where:{
+        username: username
+      }
+    })
+
+    if(!user) {
+return res.status(400).json({ message: message.NOT_FOUND });
+} else if (user) {
+      // check Password
       const isValid = await bcrypt.compare(password, user.password);
+
       if (isValid) {
         const currency = await findById(user.currencyId as number);
-        const tokens = getTokens(user.id);
+        const currencyFrom = 'USD';
+        const currencyCode = currency?.code || 'KRW';
+        const currencyRate = await axios.get(
+          `https://api.frankfurter.app/latest?from=${currencyFrom}&to=${currencyCode}`
+        );
+
+        const tokens = getTokens(user);
         const data = {
           userId: user.id,
           username: user.username,
+          type: user.type,
           currency: currency && currency.code,
-          tokens,
+          rate: currencyRate.data,
+          tokens
         };
-        return res.status(200).json({ message: "logged in", data });
+        return res.status(200).json({ message: message.SUCCESS, data });
       }
+      // Password is incorrect
+      return res.status(401).json({ message: message.INVALID_CREDENTIALS });
     }
-    return res.status(400).json({ message: "user not found" });
+    // Neither user nor agent exists with the given username
+    return res.status(400).json({ message: message.NOT_FOUND });
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({ message: message.INTERNAL_SERVER_ERROR });
+  }
+}
+
+const _updateAgent = async (user:any, parentAgentId:number, res:Response) => {
+  try { 
+    if(parentAgentId == user.id) {
+return res.status(400).json({ message: "Parent agent cannot be yourself" });
+}
+    
+    const details: any = await getParentAgentIdsByParentAgentId(parentAgentId)
+    const agent = await prisma.agents.update({
+      where:{ id: user.id },
+      data: {
+        parentAgentId,
+        parentAgentIds: details.parentAgentIds,
+        level: details.level
+      }
+    })
+    return res.status(200).json({ message: message.SUCCESS, data:agent });
+
   } catch (error) {
     console.log(error);
-    res.status(500).json({ message: "something went wrong", error });
+    return res.status(500).json({ message: "Internal server error" });
   }
-};
+}
+
+const _updatePlayer = async (user:any, agentId:number, res:Response) => {
+  try {
+    const player = await prisma.players.update({
+      where: { id: user.id },
+      data: {agentId}
+    }) 
+    return res.status(200).json({ data: player, message: message.UPDATED });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+}
+
+const _playerInsert = async (userSchema:any, agentId:number, res:Response) => {
+  try {  
+    const newUser: any  = await _userInsert(userSchema)
+    const userInsert = await prisma.players.create({
+      data: {
+        id: newUser.id,
+        agentId 
+      }
+    }) as any
+
+    const userResponse = {
+      userId: userInsert.id,
+      username: newUser.username
+    }; 
+
+    return res.status(201).json({
+      data: userResponse,
+      message: message.CREATED
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      message: "Internal server error"
+    });
+  }
+}
+
+const _agentInsert = async (userSchema:any, parentAgentId:number, res: Response) => {
+  try { 
+    const newUser: any = await _userInsert(userSchema)
+    const details: any = await getParentAgentIdsByParentAgentId(parentAgentId) 
+    const userInsert = await prisma.agents.create({
+      data: {
+        id: newUser.id,
+        parentAgentId,
+        parentAgentIds: details.parentAgentIds,
+        level: details.level,
+      }
+    }) as any;
+
+    const userResponse = {
+      userId: userInsert.id,
+      username: newUser.username
+    }; 
+
+    return res.status(201).json({
+      data: userResponse,
+      message: message.CREATED
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      message: "Internal server error"
+    });
+  }
+}
+
+const _userInsert = async (userSchema:any) => { 
+
+  const newUser = await prisma.users.create({
+    data: userSchema
+  }); 
+
+  return newUser
+
+}

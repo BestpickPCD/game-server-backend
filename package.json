@@ -9,13 +9,9 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-<<<<<<< HEAD
-    "start": "ts-node ./src/server.ts --exec"
-=======
     "start": "nodemon ./src/server.ts --exec",
     "lint": "eslint --fix --ext .ts, .",
     "postinstall": "husky install"
->>>>>>> 8ca57df4c581a5c9e179ec6f415f0a61574ee243
   },
   "author": "nguyen truong <nguyentp@bestpicktechnology.com>",
   "license": "ISC",

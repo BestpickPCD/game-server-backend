@@ -1,16 +1,3 @@
-<<<<<<< HEAD
-// import { Request, Response, NextFunction } from "express";
-// import jwt from "jsonwebtoken";
-
-// export const authenticateJWT = async (req: Request, res: Response, next: NextFunction ) => {
-//     try {
-//         const token = req.header('Authorization')?.replace('Bearer ', '')
-//         // jwt.verify
-//     } catch (error) {
-        
-//     }
-// }
-=======
 import { PrismaClient, Users } from '@prisma/client';
 import { Response, NextFunction } from 'express';
 import jwt, { JwtPayload } from 'jsonwebtoken';
@@ -60,4 +47,3 @@ export const authentication = async (
     return res.status(500).json({ message: 'No token ' });
   }
 };
->>>>>>> 8ca57df4c581a5c9e179ec6f415f0a61574ee243

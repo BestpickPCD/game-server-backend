@@ -1,19 +1,5 @@
 {
   "compilerOptions": {
-<<<<<<< HEAD
-    "target": "ES2018", // Set the target ECMAScript version
-    "module": "ESNext", // Specify the module system (Node.js uses commonjs)1
-    "outDir": "./dist", // Output directory for compiled files
-    "rootDir": "./src", // Source directory (where your TypeScript files are)
-    "strict": true, // Enable strict type-checking
-    "esModuleInterop": true, // Enable compatibility with commonjs modules
-    // "resolveJsonModule": true, // Allow importing JSON files
-    "forceConsistentCasingInFileNames": true, // Ensure consistent casing in file names (important for some platforms)
-    "emitDeclarationOnly": true,
-    "allowImportingTsExtensions": true,
-    "declaration": true,
-    // "moduleResolution": "NodeNext"
-=======
     "target": "es2017",
     "module": "ESNext",
     "lib": ["dom", "es6", "es2017", "esnext.asynciterable"],
@@ -38,7 +24,6 @@
     "baseUrl": ".",
     "noEmit": true,
     "allowImportingTsExtensions": true
->>>>>>> 8ca57df4c581a5c9e179ec6f415f0a61574ee243
   },
   "exclude": ["node_modules"],
   "include": ["./src/**/*.ts"],

@@ -6,20 +6,37 @@ import { RequestWithUser } from '../../models/customInterfaces';
 const prisma = new PrismaClient();
 
 export const getVendors = async (
-  _: RequestWithUser,
+  req: RequestWithUser,
   res: Response
 ): Promise<any> => {
   try {
+
     const vendors = await prisma.vendors.findMany({
+      select: {
+        id: true,
+        name: true,
+        url: true,
+        fetchGames: true, 
+        agents: {
+          select: {
+            vendorId: true,
+          },
+          where: {
+            agentId: req.user?.id,
+          },
+        },
+      },
       where: {
         deletedAt: null
       }
     });
 
     const rearrangedVendors = vendors.map((vendor) => {
-      const { fetchGames, deletedAt, createdAt, updatedAt, ...data } = {
+      const canSee = vendor.agents.length == 1 ? true : false // Check if there agent is linked to vendor
+      const { fetchGames, agents, ...data } = {
         ...vendor,
-        gamesTotal: (vendor.fetchGames as [])?.length ?? 0
+        gamesTotal: (vendor.fetchGames as [])?.length ?? 0,
+        canSee
       };
       return data;
     });
@@ -39,7 +56,7 @@ export const getGameVendors = async (
     const queryParams = req.query;
     const vendorStr = queryParams.vendors as string;
     const vendors: string[] = vendorStr.split(',');
-    const games = await prisma.agentVendorTokens.findMany({
+    const games = await prisma.agentVendor.findMany({
       where: {
         agentId: req.user?.id,
         vendor: {
@@ -64,17 +81,7 @@ export const getGameVendors = async (
         if (!game) {
           return null;
         }
-
-        // const gameUrl = `${game.url}/api/game-list`;
-        // const bearerToken = `SN5VfYimhHZ5mzYxC2h9TeePNOo7YzsU6SOlmsld`;
-        // const config = {
-        //   headers: {
-        //     Authorization: `Bearer ${bearerToken}`
-        //   }
-        // };
-
         try {
-          // const response = await axios.get(gameUrl, config);
           return game.vendor?.fetchGames;
         } catch (error) {
           console.log(error);
@@ -96,7 +103,7 @@ export const getGameContractByAgentId = async (
 ): Promise<any> => {
   try {
     const agentId = parseInt(req.params.agentId);
-    const contracts = await prisma.agentVendorTokens.findMany({
+    const contracts = await prisma.agentVendor.findMany({
       where: {
         agentId
       },
@@ -126,7 +133,7 @@ export const gameContract = async (
   try {
     const { agentId, vendorId } = req.body;
     const data = { agentId, vendorId };
-    await prisma.agentVendorTokens.create({
+    await prisma.agentVendor.create({
       data
     });
     return res.status(200).json({ message: 'Contract created' });

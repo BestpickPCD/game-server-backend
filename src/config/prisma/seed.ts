@@ -61,7 +61,7 @@ async function main() {
         }
       });
 
-      await prisma.agentVendorTokens.create({
+      await prisma.agentVendor.create({
         data: {
           agentId: i,
           vendorId: 1

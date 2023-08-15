@@ -49,17 +49,17 @@ model Players {
 model Agents {
   id             Int       @unique
   level          Int?
-  parentAgentId  Int?      
+  parentAgentId  Int?
   parentAgentIds Json?
   rate           Decimal?  @default(0) @db.Decimal(10, 2)
   createdAt      DateTime  @default(now())
   updatedAt      DateTime? @updatedAt
   deletedAt      DateTime?
 
-  user        Users?    @relation(fields: [id], references: [id])
+  user        Users?        @relation(fields: [id], references: [id])
   Players     Players[]
-  parentAgent Users?    @relation("ParentAgent", fields: [parentAgentId], references: [id])
-  vendorTokens        AgentVendorTokens[]
+  parentAgent Users?        @relation("ParentAgent", fields: [parentAgentId], references: [id])
+  vendors     AgentVendor[]
 }
 
 model Roles {
@@ -142,31 +142,31 @@ model Tables {
   deletedAt   DateTime?
 }
 
-model AgentVendorTokens {
-  id          Int       @id @default(autoincrement())
-  agentId     Int
-  vendorId    Int
-  startDate   DateTime?
-  endDate     DateTime?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime? @updatedAt
-  deletedAt   DateTime?
+model AgentVendor {
+  id        Int       @id @default(autoincrement())
+  agentId   Int
+  vendorId  Int
+  startDate DateTime?
+  endDate   DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime? @updatedAt
+  deletedAt DateTime?
 
-  agent     Agents?   @relation(fields: [agentId], references: [id])
-  vendor     Vendors?   @relation(fields: [vendorId], references: [id])
+  agent  Agents?  @relation(fields: [agentId], references: [id])
+  vendor Vendors? @relation(fields: [vendorId], references: [id])
 }
 
-model Vendors { 
-  id          Int       @id @default(autoincrement())
-  name        String    @unique
-  url         String?   @unique
-  fetchGames  Json?
-  contract    String?
-  startDate   DateTime?
-  endDate     DateTime?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime? @updatedAt
-  deletedAt   DateTime?
+model Vendors {
+  id         Int       @id @default(autoincrement())
+  name       String    @unique
+  url        String?   @unique
+  fetchGames Json?
+  contract   String?
+  startDate  DateTime?
+  endDate    DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime? @updatedAt
+  deletedAt  DateTime?
 
-  token   AgentVendorTokens[]
+  agents AgentVendor[]
 }

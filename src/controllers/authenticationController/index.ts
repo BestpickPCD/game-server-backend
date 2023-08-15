@@ -26,7 +26,7 @@ export const refreshToken = async (
       const tokens = getTokens({ ...user, id: user.id } as any as Users);
       await redisClient.setEx(
         `user-${user.id}-tokens`,
-        20,
+        7200,
         JSON.stringify({ ...data })
       );
       return res.status(200).json({ ...tokens });
@@ -100,7 +100,7 @@ export const login = async (req: Request, res: Response): Promise<any> => {
         const data = await formatUser(user);
         await redisClient.setEx(
           `user-${user.id}-tokens`,
-          20,
+          7200,
           JSON.stringify({ ...data })
         );
         return res.status(200).json({ message: message.SUCCESS, data });
@@ -276,6 +276,7 @@ const formatUser = async (user: any) => {
     email: user.email,
     apiKey: user.apiKey,
     roleId: user.roleId,
+    role: user.role,
     currencyId: user.currencyId,
     isActive: user.isActive,
     id: user.id,

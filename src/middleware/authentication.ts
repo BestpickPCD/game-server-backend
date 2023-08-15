@@ -61,6 +61,7 @@ export const authentication = async (
           .status(401)
           .json({ message: message.NOT_FOUND, subMessage: 'User not found' });
       }
+      
       // eslint-disable-next-line no-param-reassign
       (req as any).user = user;
       return next();

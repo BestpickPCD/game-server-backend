@@ -2,7 +2,7 @@ import jwt from 'jsonwebtoken';
 import { Users } from '@prisma/client';
 
 const refreshDays = '7'; // 3 days
-const accessHours = '20'; // 2 hrs
+const accessHours = '2'; // 2 hrs
 
 export const getTokens = (
   user: Users
@@ -20,7 +20,7 @@ export const getTokens = (
     accessKey,
     {
       // expiresIn: `${accessHours}h`
-      expiresIn: `${accessHours}s`
+      expiresIn: `${accessHours}h`
     }
   );
 

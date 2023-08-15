@@ -1,6 +1,7 @@
 import bcrypt from 'bcrypt';
 import { faker } from '@faker-js/faker';
 import { PrismaClient } from '@prisma/client';
+import { evolution, PragmaticPlay, Habanero, ezugi } from './fakedData.ts';
 const prisma = new PrismaClient();
 
 async function main() {
@@ -14,11 +15,29 @@ async function main() {
       code: 'KRW'
     }
   });
-  await prisma.vendors.create({
-    data: {
-      name: 'evolution',
-      url: `https://api.honorlink.org`
-    }
+  await prisma.vendors.createMany({
+    data: [
+      {
+        name: 'evolution',
+        url: `https://api.honorlink.org`,
+        fetchGames: evolution
+      },
+      {
+        name: 'PragmaticPlay',
+        url: `https://api.pragmaticplay.org`,
+        fetchGames: PragmaticPlay
+      },
+      {
+        name: 'Habanero',
+        url: `https://api.Habanero.org`,
+        fetchGames: Habanero
+      },
+      {
+        name: 'ezugi',
+        url: `https://api.ezugi.org`,
+        fetchGames: ezugi
+      }
+    ]
   });
   for (let i = 1; i <= 400; i++) {
     await prisma.users.create({

@@ -10,21 +10,20 @@ export const getVendors = async (
   res: Response
 ): Promise<any> => {
   try {
-
     const vendors = await prisma.vendors.findMany({
       select: {
         id: true,
         name: true,
         url: true,
-        fetchGames: true, 
+        fetchGames: true,
         agents: {
           select: {
-            vendorId: true,
+            vendorId: true
           },
           where: {
-            agentId: req.user?.id,
-          },
-        },
+            agentId: req.user?.id
+          }
+        }
       },
       where: {
         deletedAt: null
@@ -32,7 +31,7 @@ export const getVendors = async (
     });
 
     const rearrangedVendors = vendors.map((vendor) => {
-      const canSee = vendor.agents.length == 1 ? true : false // Check if there agent is linked to vendor
+      const canSee = vendor.agents.length == 1 ? true : false; // Check if there agent is linked to vendor
       const { fetchGames, agents, ...data } = {
         ...vendor,
         gamesTotal: (vendor.fetchGames as [])?.length ?? 0,

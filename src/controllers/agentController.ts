@@ -2,7 +2,7 @@ import { Agents, PrismaClient } from '@prisma/client';
 import { Request, Response } from 'express';
 import { message } from '../utilities/constants/index.ts';
 const prisma = new PrismaClient();
-import redisClient, { removeRedisKeys } from '../config/redis/index.ts';
+import connectToRedis, { removeRedisKeys } from '../config/redis/index.ts';
 interface AgentParams {
   page?: number;
   size?: number;
@@ -36,6 +36,8 @@ export const getAllAgents = async (
   req: Request,
   res: Response
 ): Promise<any> => {
+  const redisClient = await connectToRedis();
+  redisClient.connect();
   try {
     const {
       page = 0,
@@ -46,7 +48,7 @@ export const getAllAgents = async (
       dateTo,
       id
     }: AgentParams = req.query;
-    await redisClient.connect();
+
     const userId = getUserId(req);
     const redisKey = `${defaultKey}:${userId}:${id}:${page}:${size}:${search}:${level}:${dateFrom}:${dateTo}`;
     const redisData = await redisClient.get(redisKey);
@@ -136,6 +138,8 @@ export const getAllAgents = async (
   }
 };
 export const getAgentById = async (req: Request, res: Response) => {
+  const redisClient = await connectToRedis();
+  redisClient.connect();
   try {
     const { id } = req.params;
     if (!id || !Number(id)) {
@@ -143,7 +147,7 @@ export const getAgentById = async (req: Request, res: Response) => {
         .status(400)
         .json({ message: message.INVALID, subMessage: 'Invalid Id' });
     }
-    await redisClient.connect();
+
     const userId = getUserId(req);
     const redisKey = `${defaultKey}:${userId}:${id}`;
     const redisData = await redisClient.get(redisKey);

@@ -1,40 +1,23 @@
 import { createClient } from 'redis';
-const redisClient = createClient({
-  url: process.env.REDIS_URL
-});
-redisClient.on('connect', () => {
-  console.log('Connected to Redis server');
-});
 
-redisClient.on('error', (err) => {
-  console.log(err.message);
-});
-
-redisClient.on('ready', () => {
-  console.log('Redis is ready');
-});
-
-redisClient.on('end', () => {
-  console.log('Redis connection ended');
-});
-
-process.on('SIGINT', () => {
-  redisClient.quit();
-});
-
-redisClient
-  .connect()
-  .then(() => {
-    console.log('Connected to Redis');
-  })
-  .catch((err) => {
-    console.log(err.message);
+// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+function connectToRedis() {
+  const redisClient = createClient({
+    url: process.env.REDIS_URL
+  });
+  // Handle errors
+  redisClient.on('error', (error) => {
+    console.error('Redis error:', error);
   });
 
-export default redisClient;
+  return redisClient;
+}
+
+export default connectToRedis;
 export const removeRedisKeys = async (key: string): Promise<any> => {
+  const redisClient = await connectToRedis();
+  await redisClient.connect();
   try {
-    await redisClient.connect();
     const matchKeys = [];
     for await (const redisKey of redisClient.scanIterator({
       TYPE: 'string', // `SCAN` only

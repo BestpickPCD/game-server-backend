@@ -1,49 +1,35 @@
-import { Response, Request } from 'express';
-import jwt from 'jsonwebtoken';
-import bcrypt from 'bcrypt';
-import { message } from '../../utilities/constants/index.ts';
 import { PrismaClient, Users } from '@prisma/client';
-const prisma = new PrismaClient();
+import axios from 'axios';
+import bcrypt from 'bcrypt';
+import { Request, Response } from 'express';
+import connectToRedis from '../../config/redis/index.ts';
 import { RequestWithUser } from '../../models/customInterfaces.ts';
+import { message } from '../../utilities/constants/index.ts';
 import { getTokens } from '../../utilities/getTokens.ts';
-import { generateApiKey } from './utilities.ts';
 import {
   findCurrencyById,
   getParentAgentIdsByParentAgentId
 } from '../userController/utilities.ts';
-import axios from 'axios';
-
-const REFRESH_TOKEN_KEY = process.env.REFRESH_TOKEN_KEY ?? '';
+import { generateApiKey } from './utilities.ts';
+const prisma = new PrismaClient();
 
 export const refreshToken = async (
   req: RequestWithUser,
   res: Response
 ): Promise<any> => {
   try {
-    const refreshToken = localStorage.getItem('refreshToken');
-
-    if (!refreshToken) {
-      return res.status(401).json({ message: 'Refresh token not provided' });
-    }
-
-    let decoded: any;
-    try {
-      decoded = jwt.verify(refreshToken, REFRESH_TOKEN_KEY);
-    } catch (error) {
-      return res.status(401).json({ message: 'Invalid refresh token' });
-    }
-
-    if (req.user?.id === decoded.userId) {
-      try {
-        const tokens = await getTokens(req.user as Users);
-        return res.status(200).json({
-          message: 'New refresh token generated successfully',
-          tokens
-        });
-      } catch (error) {
-        console.log(error);
-        return res.status(500).json(error);
-      }
+    const user = (req as any)?.user;
+    if (user) {
+      const redisClient = await connectToRedis();
+      redisClient.connect();
+      const data = await formatUser(user);
+      const tokens = getTokens({ ...user, id: user.id } as any as Users);
+      await redisClient.setEx(
+        `user-${user.id}-tokens`,
+        20,
+        JSON.stringify({ ...data })
+      );
+      return res.status(200).json({ ...tokens });
     }
   } catch (error) {
     console.error(error);
@@ -82,8 +68,23 @@ export const apiToken = async (
 
 export const login = async (req: Request, res: Response): Promise<any> => {
   try {
+    const redisClient = await connectToRedis();
+    redisClient.connect();
     const { username, password } = req.body as any;
     const user = await prisma.users.findUnique({
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        apiKey: true,
+        roleId: true,
+        currencyId: true,
+        isActive: true,
+        username: true,
+        type: true,
+        role: true,
+        password: true
+      },
       where: {
         username: username
       }
@@ -96,22 +97,12 @@ export const login = async (req: Request, res: Response): Promise<any> => {
       const isValid = await bcrypt.compare(password, user.password);
 
       if (isValid) {
-        const currency = await findCurrencyById(user.currencyId as number);
-        const currencyFrom = 'USD';
-        const currencyCode = currency?.code ?? 'KRW';
-        const currencyRate = await axios.get(
-          `https://api.frankfurter.app/latest?from=${currencyFrom}&to=${currencyCode}`
+        const data = await formatUser(user);
+        await redisClient.setEx(
+          `user-${user.id}-tokens`,
+          20,
+          JSON.stringify({ ...data })
         );
-
-        const tokens = getTokens(user as Users);
-        const data = {
-          userId: user.id,
-          username: user.username,
-          type: user.type,
-          currency: (currency as number) && currency.code,
-          rate: currencyRate.data,
-          tokens
-        };
         return res.status(200).json({ message: message.SUCCESS, data });
       }
       // Password is incorrect
@@ -269,4 +260,30 @@ const _userInsert = async (userSchema: any) => {
   }
 
   return newUser;
+};
+
+const formatUser = async (user: any) => {
+  const currency = await findCurrencyById(user.currencyId as number);
+  const currencyFrom = 'USD';
+  const currencyCode = currency?.code ?? 'KRW';
+  const currencyRate = await axios.get(
+    `https://api.frankfurter.app/latest?from=${currencyFrom}&to=${currencyCode}`
+  );
+
+  const tokens = getTokens(user as any as Users);
+  const data = {
+    name: user.name,
+    email: user.email,
+    apiKey: user.apiKey,
+    roleId: user.roleId,
+    currencyId: user.currencyId,
+    isActive: user.isActive,
+    id: user.id,
+    username: user.username,
+    type: user.type,
+    currency: (currency as number) && currency.code,
+    rate: currencyRate.data,
+    tokens
+  };
+  return data;
 };

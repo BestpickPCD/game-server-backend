@@ -46,8 +46,6 @@ export const permission =
   (router: RouteType, method: PermissionType): any =>
   async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     try {
-      console.log((req as any).user);
-
       if (!(req as any).user) {
         return res.status(401).json({ message: message.UNAUTHORIZED });
       }
@@ -59,11 +57,13 @@ export const permission =
           .status(404)
           .json({ message: message.NOT_FOUND, subMessage: 'Role not found' });
       }
+
       const hasPermission =
         permissions[roles[hasRoles]][router].includes(method);
       if (!hasPermission) {
         return res.status(403).json({ message: message.FORBIDDEN });
       }
+
       return next();
     } catch (error) {
       return res

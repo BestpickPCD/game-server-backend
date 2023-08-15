@@ -16,8 +16,6 @@ export const getVendors = async (
       }
     });
 
-    
-
     const rearrangedVendors = vendors.map((vendor) => {
       const { fetchGames, deletedAt, createdAt, updatedAt, ...data } = {
         ...vendor,

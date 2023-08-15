@@ -46,12 +46,11 @@ export const permission =
   (router: RouteType, method: PermissionType): any =>
   async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     try {
-      
       if (!(req as any).user) {
         return res.status(401).json({ message: message.UNAUTHORIZED });
       }
-      const { role }: { role: Roles } = (req as any).user; 
-      
+      const { role }: { role: Roles } = (req as any).user;
+
       const hasRoles = roles.indexOf(role.name as RoleType);
       if (hasRoles === -1 && roles[hasRoles]) {
         return res

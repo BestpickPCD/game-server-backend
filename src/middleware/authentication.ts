@@ -1,7 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import { NextFunction, Response } from 'express';
 import jwt, { JwtPayload } from 'jsonwebtoken';
-import connectToRedis from '../config/redis/index.ts';
+import redisClient from '../config/redis/index.ts';
 import { RequestWithUser } from '../models/customInterfaces.ts';
 import { message } from '../utilities/constants/index.ts';
 
@@ -42,26 +42,30 @@ export const authentication = async (
     if (!token) {
       return res.status(401).json({ message: 'Unauthorized' });
     }
-    const redisClient = await connectToRedis();
-    redisClient.connect();
 
     try {
       const decoded = (await jwt.verify(token, ACCESS_TOKEN_KEY)) as JwtPayload;
       const result = await redisClient.get(`user-${decoded.userId}-tokens`);
       const parsedResult = JSON.parse(result ?? '');
       if (parsedResult) {
+        console.log(parsedResult.tokens.accessToken, token);
+
+        if (parsedResult.tokens.accessToken !== token) {
+          return res.status(401).json({
+            message: message.BAD_REQUEST,
+            subMessage: 'Token is expired'
+          });
+        }
         // eslint-disable-next-line no-param-reassign
         req.user = parsedResult;
         return next();
       }
-
       const user = await findUser(Number(decoded.id));
       if (!user) {
         return res
           .status(401)
           .json({ message: message.NOT_FOUND, subMessage: 'User not found' });
       }
-
       // eslint-disable-next-line no-param-reassign
       (req as any).user = user;
       return next();
@@ -83,12 +87,9 @@ export const authentication = async (
           });
         }
       }
-
       return res
         .status(401)
         .json({ message: message.BAD_REQUEST, subMessage: 'Token is expired' });
-    } finally {
-      redisClient.quit();
     }
   } catch (error) {
     return res.status(500).json({ message: message.INTERNAL_SERVER_ERROR });

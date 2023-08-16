@@ -1,4 +1,4 @@
-import { PrismaClient, Users } from '@prisma/client';
+import { PrismaClient, Users, Prisma } from '@prisma/client';
 import { Request, Response } from 'express';
 import { RequestWithUser } from '../../models/customInterfaces.ts';
 import { message } from '../../utilities/constants/index.ts';
@@ -22,116 +22,92 @@ export const getTransactions = async (
       search
     } = req.query;
     const { id } = (req as any).user;
+
+    const filterParentAgentIds = {
+      parentAgentIds: {
+        array_contains: [Number(id)]
+      }
+    };
+
     const orFilter: any = {
       Agents: {
         ...(!agentId && !Number(agentId)
-          ? { id: agentId }
-          : { parentAgentIds: { array_contains: [Number(id)] } })
+          ? {
+              id: agentId,
+              ...filterParentAgentIds
+            }
+          : { ...filterParentAgentIds })
       }
     };
-    const [transactions, count] = await prisma.$transaction([
-      prisma.transactions.findMany({
-        select: {
-          id: true,
-          senderId: true,
-          receiverId: true,
-          amount: true,
-          type: true,
-          status: true,
-          updatedAt: true,
-          sender: {
-            select: {
-              name: true,
-              username: true
-            }
-          },
-          receiver: {
-            select: {
-              name: true,
-              username: true
-            }
+
+    const filter: Prisma.TransactionsFindManyArgs = {
+      select: {
+        id: true,
+        senderId: true,
+        receiverId: true,
+        amount: true,
+        type: true,
+        status: true,
+        updatedAt: true,
+        sender: {
+          select: {
+            name: true,
+            username: true
           }
         },
-        where: {
-          deletedAt: null,
-          OR: [
-            {
-              sender: orFilter
-            },
-            {
-              receiver: orFilter
-            }
-          ],
-          AND: {
-            ...(type && { type: String(type) }),
-            ...(gameId && { gameId: Number(gameId) }),
-            OR: [
-              {
-                receiver: {
-                  name: {
-                    contains: String(search)
-                  }
-                }
-              },
-              {
-                sender: {
-                  name: {
-                    contains: String(search)
-                  }
-                }
-              }
-            ]
-          },
-          updatedAt: {
-            gte: (dateFrom as string) || '1970-01-01T00:00:00.000Z',
-            lte: (dateTo as string) || '2100-01-01T00:00:00.000Z'
+        receiver: {
+          select: {
+            name: true,
+            username: true
           }
-        },
-        orderBy: {
-          updatedAt: 'desc'
-        },
-        skip: Number(page) * Number(size),
-        take: Number(size)
-      }),
-      prisma.transactions.count({
-        where: {
-          deletedAt: null,
-          OR: [
-            {
-              sender: orFilter
-            },
-            {
-              receiver: orFilter
-            }
-          ],
-          AND: {
-            ...(type && { type: String(type) }),
-            ...(gameId && { gameId: Number(gameId) }),
-            OR: [
-              {
-                receiver: {
-                  name: {
-                    contains: String(search)
-                  }
-                }
-              },
-              {
-                sender: {
-                  name: {
-                    contains: String(search)
-                  }
-                }
-              }
-            ]
-          },
-          updatedAt: {
-            gte: (dateFrom as string) || '1970-01-01T00:00:00.000Z',
-            lte: (dateTo as string) || '2100-01-01T00:00:00.000Z'
-          }
-        },
-        orderBy: {
-          updatedAt: 'desc'
         }
+      },
+      where: {
+        deletedAt: null,
+        OR: [
+          {
+            sender: orFilter
+          },
+          {
+            receiver: orFilter
+          }
+        ],
+        AND: {
+          ...(type && { type: String(type) }),
+          ...(gameId && { gameId: Number(gameId) }),
+          OR: [
+            {
+              receiver: {
+                name: {
+                  contains: String(search)
+                }
+              }
+            },
+            {
+              sender: {
+                name: {
+                  contains: String(search)
+                }
+              }
+            }
+          ]
+        },
+        updatedAt: {
+          gte: (dateFrom as string) || '1970-01-01T00:00:00.000Z',
+          lte: (dateTo as string) || '2100-01-01T00:00:00.000Z'
+        }
+      },
+      orderBy: {
+        updatedAt: 'desc'
+      },
+      skip: Number(page) * Number(size),
+      take: Number(size)
+    };
+
+    const [transactions, count] = await prisma.$transaction([
+      prisma.transactions.findMany(filter),
+      prisma.transactions.count({
+        where: filter.where
       })
     ]);
     return res.status(200).json({
@@ -402,7 +378,6 @@ export const getTransactionDetailsByUserIdView = async (
     const userDetails = await arrangeTransactionDetails(transactions, userId);
     res.render('transactionDetails', { data: userDetails });
   } catch (error) {
-    console.log(error);
     res.status(500).json(error);
   }
 };

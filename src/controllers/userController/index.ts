@@ -51,6 +51,11 @@ export const getAllUsers = async (
       },
       where: {
         deletedAt: null,
+        agent: {
+          parentAgentIds: {
+            array_contains: [Number(id)]
+          }
+        },
         AND: {
           user: {
             OR: [
@@ -122,7 +127,12 @@ export const updateUser = async (req: Request, res: Response): Promise<any> => {
     const userId = parseInt(req.params.userId);
     const user = await prisma.users.findUnique({
       where: {
-        id: userId
+        id: userId,
+        Agents: {
+          parentAgentIds: {
+            array_contains: [Number(userId)]
+          }
+        }
       }
     });
     if (!user) {
@@ -181,6 +191,11 @@ export const getUserById = async (
   try {
     const user = await prisma.users.findUnique({
       where: {
+        Agents: {
+          parentAgentIds: {
+            array_contains: [Number((req as any).user.id)]
+          }
+        },
         id: parseInt(userId)
       },
       select: {
@@ -241,7 +256,15 @@ export const deleteUser = async (req: Request, res: Response): Promise<any> => {
     const userId = parseInt(req.params.userId);
 
     const deleteUser = await prisma.users.findUnique({
-      where: { id: userId }
+      where: {
+        deletedAt: null,
+        id: userId,
+        Agents: {
+          parentAgentIds: {
+            array_contains: [Number((req as any).user.id)]
+          }
+        }
+      }
     });
     if (deleteUser?.deletedAt == null) {
       await prisma.users.update({

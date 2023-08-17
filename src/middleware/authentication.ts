@@ -80,14 +80,15 @@ export const authentication = async (
           return next();
         } catch (error) {
           return res.status(401).json({
-            message: message.BAD_REQUEST,
+            message: message.UNAUTHORIZED,
             subMessage: 'Token is expired'
           });
         }
       }
-      return res
-        .status(401)
-        .json({ message: message.BAD_REQUEST, subMessage: 'Token is expired' });
+      return res.status(401).json({
+        message: message.UNAUTHORIZED,
+        subMessage: 'Token is expired'
+      });
     }
   } catch (error) {
     return res.status(500).json({ message: message.INTERNAL_SERVER_ERROR });

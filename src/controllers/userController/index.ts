@@ -4,7 +4,6 @@ import { message } from '../../utilities/constants/index.ts';
 import { getParentAgentIdsByParentAgentId } from './utilities.ts';
 const prisma = new PrismaClient();
 
-// Define your route handler to get all users
 export const getAllUsers = async (
   req: Request,
   res: Response
@@ -51,11 +50,21 @@ export const getAllUsers = async (
       },
       where: {
         deletedAt: null,
-        agent: {
-          parentAgentIds: {
-            array_contains: [Number(id)]
-          }
+        user: {
+          type: 'player'
         },
+        OR: [
+          {
+            agentId: Number(id)
+          },
+          {
+            agent: {
+              parentAgentIds: {
+                array_contains: [Number(id)]
+              }
+            }
+          }
+        ],
         AND: {
           user: {
             OR: [
@@ -188,15 +197,26 @@ export const getUserById = async (
   res: Response
 ): Promise<any> => {
   const { userId } = req.params;
+
   try {
+    const { id } = (req as any).user;
     const user = await prisma.users.findUnique({
       where: {
-        Agents: {
-          parentAgentIds: {
-            array_contains: [Number((req as any).user.id)]
-          }
-        },
-        id: parseInt(userId)
+        id: Number(userId),
+        Players: {
+          OR: [
+            {
+              agentId: Number(id)
+            },
+            {
+              agent: {
+                parentAgentIds: {
+                  array_contains: [Number(id)]
+                }
+              }
+            }
+          ]
+        }
       },
       select: {
         id: true,
@@ -204,11 +224,13 @@ export const getUserById = async (
         username: true,
         email: true,
         type: true,
+        roleId: true,
         role: {
           select: {
             name: true
           }
         },
+        currencyId: true,
         currency: {
           select: {
             name: true
@@ -239,12 +261,13 @@ export const getUserById = async (
       type: user.type,
       role: user.role?.name,
       currency: user.currency?.name,
-      agent: user.Players?.agent?.user?.name ?? null
+      agent: user.Players?.agent?.user?.name ?? null,
+      roleId: user.roleId,
+      currencyId: user.currencyId
     };
 
-    return res.status(200).json({ message: message.SUCCESS, data: data });
+    return res.status(200).json({ message: message.SUCCESS, data });
   } catch (error) {
-    console.log(error);
     return res
       .status(500)
       .json({ message: message.INTERNAL_SERVER_ERROR, error });
@@ -253,32 +276,67 @@ export const getUserById = async (
 
 export const deleteUser = async (req: Request, res: Response): Promise<any> => {
   try {
+    const { id } = (req as any).user;
     const userId = parseInt(req.params.userId);
 
     const deleteUser = await prisma.users.findUnique({
       where: {
+        id: Number(userId),
         deletedAt: null,
-        id: userId,
-        Agents: {
-          parentAgentIds: {
-            array_contains: [Number((req as any).user.id)]
+        Players: {
+          OR: [
+            {
+              agentId: Number(id)
+            },
+            {
+              agent: {
+                parentAgentIds: {
+                  array_contains: [Number(id)]
+                }
+              }
+            }
+          ]
+        }
+      },
+      select: {
+        id: true,
+        name: true,
+        username: true,
+        email: true,
+        type: true,
+        roleId: true,
+        role: {
+          select: {
+            name: true
+          }
+        },
+        currencyId: true,
+        currency: {
+          select: {
+            name: true
+          }
+        },
+        Players: {
+          select: {
+            agent: {
+              select: {
+                id: true,
+                user: true
+              }
+            }
           }
         }
       }
     });
-    if (deleteUser?.deletedAt == null) {
+    if (deleteUser) {
       await prisma.users.update({
         where: { id: userId },
         data: { deletedAt: new Date() }
       });
       return res.status(200).json({ message: message.DELETED });
     }
-    return res.status(400).json({ message: 'User was already deleted' });
+    return res.status(404).json({ message: message.NOT_FOUND });
   } catch (error) {
-    console.log(error);
-    if (error.code === 'P2025') {
-      return res.status(404).json({ message: message.NOT_FOUND });
-    }
     return res
       .status(500)
       .json({ message: message.INTERNAL_SERVER_ERROR, error });
@@ -323,5 +381,104 @@ const _updatePlayer = async (user: any, agentId: number, res: Response) => {
   } catch (error) {
     console.log(error);
     return res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+export const getAllUsersByAgentId = async (
+  req: Request,
+  res: Response
+): Promise<any> => {
+  const { id } = (req as any).user;
+  try {
+    const {
+      page = 0,
+      size = 10,
+      search = ''
+    }: {
+      page?: number;
+      size?: number;
+      search?: string;
+    } = req.query;
+
+    const filter: Prisma.UsersFindManyArgs = {
+      select: {
+        id: true,
+        name: true,
+        username: true
+      },
+      where: {
+        deletedAt: null,
+        AND: {
+          OR: [
+            {
+              Agents: {
+                OR: [
+                  {
+                    id: Number(id)
+                  },
+                  {
+                    parentAgentIds: {
+                      array_contains: [Number(id)]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              Players: {
+                OR: [
+                  {
+                    agentId: Number(id)
+                  },
+                  {
+                    agent: {
+                      parentAgentIds: {
+                        array_contains: [Number(id)]
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        OR: [
+          {
+            name: {
+              contains: search
+            }
+          },
+          {
+            username: {
+              contains: search
+            }
+          }
+        ]
+      },
+      orderBy: {
+        updatedAt: 'desc'
+      },
+      skip: Number(page * size),
+      take: Number(size)
+    };
+
+    const [totalItems, data] = await prisma.$transaction([
+      prisma.users.count({
+        where: filter.where
+      }),
+      prisma.users.findMany(filter)
+    ]);
+
+    return res.status(200).json({
+      data: {
+        data,
+        totalItems,
+        page: Number(page),
+        size: Number(size)
+      },
+      message: message.SUCCESS
+    });
+  } catch (error) {
+    return res.status(500).json({ message: message.INTERNAL_SERVER_ERROR });
   }
 };

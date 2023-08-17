@@ -48,8 +48,6 @@ export const authentication = async (
       const result = await redisClient.get(`user-${decoded.userId}-tokens`);
       const parsedResult = JSON.parse(result ?? '');
       if (parsedResult) {
-        console.log(parsedResult.tokens.accessToken, token);
-
         if (parsedResult.tokens.accessToken !== token) {
           return res.status(401).json({
             message: message.BAD_REQUEST,

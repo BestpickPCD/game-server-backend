@@ -26,12 +26,12 @@
     "allowImportingTsExtensions": true
   },
   "exclude": ["node_modules"],
-  "include": ["./src/**/*.ts"],
+  "include": ["./**/*.*"],
   "ts-node": {
     // Tell ts-node CLI to install the --loader automatically
     "esm": true
   },
   "resolve": {
-    "extensions": [".js", ".jsx", ".ts", ".tsx"]
+    "extensions": [".js", ".jsx", ".ts", ".tsx", ".*"]
   }
 }

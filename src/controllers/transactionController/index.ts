@@ -140,6 +140,7 @@ export const addTransaction = async (
       currencyId,
       gameId
     } = req.body;
+
     const { id: senderId } = (req as any).user;
     const data: any = { type, note, token, status, amount, gameId };
 
@@ -173,7 +174,7 @@ export const addTransaction = async (
         data: {
           ...data,
           currencyId,
-          updatedId: Number(req?.user?.id),
+          updateUserId: Number(req?.user?.id),
           ...(senderId && { senderId }),
           ...(receiverId && { receiverId })
         }

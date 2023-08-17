@@ -16,28 +16,44 @@ export const getTransactions = async (
       size = 10,
       dateFrom,
       dateTo,
-      agentId,
+      userId,
       type,
       gameId,
       search
     } = req.query;
     const { id } = (req as any).user;
 
-    const filterParentAgentIds = {
-      parentAgentIds: {
-        array_contains: [Number(id)]
-      }
-    };
-
-    const orFilter: any = {
-      Agents: {
-        ...(!agentId && !Number(agentId)
-          ? {
-              id: agentId,
-              ...filterParentAgentIds
-            }
-          : { ...filterParentAgentIds })
-      }
+    const orFilterWithoutUser: Prisma.UsersWhereInput = {
+      OR: [
+        {
+          Agents: {
+            OR: [
+              {
+                parentAgentIds: {
+                  array_contains: [Number(id)]
+                }
+              },
+              { id: Number(id) }
+            ]
+          }
+        },
+        {
+          Players: {
+            OR: [
+              {
+                agentId: Number(id)
+              },
+              {
+                agent: {
+                  parentAgentIds: {
+                    array_contains: [Number(id)]
+                  }
+                }
+              }
+            ]
+          }
+        }
+      ]
     };
 
     const filter: Prisma.TransactionsFindManyArgs = {
@@ -52,13 +68,23 @@ export const getTransactions = async (
         sender: {
           select: {
             name: true,
-            username: true
+            username: true,
+            Agents: {
+              select: {
+                parentAgentIds: true
+              }
+            }
           }
         },
         receiver: {
           select: {
             name: true,
-            username: true
+            username: true,
+            Agents: {
+              select: {
+                parentAgentIds: true
+              }
+            }
           }
         }
       },
@@ -66,10 +92,10 @@ export const getTransactions = async (
         deletedAt: null,
         OR: [
           {
-            sender: orFilter
+            sender: orFilterWithoutUser
           },
           {
-            receiver: orFilter
+            receiver: orFilterWithoutUser
           }
         ],
         AND: {
@@ -90,7 +116,31 @@ export const getTransactions = async (
                 }
               }
             }
-          ]
+          ],
+          ...(userId && {
+            AND: {
+              OR: [
+                {
+                  sender: {
+                    Agents: {
+                      parentAgentIds: {
+                        array_contains: [Number(id)]
+                      }
+                    }
+                  }
+                },
+                {
+                  receiver: {
+                    Agents: {
+                      parentAgentIds: {
+                        array_contains: [Number(id)]
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          })
         },
         updatedAt: {
           gte: (dateFrom as string) || '1970-01-01T00:00:00.000Z',
@@ -130,7 +180,6 @@ export const addTransaction = async (
 ): Promise<any> => {
   try {
     const {
-      // senderId,
       receiverId,
       type,
       note,
@@ -168,8 +217,65 @@ export const addTransaction = async (
         });
       }
     }
-
+    //*: check receiverId is our child player or child agent (done)
     if (checkTransactionType(type)) {
+      if (receiverId) {
+        const user = await prisma.users.findUnique({
+          where: {
+            id: Number(receiverId),
+            OR: [
+              {
+                Players: {
+                  OR: [
+                    {
+                      agentId: Number(senderId)
+                    },
+                    {
+                      agent: {
+                        parentAgentIds: {
+                          array_contains: [Number(senderId)]
+                        }
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                Agents: {
+                  parentAgentIds: {
+                    array_contains: [Number(senderId)]
+                  }
+                }
+              }
+            ]
+          },
+          select: {
+            id: true,
+            Players: {
+              select: {
+                agent: {
+                  select: {
+                    id: true,
+                    user: true
+                  }
+                }
+              }
+            },
+            Agents: {
+              select: {
+                parentAgentIds: true
+              }
+            }
+          }
+        });
+
+        if (!user) {
+          return res.status(404).json({
+            message: message.NOT_FOUND,
+            subMessage: 'User not found'
+          });
+        }
+      }
       await prisma.transactions.create({
         data: {
           ...data,

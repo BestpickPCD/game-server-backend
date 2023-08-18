@@ -1,0 +1,223 @@
+{
+  message: {
+    error: PrismaClientValidationError: 
+    Invalid `prisma.users.findMany()` invocation:
+    
+    {
+      select: {
+        id: true,
+        username: true,
+        name: true,
+        type: true,
+        currencyId: true,
+        roleId: true,
+        createdAt: true,
+        updatedAt: true,
+        Agents: {
+          select: {
+            id: true,
+            level: true,
+            parentAgent: {
+              select: {
+                name: true,
+                id: true
+              }
+            }
+          }
+        }
+      },
+      where: {
+        deletedAt: null,
+        type: "agent",
+        Agents: {
+          parentAgentIds: {
+            array_contains: [
+              1
+            ]
+          }
+        },
+        OR: [
+          {
+            name: {
+              contains: ""
+            }
+          },
+          {
+            username: {
+              contains: ""
+            }
+          }
+        ],
+        updatedAt: {
+          gte: "1970-01-01T00:00:00.000Z",
+          lte: "2100-01-01T00:00:00.000Z"
+        }
+      },
+      orderBy: {
+        id: "desc"
+      },
+      skip: "asd",
+            ~~~~~
+      take: 10
+    }
+    
+    Argument `skip`: Invalid value provided. Expected Int, provided String.
+        at Ur (/Users/truongphuocnguyen/Documents/web-project/game-server-backend/node_modules/@prisma/client/runtime/library.js:115:5803)
+        at zr.handleRequestError (/Users/truongphuocnguyen/Documents/web-project/game-server-backend/node_modules/@prisma/client/runtime/library.js:122:8007)
+        at zr.handleAndLogRequestError (/Users/truongphuocnguyen/Documents/web-project/game-server-backend/node_modules/@prisma/client/runtime/library.js:122:7697)
+        at zr.request (/Users/truongphuocnguyen/Documents/web-project/game-server-backend/node_modules/@prisma/client/runtime/library.js:122:7307) {
+      clientVersion: '5.0.0'
+    },
+    userId: 1,
+    url: '/?id=1&page=0&size=10&search=&dateFrom=&dateTo='
+  },
+  level: 'error',
+  timestamp: '2023-08-15T09:01:34.831Z'
+}
+{
+  name: 'PrismaClientValidationError',
+  clientVersion: '5.0.0',
+  level: 'error',
+  timestamp: '2023-08-15T09:02:32.291Z'
+}
+{
+  message: {
+    name: 'PrismaClientValidationError',
+    clientVersion: '5.0.0',
+    userId: 1,
+    url: '/?id=1&page=0&size=10&search=&dateFrom=&dateTo='
+  },
+  level: 'error',
+  timestamp: '2023-08-15T09:02:57.247Z'
+}
+{
+  message: {
+    name: 'PrismaClientValidationError',
+    clientVersion: '5.0.0',
+    userId: 1,
+    url: '//?id=1&page=0&size=10&search=&dateFrom=&dateTo='
+  },
+  level: 'error',
+  timestamp: '2023-08-15T09:03:44.293Z'
+}
+{
+  message: {
+    name: 'PrismaClientValidationError',
+    clientVersion: '5.0.0',
+    userId: 1,
+    url: '//?id=1&page=0&size=10&search=&dateFrom=&dateTo='
+  },
+  level: 'error',
+  timestamp: '2023-08-15T09:03:49.875Z'
+}
+{
+  message: {
+    name: 'PrismaClientValidationError',
+    clientVersion: '5.0.0',
+    userId: 1,
+    url: '//?id=1&page=0&size=10&search=&dateFrom=&dateTo='
+  },
+  level: 'error',
+  timestamp: '2023-08-15T09:04:30.652Z'
+}
+{
+  message: {
+    name: 'PrismaClientValidationError',
+    clientVersion: '5.0.0',
+    userId: 1,
+    url: '/agents/?id=1&page=0&size=10&search=&dateFrom=&dateTo='
+  },
+  level: 'error',
+  timestamp: '2023-08-15T09:04:48.500Z'
+}
+{
+  message: {
+    name: 'PrismaClientValidationError',
+    clientVersion: '5.0.0',
+    userId: 1,
+    url: '/agents/?id=1&page=0&size=10&search=&dateFrom=&dateTo=',
+    body: {},
+    query: {
+      id: '1',
+      page: '0',
+      size: '10',
+      search: '',
+      dateFrom: '',
+      dateTo: ''
+    }
+  },
+  level: 'error',
+  timestamp: '2023-08-15T09:06:12.847Z'
+}
+{
+  message: {
+    name: 'PrismaClientValidationError',
+    clientVersion: '5.0.0',
+    userId: 1,
+    url: '/agents/',
+    body: {},
+    query: {}
+  },
+  level: 'error',
+  timestamp: '2023-08-16T02:39:07.997Z'
+}
+{
+  message: {
+    name: 'PrismaClientValidationError',
+    clientVersion: '5.0.0',
+    userId: 1,
+    url: '/agents/',
+    body: {},
+    query: {}
+  },
+  level: 'error',
+  timestamp: '2023-08-16T02:39:15.157Z'
+}
+{
+  message: {
+    name: 'PrismaClientValidationError',
+    clientVersion: '5.0.0',
+    userId: 1,
+    url: '/agents/',
+    body: {},
+    query: {}
+  },
+  level: 'error',
+  timestamp: '2023-08-16T02:39:23.888Z'
+}
+{
+  message: {
+    name: 'PrismaClientValidationError',
+    clientVersion: '5.0.0',
+    userId: 1,
+    url: '/agents/',
+    body: {},
+    query: {}
+  },
+  level: 'error',
+  timestamp: '2023-08-16T02:39:27.588Z'
+}
+{
+  message: {
+    name: 'PrismaClientValidationError',
+    clientVersion: '5.0.0',
+    userId: 1,
+    url: '/agents/',
+    body: {},
+    query: {}
+  },
+  level: 'error',
+  timestamp: '2023-08-16T02:39:28.485Z'
+}
+{
+  message: {
+    name: 'PrismaClientValidationError',
+    clientVersion: '5.0.0',
+    userId: 1,
+    url: '/agents/',
+    body: {},
+    query: {}
+  },
+  level: 'error',
+  timestamp: '2023-08-16T02:39:32.539Z'
+}

@@ -1,36 +1,32 @@
-import { createClient } from 'redis';
+import Redis from 'ioredis';
+const redis = new Redis({
+  username: process.env.REDIS_USERNAME,
+  password: process.env.REDIS_PASSWORD,
+  host: process.env.REDIS_HOST,
+  port: Number(process.env.REDIS_PORT),
+  connectTimeout: Number(process.env.REDIS_CONNECT_TIMEOUT)
+});
+export default redis;
 
-// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-function connectToRedis() {
-  const redisClient = createClient({
-    url: process.env.REDIS_URL
-  });
-  // Handle errors
-  redisClient.on('error', (error) => {
-    console.error('Redis error:', error);
-  });
+redis.on('connect', () => {
+  console.log('Redis connected');
+});
+redis.on('error', () => {
+  console.log('Redis error');
+});
 
-  return redisClient;
-}
-
-export default connectToRedis;
 export const removeRedisKeys = async (key: string): Promise<any> => {
-  const redisClient = await connectToRedis();
-  await redisClient.connect();
   try {
     const matchKeys = [];
-    for await (const redisKey of redisClient.scanIterator({
-      TYPE: 'string', // `SCAN` only
-      MATCH: `${key}*`
+    for await (const redisKey of redis.scanStream({
+      match: `${key}*`
     })) {
       matchKeys.push(redisKey);
     }
     if (matchKeys.length > 0) {
-      redisClient.del(matchKeys);
+      redis.del(matchKeys);
     }
   } catch (error) {
     return Promise.reject(error);
-  } finally {
-    await redisClient.quit();
   }
 };

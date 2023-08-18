@@ -2,7 +2,7 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 import { Request, Response } from 'express';
 import { message } from '../utilities/constants/index.ts';
-import connectToRedis from '../config/redis/index.ts';
+import Redis from '../config/redis/index.ts';
 import { permissions } from '../middleware/permission.ts';
 import { RoleType } from '../models/customInterfaces.ts';
 
@@ -11,12 +11,11 @@ export const getAllPermission = async (
   res: Response
 ): Promise<any> => {
   try {
-    const redisClient = await connectToRedis();
     const roleName = (req as any)?.user?.role?.name as RoleType;
-    const data = await redisClient.get(`${roleName}-permissions`);
+    const data = await Redis.get(`${roleName}-permissions`);
     if (!data) {
       const userPermission = permissions[roleName];
-      await redisClient.set(
+      await Redis.set(
         `${roleName}-permissions`,
         JSON.stringify(userPermission)
       );

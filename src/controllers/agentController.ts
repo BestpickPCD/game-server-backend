@@ -1,8 +1,9 @@
 import { Agents, PrismaClient } from '@prisma/client';
 import { Request, Response } from 'express';
+import Redis, { removeRedisKeys } from '../config/redis/index.ts';
 import { message } from '../utilities/constants/index.ts';
+import logger from '../utilities/log/index.ts';
 const prisma = new PrismaClient();
-import connectToRedis, { removeRedisKeys } from '../config/redis/index.ts';
 interface AgentParams {
   page?: number;
   size?: number;
@@ -36,8 +37,6 @@ export const getAllAgents = async (
   req: Request,
   res: Response
 ): Promise<any> => {
-  const redisClient = await connectToRedis();
-  redisClient.connect();
   try {
     const {
       page = 0,
@@ -51,7 +50,7 @@ export const getAllAgents = async (
 
     const userId = getUserId(req);
     const redisKey = `${defaultKey}:${userId}:${id}:${page}:${size}:${search}:${level}:${dateFrom}:${dateTo}`;
-    const redisData = await redisClient.get(redisKey);
+    const redisData = await Redis.get(redisKey);
 
     if (!redisData) {
       const pageNumber = Number(page);
@@ -125,21 +124,22 @@ export const getAllAgents = async (
         },
         message: message.SUCCESS
       };
-      await redisClient.setEx(redisKey, 300, JSON.stringify(response));
+      await Redis.setex(redisKey, 300, JSON.stringify(response));
       return res.status(200).send(response);
     }
     return res.status(200).json({ ...JSON.parse(redisData) });
   } catch (error) {
-    return res
-      .status(500)
-      .json({ message: message.INTERNAL_SERVER_ERROR, error });
-  } finally {
-    await redisClient.quit();
+    logger.error({
+      ...error,
+      userId: (req as any)?.user.id,
+      url: `${req.baseUrl}${req.url}`,
+      body: req.body,
+      query: req.query
+    });
+    return res.status(500).json({ message: message.INTERNAL_SERVER_ERROR });
   }
 };
 export const getAgentById = async (req: Request, res: Response) => {
-  const redisClient = await connectToRedis();
-  redisClient.connect();
   try {
     const { id } = req.params;
     if (!id || !Number(id)) {
@@ -150,7 +150,8 @@ export const getAgentById = async (req: Request, res: Response) => {
 
     const userId = getUserId(req);
     const redisKey = `${defaultKey}:${userId}:${id}`;
-    const redisData = await redisClient.get(redisKey);
+
+    const redisData = await Redis.get(redisKey);
     if (!redisData) {
       const agent = await prisma.users.findUnique({
         select: {
@@ -164,11 +165,20 @@ export const getAgentById = async (req: Request, res: Response) => {
             select: {
               level: true,
               parentAgentId: true,
-              rate: true
+              rate: true,
+              parentAgentIds: true
             }
           }
         },
-        where: { id: Number(id), deletedAt: null }
+        where: {
+          id: Number(id),
+          deletedAt: null,
+          Agents: {
+            parentAgentIds: {
+              array_contains: [userId]
+            }
+          }
+        }
       });
       let parentAgent;
       if (agent?.Agents?.parentAgentId) {
@@ -186,24 +196,27 @@ export const getAgentById = async (req: Request, res: Response) => {
       if (!agent) {
         return res.status(404).json({ message: message.NOT_FOUND });
       }
-      return res.status(200).json({
+      const response = {
         data: {
           ...agent,
           Agents: { ...agent.Agents, ...parentAgent }
         },
         message: message.SUCCESS
-      });
+      };
+      await Redis.setex(redisKey, 300, JSON.stringify({ ...response }));
+      return res.status(200).json({ ...response });
     }
     return res.status(200).json({ ...JSON.parse(redisData) });
   } catch (error) {
     return res
       .status(500)
       .json({ message: message.INTERNAL_SERVER_ERROR, error: error });
-  } finally {
-    await redisClient.quit();
   }
 };
-export const updateAgent = async (req: Request, res: Response) => {
+export const updateAgent = async (
+  req: Request,
+  res: Response
+): Promise<any> => {
   try {
     const { id } = req.params;
     const { parentAgentId, currencyId, name, roleId } = req.body;
@@ -223,48 +236,34 @@ export const updateAgent = async (req: Request, res: Response) => {
         subMessage: 'Agent not found'
       });
     }
-    let parentAgent;
-    let currency;
-    let role;
+    const parentAgentPromise = prisma.agents.findUnique({
+      where: { id: parentAgentIdNumber }
+    });
+    const currencyPromise = prisma.currencies.findUnique({
+      where: { id: currencyIdNumber }
+    });
+    const rolePromise = prisma.roles.findUnique({
+      where: { id: roleIdNumber }
+    });
 
-    if (parentAgentIdNumber) {
-      parentAgent = await prisma.agents.findUnique({
-        where: { id: parentAgentIdNumber }
-      });
-      if (!parentAgent) {
-        return res.status(404).json({
-          message: message.NOT_FOUND,
-          subMessage: 'Parent agent not found'
-        });
-      }
+    const [parentAgent, role, currency] = await Promise.all([
+      parentAgentPromise,
+      rolePromise,
+      currencyPromise
+    ]);
+
+    if (!parentAgent || !role || !currency) {
+      throw new Error(
+        `${
+          !parentAgent ? 'Parent Agent' : !role ? 'Role' : 'Currency'
+        } not found`
+      );
     }
-    if (currencyIdNumber) {
-      currency = await prisma.currencies.findUnique({
-        where: { id: currencyIdNumber }
-      });
-      if (!currency) {
-        return res.status(404).json({
-          message: message.NOT_FOUND,
-          subMessage: 'Currency not found'
-        });
-      }
-    }
-    if (roleIdNumber) {
-      role = await prisma.roles.findUnique({
-        where: { id: roleIdNumber }
-      });
-      if (!role) {
-        return res.status(404).json({
-          message: message.NOT_FOUND,
-          subMessage: 'Role not found'
-        });
-      }
-    }
+
     const updatedAgentParentIds = parentAgent && [
       ...(parentAgent?.parentAgentIds as any),
       parentAgent.id
     ];
-
     const [updatedAgent] = await prisma.$transaction([
       prisma.agents.update({
         where: { id: agentId },
@@ -282,11 +281,11 @@ export const updateAgent = async (req: Request, res: Response) => {
         where: { id: agentId },
         data: {
           name,
-          roleId: role?.id
+          roleId: role?.id,
+          currencyId: currency?.id
         }
       })
     ]);
-
     const agentChildren: Agents[] = await prisma.agents.findMany({
       where: {
         parentAgentIds: {
@@ -326,9 +325,9 @@ export const updateAgent = async (req: Request, res: Response) => {
       message: message.UPDATED
     });
   } catch (error) {
-    return res.status(500).json({
-      message: message.INTERNAL_SERVER_ERROR,
-      error
+    return res.status(404).json({
+      message: message.NOT_FOUND,
+      subMessage: error.message
     });
   }
 };
@@ -347,6 +346,11 @@ export const deleteAgent = async (
     const users = await prisma.users.findUnique({
       where: {
         id: Number(id),
+        Agents: {
+          parentAgentIds: {
+            array_contains: [Number((req as any).user.id)]
+          }
+        },
         deletedAt: null
       }
     });
@@ -381,9 +385,6 @@ export const getUsersByAgentId = async (
         .status(400)
         .json({ message: message.INVALID, subMessage: 'Invalid Id' });
     }
-
-    // const redisKey = `users:${agentId}`;
-    // const redisData = await redisClient.get(redisKey);
     const users = await prisma.players.findMany({
       where: { agentId },
       include: {

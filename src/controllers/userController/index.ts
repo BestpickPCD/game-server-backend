@@ -1,11 +1,12 @@
 import { Prisma, PrismaClient } from '@prisma/client';
 import { Request, Response } from 'express';
 import { message } from '../../utilities/constants/index.ts';
-import { getParentAgentIdsByParentAgentId } from './utilities.ts';
+import { getParentAgentIdsByParentAgentId, getBalanceSummariesByIds } from './utilities.ts';
+import { RequestWithUser } from '../../models/customInterfaces.ts'
 const prisma = new PrismaClient();
 
 export const getAllUsers = async (
-  req: Request,
+  req: RequestWithUser,
   res: Response
 ): Promise<any> => {
   const { id } = (req as any).user;
@@ -46,7 +47,7 @@ export const getAllUsers = async (
             createdAt: true,
             updatedAt: true
           }
-        }
+        }, 
       },
       where: {
         deletedAt: null,
@@ -89,18 +90,18 @@ export const getAllUsers = async (
             {
               agent: {
                 parentAgentIds: {
-                  array_contains: [Number(agentId || id)]
+                  array_contains: [Number(agentId ?? id)]
                 }
               }
             },
             {
-              agentId: Number(agentId || id)
+              agentId: Number(agentId ?? id)
             }
           ]
         },
         updatedAt: {
-          gte: dateFrom || '1970-01-01T00:00:00.000Z',
-          lte: dateTo || '2100-01-01T00:00:00.000Z'
+          gte: dateFrom ?? '1970-01-01T00:00:00.000Z',
+          lte: dateTo ?? '2100-01-01T00:00:00.000Z'
         }
       },
       orderBy: {
@@ -108,7 +109,7 @@ export const getAllUsers = async (
       },
       skip: Number(page * size),
       take: Number(size)
-    };
+    }; 
 
     const [totalItems, data] = await prisma.$transaction([
       prisma.players.count({
@@ -117,13 +118,19 @@ export const getAllUsers = async (
       prisma.players.findMany(filter)
     ]);
 
+    // get all user ids
+    const userIds = data.map(item => item.id);
+    console.log(userIds)
+    console.log(await getBalanceSummariesByIds(userIds))
+    console.log(data)
+
     return res.status(200).json({
       data: {
         data,
         totalItems,
         page: Number(page),
         size: Number(size)
-      },
+      }, 
       message: message.SUCCESS
     });
   } catch (error) {

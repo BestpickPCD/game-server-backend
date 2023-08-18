@@ -1,4 +1,4 @@
-import { PrismaClient, Users, Prisma } from '@prisma/client';
+import { PrismaClient, Users } from '@prisma/client';
 import { Request, Response } from 'express';
 import { RequestWithUser } from '../../models/customInterfaces.ts';
 import { message } from '../../utilities/constants/index.ts';
@@ -14,156 +14,124 @@ export const getTransactions = async (
     const {
       page = 0,
       size = 10,
-      dateFrom,
-      dateTo,
+      // dateFrom,
+      // dateTo,
       userId,
-      type,
-      gameId,
-      search
+      type
+      // gameId,
+      // search
     } = req.query;
-    const { id } = (req as any).user;
+    // const { id } = || (req as any).user;
+    const id = 3;
 
-    const orFilterWithoutUser: Prisma.UsersWhereInput = {
-      OR: [
-        {
-          Agents: {
-            OR: [
-              {
-                parentAgentIds: {
-                  array_contains: [Number(id)]
-                }
-              },
-              { id: Number(id) }
-            ]
-          }
-        },
-        {
-          Players: {
-            OR: [
-              {
-                agentId: Number(id)
-              },
-              {
-                agent: {
-                  parentAgentIds: {
-                    array_contains: [Number(id)]
-                  }
-                }
-              }
-            ]
-          }
-        }
-      ]
-    };
+    const filter: any = `
+       (senderId IN (
+        SELECT id
+        FROM Agents
+        WHERE JSON_CONTAINS(parentAgentIds, JSON_ARRAY(${Number(id)}))) 
+          OR receiverId IN (
+            SELECT id
+            FROM Agents
+            WHERE JSON_CONTAINS(parentAgentIds, JSON_ARRAY(${Number(id)}))
+          )
+          OR senderId IN (
+            SELECT id
+            FROM Players
+            WHERE agentId = ${Number(id)}
+          OR agentId IN (
+            SELECT u.id
+            FROM Users u
+            JOIN Agents a ON u.id = a.id
+            WHERE JSON_CONTAINS(a.parentAgentIds, JSON_ARRAY(${Number(id)}))))
+          OR receiverId IN (
+          SELECT id
+          FROM Players
+          WHERE agentId = ${Number(id)}
+          OR agentId IN (
+              SELECT u.id
+              FROM Users u
+              JOIN Agents a ON u.id = a.id
+              WHERE JSON_CONTAINS(a.parentAgentIds, JSON_ARRAY(${Number(id)}))
+          )
+      )) AND `;
 
-    const filter: Prisma.TransactionsFindManyArgs = {
-      select: {
-        id: true,
-        senderId: true,
-        receiverId: true,
-        amount: true,
-        type: true,
-        status: true,
-        updatedAt: true,
-        sender: {
-          select: {
-            name: true,
-            username: true,
-            Agents: {
-              select: {
-                parentAgentIds: true
-              }
-            }
-          }
-        },
-        receiver: {
-          select: {
-            name: true,
-            username: true,
-            Agents: {
-              select: {
-                parentAgentIds: true
-              }
-            }
-          }
-        }
-      },
-      where: {
-        deletedAt: null,
-        OR: [
-          {
-            sender: orFilterWithoutUser
-          },
-          {
-            receiver: orFilterWithoutUser
-          }
-        ],
-        AND: {
-          ...(type && { type: String(type) }),
-          ...(gameId && { gameId: Number(gameId) }),
-          OR: [
-            {
-              receiver: {
-                name: {
-                  contains: String(search)
-                }
-              }
-            },
-            {
-              sender: {
-                name: {
-                  contains: String(search)
-                }
-              }
-            }
-          ],
-          ...(userId && {
-            AND: {
-              OR: [
-                {
-                  sender: {
-                    Agents: {
-                      parentAgentIds: {
-                        array_contains: [Number(id)]
-                      }
-                    }
-                  }
-                },
-                {
-                  receiver: {
-                    Agents: {
-                      parentAgentIds: {
-                        array_contains: [Number(id)]
-                      }
-                    }
-                  }
-                }
-              ]
-            }
-          })
-        },
-        updatedAt: {
-          gte: (dateFrom as string) || '1970-01-01T00:00:00.000Z',
-          lte: (dateTo as string) || '2100-01-01T00:00:00.000Z'
-        }
-      },
-      orderBy: {
-        updatedAt: 'desc'
-      },
-      skip: Number(page) * Number(size),
-      take: Number(size)
-    };
-
-    const [transactions, count] = await prisma.$transaction([
-      prisma.transactions.findMany(filter),
-      prisma.transactions.count({
-        where: filter.where
-      })
+    const [transactions1, [{ count }]]: any = await prisma.$transaction([
+      prisma.$queryRawUnsafe(`
+        SELECT DISTINCT transactions.*
+        FROM Transactions transactions
+        JOIN (
+          SELECT id
+          FROM Users
+          WHERE id = ${Number(userId || id)}
+          OR id IN (
+              SELECT id
+              FROM Agents
+              WHERE JSON_CONTAINS(parentAgentIds, JSON_ARRAY(${Number(
+                userId || id
+              )}))
+          )
+          OR id IN (
+            SELECT id
+            FROM Players
+            WHERE agentId = ${Number(userId || id)}
+            OR agentId IN (
+                SELECT u.id
+                FROM Users u
+                JOIN Agents a ON u.id = a.id
+                WHERE JSON_CONTAINS(a.parentAgentIds, JSON_ARRAY(${Number(
+                  userId || id
+                )}))
+            )
+          )
+        ) filtered_users 
+        ON transactions.senderId = filtered_users.id OR transactions.receiverId = filtered_users.id
+        WHERE ${userId && filter} ${
+          type && `transactions.type = '${String('adjust')}'`
+        }  
+        order By id
+        LIMIT ${Number(size)} 
+        OFFSET ${Number(size) * Number(page)}
+      `),
+      prisma.$queryRawUnsafe(`
+        SELECT COUNT(DISTINCT transactions.id) as count
+        FROM Transactions transactions
+        JOIN (
+          SELECT id
+          FROM Users
+          WHERE id = ${Number(userId || id)}
+          OR id IN (
+              SELECT id
+              FROM Agents
+              WHERE JSON_CONTAINS(parentAgentIds, JSON_ARRAY(${Number(
+                userId || id
+              )}))
+          )
+          OR id IN (
+            SELECT id
+            FROM Players
+            WHERE agentId = ${Number(userId || id)}
+            OR agentId IN (
+                SELECT u.id
+                FROM Users u
+                JOIN Agents a ON u.id = a.id
+                WHERE JSON_CONTAINS(a.parentAgentIds, JSON_ARRAY(${Number(
+                  userId || id
+                )}))
+            )
+          )
+        ) filtered_users 
+        ON transactions.senderId = filtered_users.id 
+          OR transactions.receiverId = filtered_users.id
+          WHERE ${userId && filter} ${
+            type && `transactions.type = '${String('adjust')}'`
+          }  
+      `)
     ]);
+
     return res.status(200).json({
       message: message.SUCCESS,
       data: {
-        data: transactions,
+        data: transactions1,
         page: Number(page),
         size: Number(size),
         totalItems: Number(count)

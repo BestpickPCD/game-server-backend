@@ -33,10 +33,11 @@ export const findCurrencyById = async (currencyId: number): Promise<any> => {
   return currency;
 };
 
-export const getBalanceSummariesByIds = async (userIds: number[]): Promise<any> => {
-
+export const getBalanceSummariesByIds = async (
+  userIds: number[]
+): Promise<any> => {
   const stringIds = userIds.join(',');
-  
+
   const usersWithBalances = await prisma.$queryRaw`
     SELECT
       sender.id AS senderId, receiver.id AS receiverId, Users.id AS userGameId, 
@@ -67,4 +68,4 @@ export const getBalanceSummariesByIds = async (userIds: number[]): Promise<any> 
   `;
 
   return usersWithBalances;
-}
+};

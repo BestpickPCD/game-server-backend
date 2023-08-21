@@ -291,6 +291,7 @@ export const getTransactionDetailsByUserId = async (
             type: true
           }
         },
+        id: true,
         amount: true,
         gameId: true,
         type: true,

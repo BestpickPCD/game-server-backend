@@ -1,14 +1,19 @@
 import { Prisma, PrismaClient } from '@prisma/client';
 import { Request, Response } from 'express';
 import { message } from '../../utilities/constants/index.ts';
-import { getParentAgentIdsByParentAgentId } from './utilities.ts';
+import {
+  getParentAgentIdsByParentAgentId
+  // getBalanceSummariesByIds
+} from './utilities.ts';
+import { RequestWithUser } from '../../models/customInterfaces.ts';
 const prisma = new PrismaClient();
 
 export const getAllUsers = async (
-  req: Request,
+  req: RequestWithUser,
   res: Response
 ): Promise<any> => {
   const { id } = (req as any).user;
+
   try {
     const {
       page = 0,
@@ -89,12 +94,12 @@ export const getAllUsers = async (
             {
               agent: {
                 parentAgentIds: {
-                  array_contains: [Number(agentId || id)]
+                  array_contains: [Number(agentId ?? id)]
                 }
               }
             },
             {
-              agentId: Number(agentId || id)
+              agentId: Number(agentId ?? id)
             }
           ]
         },
@@ -117,6 +122,12 @@ export const getAllUsers = async (
       prisma.players.findMany(filter)
     ]);
 
+    // get all user ids
+    // const userIds = data.map((item) => item.id);
+    // console.log(userIds);
+    // console.log(await getBalanceSummariesByIds(userIds));
+    // console.log(data);
+
     return res.status(200).json({
       data: {
         data,
@@ -127,6 +138,7 @@ export const getAllUsers = async (
       message: message.SUCCESS
     });
   } catch (error) {
+    console.log(error);
     return res.status(500).json({ message: message.INTERNAL_SERVER_ERROR });
   }
 };

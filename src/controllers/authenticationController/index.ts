@@ -2,7 +2,7 @@ import { PrismaClient, Users } from '@prisma/client';
 import axios from 'axios';
 import bcrypt from 'bcrypt';
 import { Request, Response } from 'express';
-import connectToRedis from '../../config/redis/index.ts';
+import Redis from '../../config/redis/index.ts';
 import { RequestWithUser } from '../../models/customInterfaces.ts';
 import { message } from '../../utilities/constants/index.ts';
 import { getTokens } from '../../utilities/getTokens.ts';
@@ -20,11 +20,9 @@ export const refreshToken = async (
   try {
     const user = (req as any)?.user;
     if (user) {
-      const redisClient = await connectToRedis();
-      redisClient.connect();
       const data = await formatUser(user);
       const tokens = getTokens({ ...user, id: user.id } as any as Users);
-      await redisClient.setEx(
+      await Redis.setex(
         `user-${user.id}-tokens`,
         7200,
         JSON.stringify({ ...data })
@@ -32,7 +30,6 @@ export const refreshToken = async (
       return res.status(200).json({ ...tokens });
     }
   } catch (error) {
-    console.error(error);
     return res.status(500).json({ message: 'Something went wrong', error });
   }
 };
@@ -68,8 +65,6 @@ export const apiToken = async (
 
 export const login = async (req: Request, res: Response): Promise<any> => {
   try {
-    const redisClient = await connectToRedis();
-    redisClient.connect();
     const { username, password } = req.body as any;
     const user = await prisma.users.findUnique({
       select: {
@@ -98,7 +93,7 @@ export const login = async (req: Request, res: Response): Promise<any> => {
 
       if (isValid) {
         const data = await formatUser(user);
-        await redisClient.setEx(
+        await Redis.setex(
           `user-${user.id}-tokens`,
           7200,
           JSON.stringify({ ...data })
@@ -111,7 +106,6 @@ export const login = async (req: Request, res: Response): Promise<any> => {
     // Neither user nor agent exists with the given username
     return res.status(400).json({ message: message.NOT_FOUND });
   } catch (error) {
-    console.log(error);
     res.status(500).json({ message: message.INTERNAL_SERVER_ERROR });
   }
 };

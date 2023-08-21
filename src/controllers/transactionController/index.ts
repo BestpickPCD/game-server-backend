@@ -14,18 +14,22 @@ export const getTransactions = async (
     const {
       page = 0,
       size = 10,
-      // dateFrom,
-      // dateTo,
+      dateFrom,
+      dateTo,
       userId,
-      type
-      // gameId,
-      // search
+      type,
+      gameId,
+      search
     } = req.query;
-    // const { id } = || (req as any).user;
-    const id = 3;
-
+    const { id } = (req as any).user;
+    const normalSelect = `
+    SELECT DISTINCT transactions.*, senderUser.name as senderUser, receiverUser.name as receiverUser
+    `;
+    const countSelect = `
+    SELECT COUNT(DISTINCT transactions.id) as count
+    `;
     const filter: any = `
-       (senderId IN (
+       senderId IN (
         SELECT id
         FROM Agents
         WHERE JSON_CONTAINS(parentAgentIds, JSON_ARRAY(${Number(id)}))) 
@@ -53,92 +57,69 @@ export const getTransactions = async (
               JOIN Agents a ON u.id = a.id
               WHERE JSON_CONTAINS(a.parentAgentIds, JSON_ARRAY(${Number(id)}))
           )
-      )) AND `;
-
-    const [transactions1, [{ count }]]: any = await prisma.$transaction([
-      prisma.$queryRawUnsafe(`
-        SELECT DISTINCT transactions.*
-        FROM Transactions transactions
-        JOIN (
+      ) `;
+    const pageSize = `
+      order By id
+      LIMIT ${Number(size || 10)} 
+      OFFSET ${Number(size || 10) * Number(page || 0)}
+    `;
+    const query = `
+      FROM Transactions transactions
+      JOIN (
+        SELECT id
+        FROM Users
+        WHERE id = ${Number(userId || id)}
+        OR id IN (
+            SELECT id
+            FROM Agents agents
+            WHERE JSON_CONTAINS(parentAgentIds, JSON_ARRAY(${Number(
+              userId || id
+            )}))
+        )
+        OR id IN (
           SELECT id
-          FROM Users
-          WHERE id = ${Number(userId || id)}
-          OR id IN (
-              SELECT id
-              FROM Agents
-              WHERE JSON_CONTAINS(parentAgentIds, JSON_ARRAY(${Number(
+          FROM Players player
+          WHERE agentId = ${Number(userId || id)}
+          OR agentId IN (
+              SELECT u.id
+              FROM Users u
+              JOIN Agents a ON u.id = a.id
+              WHERE JSON_CONTAINS(a.parentAgentIds, JSON_ARRAY(${Number(
                 userId || id
               )}))
           )
-          OR id IN (
-            SELECT id
-            FROM Players
-            WHERE agentId = ${Number(userId || id)}
-            OR agentId IN (
-                SELECT u.id
-                FROM Users u
-                JOIN Agents a ON u.id = a.id
-                WHERE JSON_CONTAINS(a.parentAgentIds, JSON_ARRAY(${Number(
-                  userId || id
-                )}))
-            )
-          )
-        ) filtered_users 
-        ON transactions.senderId = filtered_users.id OR transactions.receiverId = filtered_users.id
-        WHERE ${userId && filter} ${
-          type && `transactions.type = '${String('adjust')}'`
-        }  
-        order By id
-        LIMIT ${Number(size)} 
-        OFFSET ${Number(size) * Number(page)}
-      `),
-      prisma.$queryRawUnsafe(`
-        SELECT COUNT(DISTINCT transactions.id) as count
-        FROM Transactions transactions
-        JOIN (
-          SELECT id
-          FROM Users
-          WHERE id = ${Number(userId || id)}
-          OR id IN (
-              SELECT id
-              FROM Agents
-              WHERE JSON_CONTAINS(parentAgentIds, JSON_ARRAY(${Number(
-                userId || id
-              )}))
-          )
-          OR id IN (
-            SELECT id
-            FROM Players
-            WHERE agentId = ${Number(userId || id)}
-            OR agentId IN (
-                SELECT u.id
-                FROM Users u
-                JOIN Agents a ON u.id = a.id
-                WHERE JSON_CONTAINS(a.parentAgentIds, JSON_ARRAY(${Number(
-                  userId || id
-                )}))
-            )
-          )
-        ) filtered_users 
-        ON transactions.senderId = filtered_users.id 
-          OR transactions.receiverId = filtered_users.id
-          WHERE ${userId && filter} ${
-            type && `transactions.type = '${String('adjust')}'`
-          }  
-      `)
+        )
+      ) filtered_users 
+      ON transactions.senderId = filtered_users.id OR transactions.receiverId = filtered_users.id
+      JOIN Users senderUser ON senderUser.id = transactions.senderId
+      JOIN Users receiverUser ON receiverUser.id = transactions.receiverId
+      WHERE ((senderUser.name LIKE '%${search}%') OR 
+      (receiverUser.name LIKE '%${search}%')) 
+      AND ((transactions.updatedAt >= '${
+        dateFrom || '1970-01-01T00:00:00.000Z'
+      }') 
+      AND (transactions.updatedAt <= '${dateTo || '2100-01-01T00:00:00.000Z'}'))
+      ${type && `AND transactions.type = '${String(type)}'`}
+      ${userId ? ` AND ${filter}` : ''}
+      ${gameId ? ` AND ${gameId}` : ''}
+    `;
+    const [transactions, [{ count }]]: any = await prisma.$transaction([
+      prisma.$queryRawUnsafe(`${normalSelect} ${query} ${pageSize}`),
+      prisma.$queryRawUnsafe(`${countSelect} ${query}`)
     ]);
-
     return res.status(200).json({
       message: message.SUCCESS,
       data: {
-        data: transactions1,
-        page: Number(page),
-        size: Number(size),
+        data: transactions,
+        page: Number(page || 0),
+        size: Number(size || 10),
         totalItems: Number(count)
       }
     });
   } catch (error) {
-    return res.status(500).json({ message: 'Something went wrong', error });
+    return res
+      .status(500)
+      .json({ message: message.INTERNAL_SERVER_ERROR, error });
   }
 };
 
@@ -157,21 +138,21 @@ export const addTransaction = async (
       currencyId,
       gameId
     } = req.body;
-
     const { id: senderId } = (req as any).user;
     const data: any = { type, note, token, status, amount, gameId };
-
     const sender = await prisma.users.findUnique({
       where: {
         id: (req as any).user.id
       }
     });
     if ((sender as Users).type == 'player' && type == 'add') {
-      return res
-        .status(400)
-        .json({ message: 'Users cannot add or transfer money' });
+      throw Error(
+        JSON.stringify({
+          message: message.INVALID,
+          subMessage: 'Users cannot add or transfer money'
+        })
+      );
     }
-
     if (currencyId) {
       const currency = await prisma.currencies.findUnique({
         where: {
@@ -179,10 +160,12 @@ export const addTransaction = async (
         }
       });
       if (!currency) {
-        return res.status(404).json({
-          message: message.NOT_FOUND,
-          subMessage: 'Currency not found'
-        });
+        throw Error(
+          JSON.stringify({
+            message: message.NOT_FOUND,
+            subMessage: 'Currency not found'
+          })
+        );
       }
     }
     //*: check receiverId is our child player or child agent (done)
@@ -236,12 +219,13 @@ export const addTransaction = async (
             }
           }
         });
-
         if (!user) {
-          return res.status(404).json({
-            message: message.NOT_FOUND,
-            subMessage: 'User not found'
-          });
+          throw Error(
+            JSON.stringify({
+              message: message.NOT_FOUND,
+              subMessage: 'User not found'
+            })
+          );
         }
       }
       await prisma.transactions.create({
@@ -258,10 +242,17 @@ export const addTransaction = async (
         .status(201)
         .json({ message: 'Transaction created successfully' });
     }
-    return res.status(400).json({ message: 'Transaction type does not exist' });
+    throw Error(
+      JSON.stringify({
+        message: message.NOT_FOUND,
+        subMessage: 'Invalid transaction type'
+      })
+    );
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: 'Something went wrong', error });
+    if (error.message) {
+      return res.status(400).json(...JSON.parse(error.message));
+    }
+    return res.status(500).json({ message: message.INTERNAL_SERVER_ERROR });
   }
 };
 
@@ -308,12 +299,12 @@ export const getTransactionDetailsByUserId = async (
         createdAt: true
       }
     })) as any;
-
     const userDetails = await arrangeTransactionDetails(transactions, userId);
     res.status(200).json(userDetails);
   } catch (error) {
-    console.log(error);
-    res.status(500).json(error);
+    res.status(500).json({
+      message: message.INTERNAL_SERVER_ERROR
+    });
   }
 };
 
@@ -321,42 +312,90 @@ export const getTransactionDetail = async (
   req: Request,
   res: Response
 ): Promise<any> => {
-  const { id } = req.params;
-  const { id: userId } = (req as any).user;
-  //* check userId of transaction is in senderId or receiverId to avoid exceptions
-  const transaction = await prisma.transactions.findUnique({
-    select: {
-      id: true,
-      amount: true,
-      token: true,
-      receiverId: true,
-      senderId: true,
-      note: true,
-      type: true,
-      status: true,
-      updatedAt: true,
-      createdAt: true,
-      currencyId: true,
-      receiver: {
-        select: {
-          name: true
+  try {
+    const { id } = req.params;
+    const { id: userId } = (req as any).user;
+    //* check userId of transaction is in senderId or receiverId to avoid exceptions
+    const filterOr = {
+      OR: [
+        {
+          Agents: {
+            OR: [
+              {
+                parentAgentIds: {
+                  array_contains: [Number(userId)]
+                }
+              },
+              {
+                id: Number(userId)
+              }
+            ]
+          }
+        },
+        {
+          Players: {
+            OR: [
+              {
+                agentId: Number(userId)
+              },
+              {
+                agent: {
+                  parentAgentIds: {
+                    array_contains: [Number(userId)]
+                  }
+                }
+              }
+            ]
+          }
+        }
+      ]
+    };
+    const transaction = await prisma.transactions.findUnique({
+      select: {
+        id: true,
+        amount: true,
+        token: true,
+        receiverId: true,
+        senderId: true,
+        note: true,
+        type: true,
+        status: true,
+        updatedAt: true,
+        createdAt: true,
+        currencyId: true,
+        receiver: {
+          select: {
+            name: true
+          }
+        },
+        sender: {
+          select: {
+            name: true
+          }
         }
       },
-      sender: {
-        select: {
-          name: true
-        }
+      where: {
+        id: Number(id),
+        OR: [
+          {
+            sender: filterOr
+          },
+          { receiver: filterOr }
+        ]
       }
-    },
-    where: {
-      id: Number(id),
-      OR: [{ senderId: userId }, { receiverId: userId }]
+    });
+    if (!transaction) {
+      throw Error(message.NOT_FOUND);
     }
-  });
-  if (!transaction) {
-    return res.status(404).json({ message: message.NOT_FOUND });
+    return res
+      .status(200)
+      .json({ message: message.SUCCESS, data: transaction });
+  } catch (error) {
+    if (error.message) {
+      return res.status(404).json({ message: error.message });
+    }
+    return res.status(500).json({ message: message.INTERNAL_SERVER_ERROR });
   }
-  return res.status(200).json({ message: message.SUCCESS, data: transaction });
 };
 
 export const getTransactionsView = async (
@@ -401,7 +440,6 @@ export const getTransactionsView = async (
     const details = await arrangeTransactions(transactions);
     return res.render('transactions', { data: details });
   } catch (error) {
-    console.error(error);
     return res.status(500).json({ message: 'Something went wrong', error });
   }
 };

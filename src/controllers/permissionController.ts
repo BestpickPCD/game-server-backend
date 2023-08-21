@@ -3,8 +3,7 @@ const prisma = new PrismaClient();
 import { Request, Response } from 'express';
 import { message } from '../utilities/constants/index.ts';
 import Redis from '../config/redis/index.ts';
-import { permissions } from '../middleware/permission.ts';
-import { RoleType } from '../models/customInterfaces.ts';
+import { permissions, RoleType } from '../models/permission.ts';
 
 export const getAllPermission = async (
   req: Request,

@@ -2,7 +2,7 @@ import { Prisma, PrismaClient } from '@prisma/client';
 import { Request, Response } from 'express';
 import { message } from '../../utilities/constants/index.ts';
 import {
-  getParentAgentIdsByParentAgentId,
+  getParentAgentIdsByParentAgentId
   // getBalanceSummariesByIds
 } from './utilities.ts';
 import { RequestWithUser } from '../../models/customInterfaces.ts';
@@ -138,7 +138,7 @@ export const getAllUsers = async (
       message: message.SUCCESS
     });
   } catch (error) {
-    console.log(error)
+    console.log(error);
     return res.status(500).json({ message: message.INTERNAL_SERVER_ERROR });
   }
 };

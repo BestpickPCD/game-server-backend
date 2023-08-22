@@ -121,7 +121,7 @@ export const getAllUsers = async (
         where: filter.where
       }),
       prisma.players.findMany(filter)
-    ]); 
+    ]);
 
     return res.status(200).json({
       data: {

@@ -282,8 +282,6 @@ export const arrangeTransactions = async (
   return details;
 };
 
-
-
 export const getBalances = async (userId: number): Promise<any> => {
   try {
     const rawQuery = Prisma.sql`
@@ -313,19 +311,17 @@ export const getBalances = async (userId: number): Promise<any> => {
       ) AS gameResult ON gameResult.id = Users.id
       WHERE Users.id = ${userId};`;
 
-    return await prisma.$queryRaw(rawQuery) as balanceSummary;
-    
+    return (await prisma.$queryRaw(rawQuery)) as balanceSummary;
   } catch (error) {
-    console.log(error)
+    console.log(error);
   }
 };
 
+export const updateBalance = async (userId: number): Promise<any> => {
+  try {
+    const balances = await getBalances(userId);
+    const { balance } = balances[0];
 
-export const updateBalance = async (userId:number): Promise<any> => {
-  try { 
-    const balances = await getBalances(userId)
-    const { balance } = balances[0]
-    
     const result = await prisma.users.update({
       data: {
         balance
@@ -333,10 +329,10 @@ export const updateBalance = async (userId:number): Promise<any> => {
       where: {
         id: userId
       }
-    })
+    });
 
-    return result
+    return result;
   } catch (error) {
-    console.log(error)
+    console.log(error);
   }
-}
+};

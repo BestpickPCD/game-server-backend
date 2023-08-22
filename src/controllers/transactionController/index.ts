@@ -254,11 +254,11 @@ export const addTransaction = async (
         }
       });
 
-      if(senderId) {
-        await updateBalance(senderId)
+      if (senderId) {
+        await updateBalance(senderId);
       }
-      if(receiverId) {
-        await updateBalance(receiverId)
+      if (receiverId) {
+        await updateBalance(receiverId);
       }
 
       return res

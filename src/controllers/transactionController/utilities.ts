@@ -1,4 +1,5 @@
-import { PrismaClient, Transactions } from '@prisma/client';
+import { Prisma, PrismaClient, Transactions } from '@prisma/client';
+import { balanceSummary } from 'src/models/customInterfaces';
 const prisma = new PrismaClient();
 
 export const checkTransferAbility = async (
@@ -280,3 +281,62 @@ export const arrangeTransactions = async (
 
   return details;
 };
+
+
+
+export const getBalances = async (userId: number): Promise<any> => {
+  try {
+    const rawQuery = Prisma.sql`
+      SELECT
+        IFNULL(sender.out, 0) AS \`out\`,
+        IFNULL(receiver.in, 0) AS \`in\`,
+        IFNULL(gameResult.gameOut, 0) AS gameOut,
+        IFNULL((IFNULL(receiver.in, 0) - IFNULL(sender.out, 0) - IFNULL(gameResult.gameOut, 0)), 0) AS balance
+      FROM Users
+      LEFT JOIN (
+        SELECT SUM(IFNULL(amount, 0)) AS \`out\`, senderId AS id
+        FROM Transactions
+        WHERE TYPE IN ('add', 'lose', 'charge', 'bet') AND senderId = ${userId}
+        GROUP BY senderId
+      ) AS sender ON sender.id = Users.id
+      LEFT JOIN (
+        SELECT SUM(IFNULL(amount, 0)) AS \`in\`, receiverId AS id
+        FROM Transactions
+        WHERE TYPE IN ('add', 'win') AND receiverId = ${userId}
+        GROUP BY receiverId
+      ) AS receiver ON receiver.id = Users.id
+      LEFT JOIN (
+        SELECT SUM(IFNULL(amount, 0)) AS gameOut, receiverId AS id
+        FROM Transactions
+        WHERE TYPE IN ('lose', 'charge') AND receiverId = ${userId}
+        GROUP BY receiverId
+      ) AS gameResult ON gameResult.id = Users.id
+      WHERE Users.id = ${userId};`;
+
+    return await prisma.$queryRaw(rawQuery) as balanceSummary;
+    
+  } catch (error) {
+    console.log(error)
+  }
+};
+
+
+export const updateBalance = async (userId:number): Promise<any> => {
+  try { 
+    const balances = await getBalances(userId)
+    const { balance } = balances[0]
+    
+    const result = await prisma.users.update({
+      data: {
+        balance
+      },
+      where: {
+        id: userId
+      }
+    })
+
+    return result
+  } catch (error) {
+    console.log(error)
+  }
+}

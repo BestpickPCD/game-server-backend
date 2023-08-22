@@ -1,21 +1,23 @@
 import { PrismaClient, Transactions } from '@prisma/client';
-const prisma = new PrismaClient()
+const prisma = new PrismaClient();
 
-export const checkTransferAbility = async (senderId:number, receiverId:number): Promise<any> => {
-
-  let result = false
-  const reveiver = await prisma.$queryRaw`
+export const checkTransferAbility = async (
+  senderId: number,
+  receiverId: number
+): Promise<any> => {
+  let result = false;
+  const reveiver = (await prisma.$queryRaw`
     SELECT id, parentAgentId AS agentId FROM agents WHERE id = ${receiverId}
     UNION
     SELECT id, agentId FROM players WHERE id = ${receiverId}
-  ` as any; 
+  `) as any;
 
-  if(reveiver[0]?.agentId === senderId) {
-    result = true
+  if (reveiver[0]?.agentId === senderId) {
+    result = true;
   }
 
-  return result
-}
+  return result;
+};
 
 export const arrangeTransactionDetails = async (
   transactions: Transactions[],

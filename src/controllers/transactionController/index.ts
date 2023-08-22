@@ -3,7 +3,7 @@ import { Request, Response } from 'express';
 import { RequestWithUser } from '../../models/customInterfaces.ts';
 import { message } from '../../utilities/constants/index.ts';
 import { checkTransactionType } from './transactionTypes.ts';
-import { arrangeTransactionDetails, arrangeTransactions } from './utilities.ts';
+import { arrangeTransactionDetails, arrangeTransactions, checkTransferAbility } from './utilities.ts';
 const prisma = new PrismaClient();
 
 export const getTransactions = async (
@@ -138,7 +138,15 @@ export const addTransaction = async (
       currencyId,
       gameId
     } = req.body;
-    const { id: senderId } = (req as any).user;
+
+    const senderId = req.body.senderId ?? (req as any).user.id
+ 
+    if(senderId && receiverId) {
+      if(!await checkTransferAbility(senderId, receiverId)) {
+        return res.status(500).json({ message: `The transfer cannot be made.` });
+      }
+    }
+
     const data: any = { type, note, token, status, amount, gameId };
     const sender = await prisma.users.findUnique({
       where: {

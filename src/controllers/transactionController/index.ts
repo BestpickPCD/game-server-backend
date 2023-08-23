@@ -6,7 +6,8 @@ import { checkTransactionType } from './transactionTypes.ts';
 import {
   arrangeTransactionDetails,
   arrangeTransactions,
-  checkTransferAbility
+  checkTransferAbility,
+  updateBalance
 } from './utilities.ts';
 const prisma = new PrismaClient();
 
@@ -242,6 +243,7 @@ export const addTransaction = async (
           );
         }
       }
+
       await prisma.transactions.create({
         data: {
           ...data,
@@ -251,6 +253,13 @@ export const addTransaction = async (
           ...(receiverId && { receiverId })
         }
       });
+
+      if (senderId) {
+        await updateBalance(senderId);
+      }
+      if (receiverId) {
+        await updateBalance(receiverId);
+      }
 
       return res
         .status(201)
@@ -509,36 +518,3 @@ export const getTransactionDetailsByUserIdView = async (
     res.status(500).json(error);
   }
 };
-
-// export const getBalance = async (req: Request, res: Response) => {
-//   const userId = parseInt(req.params.userId);
-//   try {
-//     const depositQuery = prisma.transactions.aggregate({
-//       _sum: { amount: true },
-//       where: { action: 1, userId }
-//     });
-
-//     const withdrawQuery = prisma.transactions.aggregate({
-//       _sum: { amount: true },
-//       where: { action: 2, userId }
-//     });
-
-//     const [depositResult, withdrawResult] = await prisma.$transaction([
-//       depositQuery,
-//       withdrawQuery
-//     ]);
-
-//     const depositAmount = depositResult._sum?.amount ?? 0;
-//     const withdrawAmount = withdrawResult._sum?.amount ?? 0;
-//     const balance = Number(depositAmount) - Number(withdrawAmount);
-
-//     return res.status(200).json({
-//       totalDepositAmount: Number(depositAmount),
-//       totalWithdrawAmount: Number(withdrawAmount),
-//       balance
-//     });
-//   } catch (error) {
-//     console.error(error);
-//     return res.status(500).json({ error: 'Unable to fetch balance' });
-//   }
-// };

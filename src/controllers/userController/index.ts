@@ -38,6 +38,7 @@ export const getAllUsers = async (
         agentId: true,
         user: {
           select: {
+            balance: true,
             email: true,
             name: true,
             currency: {
@@ -121,12 +122,6 @@ export const getAllUsers = async (
       }),
       prisma.players.findMany(filter)
     ]);
-
-    // get all user ids
-    // const userIds = data.map((item) => item.id);
-    // console.log(userIds);
-    // console.log(await getBalanceSummariesByIds(userIds));
-    // console.log(data);
 
     return res.status(200).json({
       data: {

@@ -16,6 +16,7 @@ model Users {
   type       String?
   apiKey     String?
   roleId     Int?
+  balance    Decimal?  @default(0) @db.Decimal(10, 2)
   currencyId Int?
   isActive   Boolean   @default(true)
   createdAt  DateTime  @default(now())
@@ -30,8 +31,6 @@ model Users {
   transactionSenders      Transactions[] @relation("TransactionSender")
   transactionReceivers    Transactions[] @relation("TransactionReceiver")
   transactionUpdatedUsers Transactions[] @relation("TransactionUpdatedUser")
-  BalancesUser            Balances[]     @relation("UserBalance")
-  BalanceUpdatedUsers     Balances[]     @relation("BalanceUpdatedUser")
   ip_user                 ip_user[]
 }
 
@@ -83,7 +82,6 @@ model Currencies {
 
   Users        Users[]
   Transactions Transactions[]
-  Balances     Balances[]
 }
 
 model ip_user {
@@ -116,21 +114,6 @@ model Transactions {
   sender      Users?      @relation("TransactionSender", fields: [senderId], references: [id])
   receiver    Users?      @relation("TransactionReceiver", fields: [receiverId], references: [id])
   updatedUser Users?      @relation("TransactionUpdatedUser", fields: [updateUserId], references: [id])
-}
-
-model Balances {
-  id         Int       @id @default(autoincrement())
-  userId     Int
-  balances   Decimal   @default(0) @db.Decimal(10, 2)
-  currencyId Int
-  updatedBy  Int?
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime? @updatedAt
-  deletedAt  DateTime?
-
-  currency    Currencies @relation(fields: [currencyId], references: [id])
-  user        Users?     @relation("UserBalance", fields: [userId], references: [id])
-  updatedUser Users?     @relation("BalanceUpdatedUser", fields: [updatedBy], references: [id])
 }
 
 model Tables {

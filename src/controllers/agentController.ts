@@ -116,7 +116,7 @@ export const getAllAgents = async (
         prisma.users.findMany(filter),
         prisma.users.count({ where: filter.where })
       ]);
-      
+
       const response = {
         data: {
           data: users,

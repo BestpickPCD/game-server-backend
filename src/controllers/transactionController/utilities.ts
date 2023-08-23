@@ -320,8 +320,8 @@ export const getBalances = async (userId: number): Promise<any> => {
 export const paramsToArray = async (params: string): Promise<any> => {
   const array = params.split(',');
   const formattedParams = `('${array.join("','")}')`;
-  return formattedParams
-}
+  return formattedParams;
+};
 
 export const updateBalance = async (userId: number): Promise<any> => {
   try {

@@ -60,6 +60,7 @@ export const getAllAgents = async (
           id: true,
           username: true,
           name: true,
+          balance: true,
           type: true,
           currencyId: true,
           roleId: true,
@@ -115,6 +116,7 @@ export const getAllAgents = async (
         prisma.users.findMany(filter),
         prisma.users.count({ where: filter.where })
       ]);
+      
       const response = {
         data: {
           data: users,

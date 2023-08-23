@@ -7,6 +7,7 @@ import {
   arrangeTransactionDetails,
   arrangeTransactions,
   checkTransferAbility,
+  paramsToArray,
   updateBalance
 } from './utilities.ts';
 const prisma = new PrismaClient();
@@ -25,8 +26,10 @@ export const getTransactions = async (
       type,
       gameId,
       search
-    } = req.query;
+    } = req.query; 
     const { id } = (req as any).user;
+ 
+    const paramArray = !type ? "" : await paramsToArray(type as string) 
     const normalSelect = `
     SELECT DISTINCT transactions.*, senderUser.name as senderUser, receiverUser.name as receiverUser
     `;
@@ -66,31 +69,31 @@ export const getTransactions = async (
     const pageSize = `
       order By id
       LIMIT ${Number(size || 10)} 
-      OFFSET ${Number(size || 10) * Number(page || 0)}
+      OFFSET ${Number(size ?? 10) * Number(page || 0)}
     `;
     const query = `
       FROM Transactions transactions
       JOIN (
         SELECT id
         FROM Users
-        WHERE id = ${Number(userId || id)}
+        WHERE id = ${Number(userId ?? id)}
         OR id IN (
             SELECT id
             FROM Agents agents
             WHERE JSON_CONTAINS(parentAgentIds, JSON_ARRAY(${Number(
-              userId || id
+              userId ?? id
             )}))
         )
         OR id IN (
           SELECT id
           FROM Players player
-          WHERE agentId = ${Number(userId || id)}
+          WHERE agentId = ${Number(userId ?? id)}
           OR agentId IN (
               SELECT u.id
               FROM Users u
               JOIN Agents a ON u.id = a.id
               WHERE JSON_CONTAINS(a.parentAgentIds, JSON_ARRAY(${Number(
-                userId || id
+                userId ?? id
               )}))
           )
         )
@@ -98,20 +101,19 @@ export const getTransactions = async (
       ON transactions.senderId = filtered_users.id OR transactions.receiverId = filtered_users.id
       JOIN Users senderUser ON senderUser.id = transactions.senderId
       JOIN Users receiverUser ON receiverUser.id = transactions.receiverId
-      WHERE ((senderUser.name LIKE '%${search}%') OR 
-      (receiverUser.name LIKE '%${search}%')) 
-      AND ((transactions.updatedAt >= '${
+      WHERE ${search ? `((senderUser.name LIKE '%${search}%') OR (receiverUser.name LIKE '%${search}%')) AND` : ""} 
+      ((transactions.updatedAt >= '${
         dateFrom || '1970-01-01T00:00:00.000Z'
       }') 
       AND (transactions.updatedAt <= '${dateTo || '2100-01-01T00:00:00.000Z'}'))
-      ${type && `AND transactions.type = '${String(type)}'`}
+      ${paramArray ? `AND transactions.type in ${String(paramArray)}`: ""}
       ${userId ? ` AND ${filter}` : ''}
       ${gameId ? ` AND ${gameId}` : ''}
     `;
     const [transactions, [{ count }]]: any = await prisma.$transaction([
       prisma.$queryRawUnsafe(`${normalSelect} ${query} ${pageSize}`),
       prisma.$queryRawUnsafe(`${countSelect} ${query}`)
-    ]);
+    ]); 
     return res.status(200).json({
       message: message.SUCCESS,
       data: {
@@ -133,7 +135,7 @@ export const addTransaction = async (
   res: Response
 ): Promise<any> => {
   try {
-    const {
+    const { 
       receiverId,
       type,
       note,
@@ -144,7 +146,7 @@ export const addTransaction = async (
       gameId
     } = req.body;
 
-    const senderId = req.body.senderId ?? (req as any).user.id;
+    const senderId = req.body.senderId ?? (req as any).user.id; 
 
     if (senderId && receiverId) {
       if (!(await checkTransferAbility(senderId, receiverId))) {
@@ -518,3 +520,5 @@ export const getTransactionDetailsByUserIdView = async (
     res.status(500).json(error);
   }
 };
+
+// };

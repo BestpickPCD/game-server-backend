@@ -291,7 +291,7 @@ export const getTransactionDetailsByUserId = async (
     const userId = parseInt(req.params.userId);
     const type = req.query.type as string;
     const arrayTypes = type.split(',');
-    const transactions = await prisma.transactions.findMany({
+    const transactions = (await prisma.transactions.findMany({
       where: {
         OR: [{ senderId: userId }, { receiverId: userId }],
         type: {
@@ -331,7 +331,7 @@ export const getTransactionDetailsByUserId = async (
         status: true,
         createdAt: true
       }
-    }) as any;
+    })) as any;
     const userDetails = await arrangeTransactionDetails(transactions, userId);
     res.status(200).json(userDetails);
   } catch (error) {

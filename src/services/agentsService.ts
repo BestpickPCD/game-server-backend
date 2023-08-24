@@ -94,7 +94,7 @@ export const getAll = async ({
         updatedAt: 'desc'
       },
       skip: page * size,
-      take: size  
+      take: size
     };
 
     const [users, totalItems] = await prisma.$transaction([

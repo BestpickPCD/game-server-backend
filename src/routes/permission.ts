@@ -10,5 +10,11 @@ router.get(
   permission('permissions', 'get'),
   getAllPermission
 );
+router.get(
+  '',
+  authentication,
+  permission('permissions', 'getById'),
+  getAllPermission
+);
 
 export default router;

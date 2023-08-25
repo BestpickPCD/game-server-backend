@@ -16,7 +16,7 @@ export const getAllUsersWithBalances = async (
   try {
     const users = (await prisma.$queryRaw`SELECT * FROM 
     (SELECT id, name, email, username, type, balance, currencyId, isActive, updatedAt FROM Users users WHERE deletedAt IS NULL) AS users JOIN 
-    (SELECT players.agentId, players.id, agents.parentAgentIds FROM Players players JOIN agents ON agents.id = players.agentId WHERE ( JSON_CONTAINS(agents.parentAgentIds, JSON_ARRAY(${req.user?.id})) OR players.agentId = ${req.user?.id})) AS players ON players.id = users.id LEFT JOIN 
+    (SELECT players.agentId, players.id, agents.parentAgentIds FROM Players players JOIN Agents agents ON agents.id = players.agentId WHERE ( JSON_CONTAINS(agents.parentAgentIds, JSON_ARRAY(${req.user?.id})) OR players.agentId = ${req.user?.id})) AS players ON players.id = users.id LEFT JOIN 
     (SELECT SUM(amount) AS amountSentOut, senderId FROM Transactions transactions WHERE TYPE IN ('add') GROUP BY senderId ) AS senders ON senders.senderId = users.id LEFT JOIN 
     (SELECT SUM(amount) AS amountReceived, receiverId FROM Transactions transactions WHERE TYPE IN ('add') GROUP BY receiverId ) AS receivers ON receivers.receiverId = users.id LEFT JOIN 
     (SELECT SUM(amount) AS winGameAmount, receiverId FROM Transactions transactions WHERE TYPE IN ('win') GROUP BY receiverId ) AS winGamers ON winGamers.receiverId = users.id LEFT JOIN 

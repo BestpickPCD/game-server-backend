@@ -100,7 +100,7 @@ export const getTransactions = async (
         ],
         AND: {
           ...(type && { type: String(type) }),
-          ...(gameId && { gameId: Number(gameId) }),
+          ...(gameId && { gameId: String(gameId) }),
           OR: [
             {
               receiver: {

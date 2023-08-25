@@ -2,45 +2,12 @@ import { Roles } from '@prisma/client';
 import { NextFunction, Response } from 'express';
 import { message } from '../utilities/constants/index.ts';
 import {
-  Permissions,
-  commonPermissions,
+  permissions,
   RouteType,
   PermissionType,
   roles,
   RoleType
-} from '../models/customInterfaces.ts';
-export const permissions: Permissions = {
-  admin: {
-    users: [...commonPermissions],
-    permissions: [...commonPermissions],
-    agents: [...commonPermissions],
-    roles: [...commonPermissions],
-    transactions: [...commonPermissions],
-    players: [...commonPermissions],
-    currencies: [...commonPermissions],
-    games: [...commonPermissions]
-  },
-  distributor: {
-    users: ['get', 'getById'],
-    permissions: ['get', 'getById'],
-    agents: ['get', 'getById'],
-    roles: ['get', 'getById'],
-    transactions: [...commonPermissions],
-    players: ['get', 'getById'],
-    currencies: ['get', 'getById'],
-    games: [...commonPermissions]
-  },
-  operator: {
-    users: [...commonPermissions],
-    permissions: [...commonPermissions],
-    agents: [...commonPermissions],
-    roles: [...commonPermissions],
-    transactions: ['get', 'getById'],
-    players: [...commonPermissions],
-    currencies: [...commonPermissions],
-    games: [...commonPermissions]
-  }
-};
+} from '../models/permission.ts';
 
 export const permission =
   (router: RouteType, method: PermissionType): any =>

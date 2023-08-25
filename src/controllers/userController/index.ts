@@ -15,13 +15,13 @@ export const getAllUsersWithBalances = async (
 ): Promise<any> => {
   try {
     const users = (await prisma.$queryRaw`SELECT * FROM 
-    (SELECT id, name, email, username, type, balance, currencyId, isActive, updatedAt FROM users WHERE deletedAt IS NULL) AS users JOIN 
-    (SELECT players.agentId, players.id, agents.parentAgentIds FROM players JOIN agents ON agents.id = players.agentId WHERE ( JSON_CONTAINS(agents.parentAgentIds, JSON_ARRAY(${req.user?.id})) OR players.agentId = ${req.user?.id})) AS players ON players.id = users.id LEFT JOIN 
-    (SELECT SUM(amount) AS amountSentOut, senderId FROM transactions WHERE TYPE IN ('add') GROUP BY senderId ) AS senders ON senders.senderId = users.id LEFT JOIN 
-    (SELECT SUM(amount) AS amountReceived, receiverId FROM transactions WHERE TYPE IN ('add') GROUP BY receiverId ) AS receivers ON receivers.receiverId = users.id LEFT JOIN 
-    (SELECT SUM(amount) AS winGameAmount, receiverId FROM transactions WHERE TYPE IN ('win') GROUP BY receiverId ) AS winGamers ON winGamers.receiverId = users.id LEFT JOIN 
-    (SELECT SUM(amount) AS betGameAmount, senderId FROM transactions WHERE TYPE IN ('bet') GROUP BY senderId ) AS betGamers ON betGamers.senderId = users.id LEFT JOIN 
-    (SELECT SUM(amount) AS chargeGameAmount, receiverId FROM transactions WHERE TYPE IN ('charge') GROUP BY receiverId ) AS chargeGamers ON chargeGamers.receiverId = users.id 
+    (SELECT id, name, email, username, type, balance, currencyId, isActive, updatedAt FROM Users users WHERE deletedAt IS NULL) AS users JOIN 
+    (SELECT players.agentId, players.id, agents.parentAgentIds FROM Players players JOIN agents ON agents.id = players.agentId WHERE ( JSON_CONTAINS(agents.parentAgentIds, JSON_ARRAY(${req.user?.id})) OR players.agentId = ${req.user?.id})) AS players ON players.id = users.id LEFT JOIN 
+    (SELECT SUM(amount) AS amountSentOut, senderId FROM Transactions transactions WHERE TYPE IN ('add') GROUP BY senderId ) AS senders ON senders.senderId = users.id LEFT JOIN 
+    (SELECT SUM(amount) AS amountReceived, receiverId FROM Transactions transactions WHERE TYPE IN ('add') GROUP BY receiverId ) AS receivers ON receivers.receiverId = users.id LEFT JOIN 
+    (SELECT SUM(amount) AS winGameAmount, receiverId FROM Transactions transactions WHERE TYPE IN ('win') GROUP BY receiverId ) AS winGamers ON winGamers.receiverId = users.id LEFT JOIN 
+    (SELECT SUM(amount) AS betGameAmount, senderId FROM Transactions transactions WHERE TYPE IN ('bet') GROUP BY senderId ) AS betGamers ON betGamers.senderId = users.id LEFT JOIN 
+    (SELECT SUM(amount) AS chargeGameAmount, receiverId FROM Transactions transactions WHERE TYPE IN ('charge') GROUP BY receiverId ) AS chargeGamers ON chargeGamers.receiverId = users.id 
     ORDER BY users.updatedAt DESC`) as any;
 
     const userDetails = users.map((row: any) => {

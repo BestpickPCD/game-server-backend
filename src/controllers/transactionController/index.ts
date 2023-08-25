@@ -237,7 +237,7 @@ export const addTransaction = async (
               }
             }
           }
-        }); 
+        });
 
         if (!user) {
           throw Error(
@@ -248,7 +248,7 @@ export const addTransaction = async (
           );
         }
       }
- 
+
       try {
         await prisma.transactions.create({
           data: {
@@ -259,19 +259,19 @@ export const addTransaction = async (
             ...(receiverId && { receiverId })
           }
         });
-  
+
         if (senderId) {
           await updateBalance(senderId);
         }
         if (receiverId) {
           await updateBalance(receiverId);
         }
-  
+
         return res
           .status(201)
           .json({ message: 'Transaction created successfully' });
       } catch (error) {
-        console.log(error)
+        console.log(error);
       }
     }
     throw Error(
@@ -340,7 +340,7 @@ export const getTransactionDetailsByUserId = async (
     const userDetails = await arrangeTransactionDetails(transactions, userId);
     res.status(200).json(userDetails);
   } catch (error) {
-    console.log(error)
+    console.log(error);
     res.status(500).json({
       message: message.INTERNAL_SERVER_ERROR
     });

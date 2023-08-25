@@ -8,12 +8,13 @@ import {
 import { RequestWithUser } from '../../models/customInterfaces.ts';
 const prisma = new PrismaClient();
 
-export const getAllUsersWithBalances = async ( // Only used until can merge this raw query in prisma ORM 
+export const getAllUsersWithBalances = async (
+  // Only used until can merge this raw query in prisma ORM
   req: RequestWithUser,
   res: Response
 ): Promise<any> => {
   try {
-    const users = await prisma.$queryRaw`SELECT * FROM 
+    const users = (await prisma.$queryRaw`SELECT * FROM 
     (SELECT id, name, email, username, type, balance, currencyId, isActive, updatedAt FROM users WHERE deletedAt IS NULL) AS users JOIN 
     (SELECT players.agentId, players.id, agents.parentAgentIds FROM players JOIN agents ON agents.id = players.agentId WHERE ( JSON_CONTAINS(agents.parentAgentIds, JSON_ARRAY(${req.user?.id})) OR players.agentId = ${req.user?.id})) AS players ON players.id = users.id LEFT JOIN 
     (SELECT SUM(amount) AS amountSentOut, senderId FROM transactions WHERE TYPE IN ('add') GROUP BY senderId ) AS senders ON senders.senderId = users.id LEFT JOIN 
@@ -21,24 +22,27 @@ export const getAllUsersWithBalances = async ( // Only used until can merge this
     (SELECT SUM(amount) AS winGameAmount, receiverId FROM transactions WHERE TYPE IN ('win') GROUP BY receiverId ) AS winGamers ON winGamers.receiverId = users.id LEFT JOIN 
     (SELECT SUM(amount) AS betGameAmount, senderId FROM transactions WHERE TYPE IN ('bet') GROUP BY senderId ) AS betGamers ON betGamers.senderId = users.id LEFT JOIN 
     (SELECT SUM(amount) AS chargeGameAmount, receiverId FROM transactions WHERE TYPE IN ('charge') GROUP BY receiverId ) AS chargeGamers ON chargeGamers.receiverId = users.id 
-    ORDER BY users.updatedAt DESC` as any;
+    ORDER BY users.updatedAt DESC`) as any;
 
     const userDetails = users.map((row: any) => {
       const data = {
         ...row,
         user: {
-          name: row.name, 
+          name: row.name,
           username: row.username,
-          betGameAmount: (row.winGameAmount as number ?? 0) - (row.betGameAmount as number ?? 0) - (row.chargeGameAmount as number ?? 0) ?? 0,
+          betGameAmount:
+            ((row.winGameAmount as number) ?? 0) -
+              ((row.betGameAmount as number) ?? 0) -
+              ((row.chargeGameAmount as number) ?? 0) ?? 0,
           amountReceived: row.amountReceived ?? 0,
           winGameAmount: row.winGameAmount ?? 0,
           chargeGameAmount: row.chargeGameAmount ?? 0,
           balance: row.balance ?? 0,
-          updatedAt: row.updatedAt,
-        }, 
-      }
-      return data
-    }) 
+          updatedAt: row.updatedAt
+        }
+      };
+      return data;
+    });
 
     return res.status(200).json({
       data: {
@@ -48,13 +52,12 @@ export const getAllUsersWithBalances = async ( // Only used until can merge this
         size: Number(200)
       },
       message: message.SUCCESS
-    }); 
+    });
   } catch (error) {
-    console.log(error)
+    console.log(error);
     return res.status(500).json({ message: message.INTERNAL_SERVER_ERROR });
   }
-}
-
+};
 
 export const getAllUsers = async (
   req: RequestWithUser,

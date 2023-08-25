@@ -7,6 +7,7 @@ import {
   arrangeTransactionDetails,
   arrangeTransactions,
   checkTransferAbility,
+  paramsToArray,
   updateBalance
 } from './utilities.ts';
 const prisma = new PrismaClient();
@@ -27,6 +28,8 @@ export const getTransactions = async (
       search
     } = req.query;
     const { id } = (req as any).user;
+
+    const paramArray = !type ? '' : await paramsToArray(type as string);
     const normalSelect = `
     SELECT DISTINCT transactions.*, senderUser.name as senderUser, receiverUser.name as receiverUser
     `;
@@ -66,31 +69,31 @@ export const getTransactions = async (
     const pageSize = `
       order By id
       LIMIT ${Number(size || 10)} 
-      OFFSET ${Number(size || 10) * Number(page || 0)}
+      OFFSET ${Number(size ?? 10) * Number(page || 0)}
     `;
     const query = `
       FROM Transactions transactions
       JOIN (
         SELECT id
         FROM Users
-        WHERE id = ${Number(userId || id)}
+        WHERE id = ${Number(userId ?? id)}
         OR id IN (
             SELECT id
             FROM Agents agents
             WHERE JSON_CONTAINS(parentAgentIds, JSON_ARRAY(${Number(
-              userId || id
+              userId ?? id
             )}))
         )
         OR id IN (
           SELECT id
           FROM Players player
-          WHERE agentId = ${Number(userId || id)}
+          WHERE agentId = ${Number(userId ?? id)}
           OR agentId IN (
               SELECT u.id
               FROM Users u
               JOIN Agents a ON u.id = a.id
               WHERE JSON_CONTAINS(a.parentAgentIds, JSON_ARRAY(${Number(
-                userId || id
+                userId ?? id
               )}))
           )
         )
@@ -98,13 +101,14 @@ export const getTransactions = async (
       ON transactions.senderId = filtered_users.id OR transactions.receiverId = filtered_users.id
       JOIN Users senderUser ON senderUser.id = transactions.senderId
       JOIN Users receiverUser ON receiverUser.id = transactions.receiverId
-      WHERE ((senderUser.name LIKE '%${search}%') OR 
-      (receiverUser.name LIKE '%${search}%')) 
-      AND ((transactions.updatedAt >= '${
-        dateFrom || '1970-01-01T00:00:00.000Z'
-      }') 
+      WHERE ${
+        search
+          ? `((senderUser.name LIKE '%${search}%') OR (receiverUser.name LIKE '%${search}%')) AND`
+          : ''
+      } 
+      ((transactions.updatedAt >= '${dateFrom || '1970-01-01T00:00:00.000Z'}') 
       AND (transactions.updatedAt <= '${dateTo || '2100-01-01T00:00:00.000Z'}'))
-      ${type && `AND transactions.type = '${String(type)}'`}
+      ${paramArray ? `AND transactions.type in ${String(paramArray)}` : ''}
       ${userId ? ` AND ${filter}` : ''}
       ${gameId ? ` AND ${gameId}` : ''}
     `;
@@ -234,6 +238,7 @@ export const addTransaction = async (
             }
           }
         });
+
         if (!user) {
           throw Error(
             JSON.stringify({
@@ -244,26 +249,30 @@ export const addTransaction = async (
         }
       }
 
-      await prisma.transactions.create({
-        data: {
-          ...data,
-          currencyId,
-          updateUserId: Number(req?.user?.id),
-          ...(senderId && { senderId }),
-          ...(receiverId && { receiverId })
+      try {
+        await prisma.transactions.create({
+          data: {
+            ...data,
+            currencyId,
+            updateUserId: Number(req?.user?.id),
+            ...(senderId && { senderId }),
+            ...(receiverId && { receiverId })
+          }
+        });
+
+        if (senderId) {
+          await updateBalance(senderId);
         }
-      });
+        if (receiverId) {
+          await updateBalance(receiverId);
+        }
 
-      if (senderId) {
-        await updateBalance(senderId);
+        return res
+          .status(201)
+          .json({ message: 'Transaction created successfully' });
+      } catch (error) {
+        console.log(error);
       }
-      if (receiverId) {
-        await updateBalance(receiverId);
-      }
-
-      return res
-        .status(201)
-        .json({ message: 'Transaction created successfully' });
     }
     throw Error(
       JSON.stringify({
@@ -285,9 +294,14 @@ export const getTransactionDetailsByUserId = async (
 ): Promise<any> => {
   try {
     const userId = parseInt(req.params.userId);
+    const type = req.query.type as string;
+    const arrayTypes = type.split(',');
     const transactions = (await prisma.transactions.findMany({
       where: {
-        OR: [{ senderId: userId }, { receiverId: userId }]
+        OR: [{ senderId: userId }, { receiverId: userId }],
+        type: {
+          in: arrayTypes
+        }
       },
       orderBy: {
         createdAt: 'asc'
@@ -326,6 +340,7 @@ export const getTransactionDetailsByUserId = async (
     const userDetails = await arrangeTransactionDetails(transactions, userId);
     res.status(200).json(userDetails);
   } catch (error) {
+    console.log(error);
     res.status(500).json({
       message: message.INTERNAL_SERVER_ERROR
     });
@@ -518,3 +533,5 @@ export const getTransactionDetailsByUserIdView = async (
     res.status(500).json(error);
   }
 };
+
+// };

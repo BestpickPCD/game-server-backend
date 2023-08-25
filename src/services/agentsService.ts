@@ -121,6 +121,7 @@ export const getById = async ({ id, userId }: AgentsParams): Promise<any> => {
         roleId: true,
         createdAt: true,
         updatedAt: true,
+        balance: true,
         Agents: {
           select: {
             level: true,

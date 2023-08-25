@@ -317,6 +317,12 @@ export const getBalances = async (userId: number): Promise<any> => {
   }
 };
 
+export const paramsToArray = async (params: string): Promise<any> => {
+  const array = params.split(',');
+  const formattedParams = `('${array.join("','")}')`;
+  return formattedParams;
+};
+
 export const updateBalance = async (userId: number): Promise<any> => {
   try {
     const balances = await getBalances(userId);

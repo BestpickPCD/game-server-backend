@@ -72,7 +72,7 @@ export default {
                   type: 'number'
                 },
                 gameId: {
-                  type: 'number'
+                  type: 'string'
                 },
                 type: {
                   type: 'string'

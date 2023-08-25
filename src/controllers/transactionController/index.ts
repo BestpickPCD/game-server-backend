@@ -237,7 +237,8 @@ export const addTransaction = async (
               }
             }
           }
-        });
+        }); 
+
         if (!user) {
           throw Error(
             JSON.stringify({
@@ -247,27 +248,31 @@ export const addTransaction = async (
           );
         }
       }
-
-      await prisma.transactions.create({
-        data: {
-          ...data,
-          currencyId,
-          updateUserId: Number(req?.user?.id),
-          ...(senderId && { senderId }),
-          ...(receiverId && { receiverId })
+ 
+      try {
+        await prisma.transactions.create({
+          data: {
+            ...data,
+            currencyId,
+            updateUserId: Number(req?.user?.id),
+            ...(senderId && { senderId }),
+            ...(receiverId && { receiverId })
+          }
+        });
+  
+        if (senderId) {
+          await updateBalance(senderId);
         }
-      });
-
-      if (senderId) {
-        await updateBalance(senderId);
+        if (receiverId) {
+          await updateBalance(receiverId);
+        }
+  
+        return res
+          .status(201)
+          .json({ message: 'Transaction created successfully' });
+      } catch (error) {
+        console.log(error)
       }
-      if (receiverId) {
-        await updateBalance(receiverId);
-      }
-
-      return res
-        .status(201)
-        .json({ message: 'Transaction created successfully' });
     }
     throw Error(
       JSON.stringify({
@@ -335,6 +340,7 @@ export const getTransactionDetailsByUserId = async (
     const userDetails = await arrangeTransactionDetails(transactions, userId);
     res.status(200).json(userDetails);
   } catch (error) {
+    console.log(error)
     res.status(500).json({
       message: message.INTERNAL_SERVER_ERROR
     });

@@ -1,3 +1,4 @@
+import { Response } from 'express';
 export interface Agent {
   id: number;
   username: string;
@@ -32,6 +33,12 @@ export interface ResponsePagination<T> {
 
 export interface ResponseWithoutPagination<T> {
   data: T;
+  message?: string;
+  subMessage?: string;
+}
+
+export interface AsyncResponse<T> extends Response {
+  data?: T;
   message?: string;
   subMessage?: string;
 }

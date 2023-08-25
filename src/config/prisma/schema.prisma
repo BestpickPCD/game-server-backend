@@ -62,14 +62,21 @@ model Agents {
 }
 
 model Roles {
-  id          Int       @id @default(autoincrement())
-  name        String    @unique
-  permissions String?   @db.LongText
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id           Int    @id @default(autoincrement())
+  name         String @unique
+  permissions Json?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
   deletedAt   DateTime?
-
   Users Users[]
+}
+model Permissions{
+  id          Int    @id @default(autoincrement())
+  name        String @unique
+  permissions Json?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  deletedAt   DateTime?
 }
 
 model Currencies {
@@ -114,15 +121,6 @@ model Transactions {
   sender      Users?      @relation("TransactionSender", fields: [senderId], references: [id])
   receiver    Users?      @relation("TransactionReceiver", fields: [receiverId], references: [id])
   updatedUser Users?      @relation("TransactionUpdatedUser", fields: [updateUserId], references: [id])
-}
-
-model Tables {
-  id          Int       @id @default(autoincrement())
-  name        String    @unique
-  permissions String    @db.LongText
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime? @updatedAt
-  deletedAt   DateTime?
 }
 
 model AgentVendor {

@@ -1,6 +1,7 @@
 import { Agents, Prisma, PrismaClient, Users } from '@prisma/client';
 const prisma = new PrismaClient();
 
+const NOT_FOUND = 'Agent not found';
 interface AgentsParams {
   id?: number;
   level?: number | null;
@@ -144,7 +145,7 @@ export const getById = async ({ id, userId }: AgentsParams): Promise<any> => {
       }
     });
     if (!agent) {
-      throw Error('Agent not found');
+      throw Error(NOT_FOUND);
     }
     return agent;
   } catch (error) {
@@ -171,7 +172,7 @@ const getAgentById = async (agentId: number): Promise<any> => {
       }
     });
     if (!agent) {
-      throw new Error('Agent not found');
+      throw Error(NOT_FOUND);
     }
     return agent;
   } catch (error) {
@@ -206,7 +207,7 @@ const validateUpdateData = async ({
           : !roleIdNumber
           ? 'Role'
           : 'Currency';
-      throw new Error(`${missingItem} not valid`);
+      throw Error(`${missingItem} not valid`);
     }
     const [parentAgent, role, currency] = await Promise.all([
       parentAgentIdNumber && agent.parentAgentId
@@ -220,13 +221,13 @@ const validateUpdateData = async ({
         : null
     ]);
     if (!parentAgent && parentAgentIdNumber && agent.parentAgentId) {
-      throw new Error('Parent Agent not found');
+      throw Error('Parent Agent not found');
     }
     if (!role && roleIdNumber && roleIdNumber !== agent.user?.roleId) {
-      throw new Error('Role not found');
+      throw Error('Role not found');
     }
     if (!currency && roleIdNumber && roleIdNumber !== agent.user?.currencyId) {
-      throw new Error('Currency not found');
+      throw Error('Currency not found');
     }
     const updatedAgentParentIds = parentAgent && [
       ...(parentAgent?.parentAgentIds as any),

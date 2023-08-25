@@ -62,7 +62,10 @@ export const checkStatusAndMessage = (
       status: 400,
       message: constantMessages.INVALID
     };
-  } else if (message.toLowerCase().includes('duplicate')) {
+  } else if (
+    message.toLowerCase().includes('duplicate') ||
+    message.toLowerCase().includes('exist')
+  ) {
     return {
       status: 400,
       message: constantMessages.DUPLICATE

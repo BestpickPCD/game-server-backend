@@ -47,7 +47,7 @@ export const getAllAgents = async (
     const redisKey = `${defaultKey}:${id}:${id}:${page}:${size}:${search}:${level}:${dateFrom}:${dateTo}`;
     const redisData = await Redis.get(redisKey);
     if (!redisData) {
-      if (!Number(page) || !Number(size)) {
+      if (!Number.isInteger(Number(page)) || !Number.isInteger(Number(page))) {
         throw Error('Invalid page or size');
       }
       const { users, totalItems } = await getAll({

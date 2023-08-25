@@ -8,9 +8,9 @@ export const checkTransferAbility = async (
 ): Promise<any> => {
   let result = false;
   const reveiver = (await prisma.$queryRaw`
-    SELECT id, parentAgentId AS agentId FROM agents WHERE id = ${receiverId}
+    SELECT id, parentAgentId AS agentId FROM Agents agents WHERE id = ${receiverId}
     UNION
-    SELECT id, agentId FROM players WHERE id = ${receiverId}
+    SELECT id, agentId FROM Players players WHERE id = ${receiverId}
   `) as any;
 
   if (reveiver[0]?.agentId === senderId) {

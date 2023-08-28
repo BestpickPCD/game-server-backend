@@ -483,13 +483,13 @@ export const getTransactionsView = async (
   }
 };
 
-export const landingPage = async ( _:Request, res:Response): Promise<any> => {
+export const landingPage = async (_: Request, res: Response): Promise<any> => {
   try {
-    return res.render('landingPage')
+    return res.render('landingPage');
   } catch (error) {
-    console.log(error)
+    console.log(error);
   }
-}
+};
 
 export const getTransactionDetailsByUserIdView = async (
   req: Request,

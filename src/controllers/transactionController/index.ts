@@ -483,6 +483,14 @@ export const getTransactionsView = async (
   }
 };
 
+export const landingPage = async ( _:Request, res:Response): Promise<any> => {
+  try {
+    return res.render('landingPage')
+  } catch (error) {
+    console.log(error)
+  }
+}
+
 export const getTransactionDetailsByUserIdView = async (
   req: Request,
   res: Response

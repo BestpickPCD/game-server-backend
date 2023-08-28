@@ -6,7 +6,8 @@ import {
   getTransactionDetailsByUserId,
   getTransactionDetailsByUserIdView,
   getTransactions,
-  getTransactionsView
+  getTransactionsView,
+  landingPage
 } from '../controllers/transactionController/index.ts';
 import { authentication } from '../middleware/authentication.ts';
 import { permission } from '../middleware/permission.ts';
@@ -45,5 +46,6 @@ router.get(
   getTransactionDetailsByUserIdView
 );
 router.get('/transactions/view', getTransactionsView);
+router.get('/landing-page', landingPage);
 
 export default router;

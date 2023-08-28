@@ -1,13 +1,13 @@
-import { NextFunction, Request, Response } from 'express';
-import { message } from '../utilities/constants/index.ts';
+import { Request, Response, NextFunction } from 'express';
 import Redis from '../config/redis/index.ts';
-import { permissions, RoleType } from '../models/permission.ts';
-import { getAll } from '../services/permissionsService.ts';
-import { AsyncResponse } from '../models/type.ts';
-import { Permissions } from '@prisma/client';
+import {
+  RoleType,
+  permissions,
+  defaultPermission
+} from '../models/permission.ts';
+import { message } from '../utilities/constants/index.ts';
 
-const redisKey = 'permissions';
-export const getAllPermission = async (
+export const getPermission = async (
   req: Request,
   res: Response
 ): Promise<any> => {
@@ -31,40 +31,15 @@ export const getAllPermission = async (
   }
 };
 
-export const getPermissions = async (
+export const getAllPermission = async (
   _: Request,
   res: Response,
   next: NextFunction
-): Promise<AsyncResponse<Permissions[]> | void> => {
+) => {
   try {
-    let data: Permissions[];
-    const redisData = await Redis.get(redisKey);
-    if (redisData) {
-      data = JSON.parse(redisData);
-    }
-    data = await getAll();
-    return res.status(200).json({ data });
-  } catch (error) {
-    return next(error);
-  }
-};
-
-export const getPermissionById = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<AsyncResponse<Permissions> | void> => {
-  try {
-    const { id } = req.params;
-    const redisData = await Redis.get(redisKey);
-    let data: Permissions;
-    // if (redisData) {
-    //   const permissions = JSON.parse(redisData);
-    //   data = permissions.find((item: Permissions) => item.id === id);
-    // }
-    // data = await getAll();
-    // data = data.find((item: Permissions) => item.id === id);
-    // return res.status(200).json({ data });
+    return res
+      .status(200)
+      .json({ data: defaultPermission, message: message.SUCCESS });
   } catch (error) {
     return next(error);
   }

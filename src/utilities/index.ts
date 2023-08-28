@@ -41,10 +41,26 @@ export const getTokens = (
   return { accessToken, refreshToken };
 };
 
-export const checkStatusAndMessage = (
-  message: string
-): { status: number; message: string } => {
+export const checkStatusAndMessage = ({
+  message
+}: {
+  message: string;
+}): { status: number; message: string; subMessage?: string } => {
   if (message.toLowerCase().includes('prisma')) {
+    const splittedMessage = message.toLowerCase().split(' ');
+    console.log(message.toLowerCase());
+
+    const errorField =
+      splittedMessage[splittedMessage.length - 1].split('_')[1];
+    if (splittedMessage.includes('invocation:\n\n\nunique')) {
+      return {
+        status: 400,
+        message: constantMessages.DUPLICATE,
+        subMessage: `${
+          errorField.charAt(0).toUpperCase() + errorField.slice(1)
+        } existed`
+      };
+    }
     return {
       status: 500,
       message: constantMessages.INTERNAL_SERVER_ERROR

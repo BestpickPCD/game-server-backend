@@ -21,7 +21,7 @@ export const getById = async ({
 }: {
   id?: number;
   name?: string;
-}): Promise<Roles> => {
+}): Promise<Roles | boolean> => {
   try {
     const filter = {
       ...(id ? { id } : { name })
@@ -29,14 +29,14 @@ export const getById = async ({
     const role = await prisma.roles.findFirst({
       where: { deletedAt: null, ...filter }
     });
-    if (name && role) {
-      throw new Error(EXISTED);
-    } else if (!role && id) {
-      throw new Error(NOT_FOUND);
-    } else if (!role) {
-      throw new Error(NOT_FOUND);
+    console.log(role);
+
+    if ((name && role) || (id && role)) {
+      return role;
+    } else if (name && !role) {
+      return false;
     }
-    return role;
+    throw Error(NOT_FOUND);
   } catch (error) {
     throw Error(error.message);
   }
@@ -44,12 +44,15 @@ export const getById = async ({
 
 export const create = async (
   name: string,
-  permissions: string[]
+  permissions: any
 ): Promise<Roles> => {
   try {
-    await getById({ name });
+    const role = await getById({ name });
+    if (role) {
+      throw Error(EXISTED);
+    }
     const newRole = await prisma.roles.create({
-      data: { name, permissions }
+      data: { name, permissions: permissions || {} }
     });
     return newRole;
   } catch (error) {
@@ -60,15 +63,16 @@ export const create = async (
 export const update = async (
   id: number,
   name: string,
-  permissions: string[]
-): Promise<Roles> => {
+  permissions: any
+): Promise<any> => {
   try {
     await getById({ id });
-    await getById({ name });
     const updatedRole = await prisma.roles.update({
       where: { id },
-      data: { ...(name && { name }), ...(permissions && { permissions }) }
+      data: { name, permissions }
     });
+    console.log(updatedRole);
+
     return updatedRole;
   } catch (error) {
     throw Error(error.message);

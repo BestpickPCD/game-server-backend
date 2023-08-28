@@ -29,7 +29,7 @@ const errorHandler = (
   message?: string;
   subMessage?: string;
 }> => {
-  const { status, message } = checkStatusAndMessage(error.message);
+  const { status, message, subMessage } = checkStatusAndMessage(error);
   logger.error({
     userId: (req as any)?.user.id,
     url: `${req.baseUrl}${req.url}`,
@@ -40,7 +40,7 @@ const errorHandler = (
   });
   return res.status(status).json({
     message,
-    ...(status !== 500 && { subMessage: error.message })
+    ...(status !== 500 && { subMessage: subMessage || error.message })
   });
 };
 

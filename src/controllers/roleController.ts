@@ -51,14 +51,9 @@ export const getRolesById = async (
     if (redisData) {
       data = JSON.parse(redisData);
     }
-    data = await getById({
-      id: Number(id)
-    });
+    data = (await getById({ id: Number(id) })) as Roles;
     !redisData && (await Redis.set(redisKeyWithId, JSON.stringify(data)));
-    return res.status(200).json({
-      data,
-      message: message.SUCCESS
-    });
+    return res.status(200).json({ data, message: message.SUCCESS });
   } catch (error) {
     return next(error);
   }
@@ -88,11 +83,16 @@ export const updateRole = async (
 ): Promise<any> => {
   try {
     const { roleId } = req.params;
-    const { name = '', permissions = [] } = req.body;
+    const { name = '', permissions } = req.body;
     if (!Number(roleId)) {
       throw Error(INVALID);
     }
     const updatedRole = await update(Number(roleId), name, permissions);
+    const redisKeyWithId = `${redisKey}-${roleId}`;
+    const redisDataById = await Redis.get(redisKeyWithId);
+    if (redisDataById) {
+      await Redis.set(redisKeyWithId, JSON.stringify(updatedRole));
+    }
     const redisData = await Redis.get(redisKey);
     if (redisData) {
       const parseRedisData = JSON.parse(redisData) as Roles[];
@@ -102,12 +102,9 @@ export const updateRole = async (
         }
         return role;
       });
+      console.log(updatedRedisData);
+
       await Redis.set(redisKey, JSON.stringify(updatedRedisData));
-    }
-    const redisKeyWithId = `${redisKey}-${roleId}`;
-    const redisDataById = await Redis.get(redisKeyWithId);
-    if (redisDataById) {
-      await Redis.set(redisKeyWithId, JSON.stringify(updatedRole));
     }
     return res
       .status(200)

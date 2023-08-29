@@ -401,10 +401,13 @@ export const deleteUser = async (req: Request, res: Response): Promise<any> => {
   }
 };
 
-export const dashboard = async (req:RequestWithUser, res:Response):Promise<any> => {
+export const dashboard = async (
+  req: RequestWithUser,
+  res: Response
+): Promise<any> => {
   try {
-    const userId = req.user?.id 
-    const dashboard = await prisma.$queryRaw`
+    const userId = req.user?.id;
+    const dashboard = (await prisma.$queryRaw`
       SELECT * FROM  
         (SELECT id, balance, name, type FROM Users WHERE id = ${userId}) AS USER LEFT JOIN 
         (SELECT COUNT(id) AS subAgent, parentAgentId FROM Agents WHERE parentAgentId = ${userId} GROUP BY parentAgentId) AS subAgent ON subAgent.parentAgentId = User.id LEFT JOIN
@@ -414,13 +417,13 @@ export const dashboard = async (req:RequestWithUser, res:Response):Promise<any> 
         (SELECT IFNULL(SUM(amount),0) AS bet, senderId FROM Transactions WHERE senderId = ${userId} AND type = 'bet' GROUP BY senderId) AS bet ON bet.senderId = User.id LEFT JOIN
         (SELECT IFNULL(SUM(amount),0) AS win, receiverId FROM Transactions WHERE receiverId = ${userId} AND type = 'win' GROUP BY receiverId) AS win ON win.receiverId = User.id LEFT JOIN
         (SELECT IFNULL(SUM(amount),0) AS charge, receiverId FROM Transactions WHERE receiverId = ${userId} AND type = 'charge' GROUP BY receiverId) AS charge ON charge.receiverId = User.id 
-    ` as any
-    const { ...data } = { ...dashboard[0] }
-    return res.status(200).json(data)
+    `) as any;
+    const { ...data } = { ...dashboard[0] };
+    return res.status(200).json(data);
   } catch (error) {
-    console.log(error)
+    console.log(error);
   }
-}
+};
 
 const _updateAgent = async (
   user: any,

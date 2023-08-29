@@ -1,3 +1,4 @@
+import { Response } from 'express';
 export interface Agent {
   id: number;
   username: string;
@@ -15,4 +16,29 @@ export interface Agent {
   createdAt: Date;
   updatedAt: Date;
   deletedAt?: Date | null;
+}
+
+export interface Pagination<T> {
+  data: T[];
+  page: number;
+  size: number;
+  totalItems: number;
+}
+
+export interface ResponsePagination<T> {
+  data: Pagination<T>;
+  message?: string;
+  subMessage?: string;
+}
+
+export interface ResponseWithoutPagination<T> {
+  data: T;
+  message?: string;
+  subMessage?: string;
+}
+
+export interface AsyncResponse<T> extends Response {
+  data?: T;
+  message?: string;
+  subMessage?: string;
 }

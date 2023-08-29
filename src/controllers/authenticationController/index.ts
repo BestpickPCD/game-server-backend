@@ -5,7 +5,7 @@ import { Request, Response } from 'express';
 import Redis from '../../config/redis/index.ts';
 import { RequestWithUser } from '../../models/customInterfaces.ts';
 import { message } from '../../utilities/constants/index.ts';
-import { getTokens } from '../../utilities/getTokens.ts';
+import { getTokens } from '../../utilities/index.ts';
 import {
   findCurrencyById,
   getParentAgentIdsByParentAgentId

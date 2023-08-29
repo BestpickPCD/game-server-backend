@@ -3,25 +3,24 @@ import {
   deleteAgent,
   getAgentById,
   getAllAgents,
-  getUsersByAgentId,
-  // createAgent,
   updateAgent
+  // getUsersByAgentId,
+  // createAgent,
 } from '../controllers/agentController.ts';
 import { authentication } from '../middleware/authentication.ts';
 import { permission } from '../middleware/permission.ts';
-
 const router = express.Router();
 
-router.get('', authentication, permission('roles', 'get'), getAllAgents);
+router.get('', authentication, permission('agents', 'get'), getAllAgents);
 router.get(
   '/:id',
   authentication,
-  permission('transactions', 'get'),
+  permission('agents', 'getById'),
   getAgentById
 );
+router.put('/:id', permission('agents', 'update'), updateAgent);
+router.delete('/:id', permission('agents', 'delete'), deleteAgent);
 // router.post('', createAgent);
-router.put('/:id', permission('roles', 'update'), updateAgent);
-router.delete('/:id', permission('roles', 'delete'), deleteAgent);
-router.get('/:id/users', permission('roles', 'get'), getUsersByAgentId);
+// router.get('/:id/users', permission('roles', 'get'), getUsersByAgentId);
 
 export default router;

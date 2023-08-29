@@ -50,16 +50,27 @@ export const permissions: Permissions = {
     transactions: [...commonPermissions],
     players: ['get', 'getById'],
     currencies: ['get', 'getById'],
-    games: [...commonPermissions]
+    games: ['get', 'getById']
   },
   operator: {
-    users: [...commonPermissions],
-    permissions: [...commonPermissions],
-    agents: [...commonPermissions],
-    roles: [...commonPermissions],
+    users: ['get', 'getById'],
+    permissions: ['get', 'getById'],
+    agents: ['get', 'getById'],
+    roles: ['get', 'getById'],
     transactions: ['get', 'getById'],
-    players: [...commonPermissions],
-    currencies: [...commonPermissions],
-    games: [...commonPermissions]
+    players: ['get', 'getById'],
+    currencies: ['get', 'getById'],
+    games: ['get', 'getById']
   }
+};
+
+export const defaultPermission = {
+  users: [...commonPermissions],
+  permissions: [...commonPermissions],
+  agents: [...commonPermissions],
+  roles: [...commonPermissions],
+  transactions: [...commonPermissions],
+  players: [...commonPermissions],
+  currencies: [...commonPermissions],
+  games: [...commonPermissions]
 };

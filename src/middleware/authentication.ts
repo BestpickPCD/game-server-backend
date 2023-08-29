@@ -47,6 +47,7 @@ export const authentication = async (
       const decoded = (await jwt.verify(token, ACCESS_TOKEN_KEY)) as JwtPayload;
       const result = await redisClient.get(`user-${decoded.userId}-tokens`);
       const parsedResult = JSON.parse(result ?? '');
+
       if (parsedResult) {
         if (parsedResult.tokens.accessToken !== token) {
           return res.status(401).json({
@@ -54,6 +55,7 @@ export const authentication = async (
             subMessage: 'Token is expired'
           });
         }
+
         // eslint-disable-next-line no-param-reassign
         req.user = parsedResult;
         return next();
@@ -66,6 +68,7 @@ export const authentication = async (
       }
       // eslint-disable-next-line no-param-reassign
       (req as any).user = user;
+
       return next();
     } catch (error) {
       if (req.body?.refreshToken) {

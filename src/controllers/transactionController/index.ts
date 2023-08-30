@@ -10,7 +10,10 @@ import {
   updateBalance
 } from './utilities.ts';
 import Redis, { getRedisData } from '../../config/redis/index.ts';
-import { getAllById, getByIdWithType } from '../../services/transactionsService.ts';
+import {
+  getAllById,
+  getByIdWithType
+} from '../../services/transactionsService.ts';
 const prisma = new PrismaClient();
 
 export const getTransactions = async (
@@ -19,18 +22,22 @@ export const getTransactions = async (
 ): Promise<any> => {
   try {
     const { id } = (req as any).user;
-    const redisKey = 'transactions'
-    const {redisData, redisKeyWithId} = await getRedisData(id, redisKey, 'Invalid users Id')
+    const redisKey = 'transactions';
+    const { redisData, redisKeyWithId } = await getRedisData(
+      id,
+      redisKey,
+      'Invalid users Id'
+    );
     let data: any;
     if (redisData) {
       data = JSON.parse(redisData);
-    }else{
-      data = await getAllById(req.query, id) as any;
+    } else {
+      data = (await getAllById(req.query, id)) as any;
     }
     !redisData && (await Redis.set(redisKeyWithId, JSON.stringify(data)));
 
-    const {transactions, count, page, size} = data
-    
+    const { transactions, count, page, size } = data;
+
     return res.status(200).json({
       message: message.SUCCESS,
       data: {
@@ -212,19 +219,20 @@ export const getTransactionDetailsByUserId = async (
     const type = req.query.type as string;
     const arrayTypes = type.split(',');
 
-    const redisKey = 'transactionById'
-    const {redisData, redisKeyWithId} = await getRedisData(userId, redisKey, 'Invalid users Id')
+    const redisKey = 'transactionById';
+    const { redisData, redisKeyWithId } = await getRedisData(
+      userId,
+      redisKey,
+      'Invalid users Id'
+    );
     let data: any;
     if (redisData) {
       data = JSON.parse(redisData);
-    }else{
-      data = await getByIdWithType(userId, arrayTypes) as any;
+    } else {
+      data = (await getByIdWithType(userId, arrayTypes)) as any;
     }
     !redisData && (await Redis.set(redisKeyWithId, JSON.stringify(data)));
 
-
-
-    
     res.status(200).json(data);
   } catch (error) {
     console.log(error);

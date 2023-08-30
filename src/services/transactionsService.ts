@@ -1,28 +1,30 @@
-import { PrismaClient } from "@prisma/client";
-import { arrangeTransactionDetails, paramsToArray } from "../controllers/transactionController/utilities.ts";
+import { PrismaClient } from '@prisma/client';
+import {
+  arrangeTransactionDetails,
+  paramsToArray
+} from '../controllers/transactionController/utilities.ts';
 const prisma = new PrismaClient();
 
-
-export const getAllById = async (queryParams:any, id:number) => {
-    try {
-        const {
-            page = 0,
-            size = 10,
-            dateFrom,
-            dateTo,
-            userId,
-            type,
-            gameId,
-            search
-          } = queryParams;
-          const paramArray = !type ? '' : await paramsToArray(type as string);
-          const normalSelect = `
+export const getAllById = async (queryParams: any, id: number) => {
+  try {
+    const {
+      page = 0,
+      size = 10,
+      dateFrom,
+      dateTo,
+      userId,
+      type,
+      gameId,
+      search
+    } = queryParams;
+    const paramArray = !type ? '' : await paramsToArray(type as string);
+    const normalSelect = `
           SELECT DISTINCT transactions.*, senderUser.name as senderUser, receiverUser.name as receiverUser
           `;
-          const countSelect = `
+    const countSelect = `
           SELECT COUNT(DISTINCT transactions.id) as count
           `;
-          const filter: any = `
+    const filter: any = `
              senderId IN (
               SELECT id
               FROM Agents
@@ -40,7 +42,9 @@ export const getAllById = async (queryParams:any, id:number) => {
                   SELECT u.id
                   FROM Users u
                   JOIN Agents a ON u.id = a.id
-                  WHERE JSON_CONTAINS(a.parentAgentIds, JSON_ARRAY(${Number(id)}))))
+                  WHERE JSON_CONTAINS(a.parentAgentIds, JSON_ARRAY(${Number(
+                    id
+                  )}))))
                 OR receiverId IN (
                 SELECT id
                 FROM Players
@@ -49,15 +53,17 @@ export const getAllById = async (queryParams:any, id:number) => {
                     SELECT u.id
                     FROM Users u
                     JOIN Agents a ON u.id = a.id
-                    WHERE JSON_CONTAINS(a.parentAgentIds, JSON_ARRAY(${Number(id)}))
+                    WHERE JSON_CONTAINS(a.parentAgentIds, JSON_ARRAY(${Number(
+                      id
+                    )}))
                 )
             ) `;
-          const pageSize = `
+    const pageSize = `
             order By id
             LIMIT ${Number(size || 10)} 
             OFFSET ${Number(size ?? 10) * Number(page || 0)}
           `;
-          const query = `
+    const query = `
             FROM Transactions transactions
             JOIN (
               SELECT id
@@ -92,73 +98,79 @@ export const getAllById = async (queryParams:any, id:number) => {
                 ? `((senderUser.name LIKE '%${search}%') OR (receiverUser.name LIKE '%${search}%')) AND`
                 : ''
             } 
-            ((transactions.updatedAt >= '${dateFrom || '1970-01-01T00:00:00.000Z'}') 
-            AND (transactions.updatedAt <= '${dateTo || '2100-01-01T00:00:00.000Z'}'))
-            ${paramArray ? `AND transactions.type in ${String(paramArray)}` : ''}
+            ((transactions.updatedAt >= '${
+              dateFrom || '1970-01-01T00:00:00.000Z'
+            }') 
+            AND (transactions.updatedAt <= '${
+              dateTo || '2100-01-01T00:00:00.000Z'
+            }'))
+            ${
+              paramArray ? `AND transactions.type in ${String(paramArray)}` : ''
+            }
             ${userId ? ` AND ${filter}` : ''}
             ${gameId ? ` AND ${gameId}` : ''}
           `;
-          console.log(`${normalSelect} ${query} ${pageSize}`)
-          const [transactions, [{ count }]]: any = await prisma.$transaction([
-            prisma.$queryRawUnsafe(`${normalSelect} ${query} ${pageSize}`),
-            prisma.$queryRawUnsafe(`${countSelect} ${query}`)
-          ]);
-        console.log(transactions,count)
-        return {transactions, count: parseInt(count), page, size}
-    } catch (error) {
-        console.log(error)
-        throw Error(error);
-    }
-}
+    console.log(`${normalSelect} ${query} ${pageSize}`);
+    const [transactions, [{ count }]]: any = await prisma.$transaction([
+      prisma.$queryRawUnsafe(`${normalSelect} ${query} ${pageSize}`),
+      prisma.$queryRawUnsafe(`${countSelect} ${query}`)
+    ]);
+    console.log(transactions, count);
+    return { transactions, count: parseInt(count), page, size };
+  } catch (error) {
+    console.log(error);
+    throw Error(error);
+  }
+};
 
-export const getByIdWithType = async (userId:number, arrayTypes:string[] ) => {
-    try {
-        const transactions = (await prisma.transactions.findMany({
-            where: {
-              OR: [{ senderId: userId }, { receiverId: userId }],
-              type: {
-                in: arrayTypes
-              }
-            },
-            orderBy: {
-              createdAt: 'asc'
-            },
-            select: {
-                receiver: {
-                    select: {
-                    id: true,
-                    username: true,
-                    type: true
-                    }
-                },
-                sender: {
-                    select: {
-                    id: true,
-                    username: true,
-                    type: true
-                    }
-                },
-                updatedUser: {
-                    select: {
-                    id: true,
-                    username: true,
-                    type: true
-                    }
-                },
-                id: true,
-                amount: true,
-                gameId: true,
-                type: true,
-                note: true,
-                status: true,
-                createdAt: true
-            }
-        })) as any;
-        const userDetails = await arrangeTransactionDetails(transactions, userId);
+export const getByIdWithType = async (userId: number, arrayTypes: string[]) => {
+  try {
+    const transactions = (await prisma.transactions.findMany({
+      where: {
+        OR: [{ senderId: userId }, { receiverId: userId }],
+        type: {
+          in: arrayTypes
+        }
+      },
+      orderBy: {
+        createdAt: 'asc'
+      },
+      select: {
+        receiver: {
+          select: {
+            id: true,
+            username: true,
+            type: true
+          }
+        },
+        sender: {
+          select: {
+            id: true,
+            username: true,
+            type: true
+          }
+        },
+        updatedUser: {
+          select: {
+            id: true,
+            username: true,
+            type: true
+          }
+        },
+        id: true,
+        amount: true,
+        gameId: true,
+        type: true,
+        note: true,
+        status: true,
+        createdAt: true
+      }
+    })) as any;
+    const userDetails = await arrangeTransactionDetails(transactions, userId);
 
-        return userDetails
-    } catch (error) {
-        console.log(error)
-        throw Error(error);
-    }
-}
+    return userDetails;
+  } catch (error) {
+    console.log(error);
+    throw Error(error);
+  }
+};

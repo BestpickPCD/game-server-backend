@@ -1,9 +1,8 @@
-import { Prisma, PrismaClient, Users } from "@prisma/client";
+import { Prisma, PrismaClient, Users } from '@prisma/client';
 const prisma = new PrismaClient();
 
-export const getAllWithBalance = async (userId:number) => {
-
-  try { 
+export const getAllWithBalance = async (userId: number) => {
+  try {
     const users = (await prisma.$queryRaw`SELECT * FROM 
     (SELECT id, name, email, username, type, balance, currencyId, isActive, updatedAt FROM Users users WHERE deletedAt IS NULL) AS users JOIN 
     (SELECT players.agentId, players.id, agents.parentAgentIds FROM Players players JOIN Agents agents ON agents.id = players.agentId WHERE ( JSON_CONTAINS(agents.parentAgentIds, JSON_ARRAY(${userId})) OR players.agentId = ${userId})) AS players ON players.id = users.id LEFT JOIN 
@@ -34,148 +33,145 @@ export const getAllWithBalance = async (userId:number) => {
       return data;
     });
 
-    return userDetails
-
+    return userDetails;
   } catch (error) {
-    throw Error(error );
+    throw Error(error);
   }
-}
+};
 
-export const getAll = async (query:any, id: number) => {
+export const getAll = async (query: any, id: number) => {
   try {
     const {
-        page = 0,
-        size = 10,
-        search = '',
-        dateFrom,
-        dateTo,
-        agentId
-      }: {
-        page?: number;
-        size?: number;
-        search?: string;
-        dateFrom?: string;
-        dateTo?: string;
-        isActive?: true | false | null;
-        agentId?: number;
-      } = query;
-
+      page = 0,
+      size = 10,
+      search = '',
+      dateFrom,
+      dateTo,
+      agentId
+    }: {
+      page?: number;
+      size?: number;
+      search?: string;
+      dateFrom?: string;
+      dateTo?: string;
+      isActive?: true | false | null;
+      agentId?: number;
+    } = query;
 
     const filter: Prisma.PlayersFindManyArgs = {
-        select: {
-          id: true,
-          agentId: true,
-          user: {
-            select: {
-              balance: true,
-              email: true,
-              name: true,
-              currency: {
-                select: {
-                  id: true,
-                  code: true,
-                  name: true
-                }
-              },
-              username: true,
-              createdAt: true,
-              updatedAt: true
-            }
-          }
-        },
-        where: {
-          deletedAt: null,
-          user: {
-            type: 'player'
-          },
-          OR: [
-            {
-              agentId: Number(id)
+      select: {
+        id: true,
+        agentId: true,
+        user: {
+          select: {
+            balance: true,
+            email: true,
+            name: true,
+            currency: {
+              select: {
+                id: true,
+                code: true,
+                name: true
+              }
             },
-            {
-              agent: {
-                parentAgentIds: {
-                  array_contains: [Number(id)]
-                }
+            username: true,
+            createdAt: true,
+            updatedAt: true
+          }
+        }
+      },
+      where: {
+        deletedAt: null,
+        user: {
+          type: 'player'
+        },
+        OR: [
+          {
+            agentId: Number(id)
+          },
+          {
+            agent: {
+              parentAgentIds: {
+                array_contains: [Number(id)]
               }
             }
-          ],
-          AND: {
-            user: {
-              OR: [
-                {
-                  name: {
-                    contains: search
-                  }
-                },
-                {
-                  email: {
-                    contains: search
-                  }
-                },
-                {
-                  username: {
-                    contains: search
-                  }
-                }
-              ]
-            },
+          }
+        ],
+        AND: {
+          user: {
             OR: [
               {
-                agent: {
-                  parentAgentIds: {
-                    array_contains: [Number(agentId ?? id)]
-                  }
+                name: {
+                  contains: search
                 }
               },
               {
-                agentId: Number(agentId ?? id)
+                email: {
+                  contains: search
+                }
+              },
+              {
+                username: {
+                  contains: search
+                }
               }
             ]
           },
-          updatedAt: {
-            gte: dateFrom || '1970-01-01T00:00:00.000Z',
-            lte: dateTo || '2100-01-01T00:00:00.000Z'
-          }
+          OR: [
+            {
+              agent: {
+                parentAgentIds: {
+                  array_contains: [Number(agentId ?? id)]
+                }
+              }
+            },
+            {
+              agentId: Number(agentId ?? id)
+            }
+          ]
         },
-        orderBy: {
-          updatedAt: 'desc'
-        },
-        skip: Number(page * size),
-        take: Number(size)
-      };
-  
-      const [totalItems, data] = await prisma.$transaction([
-        prisma.players.count({
-          where: filter.where
-        }),
-        prisma.players.findMany(filter)
-      ]);
+        updatedAt: {
+          gte: dateFrom || '1970-01-01T00:00:00.000Z',
+          lte: dateTo || '2100-01-01T00:00:00.000Z'
+        }
+      },
+      orderBy: {
+        updatedAt: 'desc'
+      },
+      skip: Number(page * size),
+      take: Number(size)
+    };
 
-      return {data, totalItems, page, size}
+    const [totalItems, data] = await prisma.$transaction([
+      prisma.players.count({
+        where: filter.where
+      }),
+      prisma.players.findMany(filter)
+    ]);
+
+    return { data, totalItems, page, size };
   } catch (error) {
     throw Error(error);
   }
+};
 
-}
-
-export const getById = async (id:number) => {
+export const getById = async (id: number) => {
   try {
-    const user = await prisma.users.findUnique({
+    const user = (await prisma.users.findUnique({
       where: {
         id
       }
-    }) as Users
+    })) as Users;
 
-    return user
+    return user;
   } catch (error) {
     throw Error(error);
   }
-}
+};
 
-export const getPlayerById = async (id:number, userId:number) => {
+export const getPlayerById = async (id: number, userId: number) => {
   try {
-    const user = await prisma.users.findUnique({
+    const user = (await prisma.users.findUnique({
       where: {
         id: Number(userId),
         Players: {
@@ -222,7 +218,7 @@ export const getPlayerById = async (id:number, userId:number) => {
           }
         }
       }
-    }) as any;
+    })) as any;
 
     const data = {
       id: user.id,
@@ -236,14 +232,14 @@ export const getPlayerById = async (id:number, userId:number) => {
       roleId: user.roleId,
       currencyId: user.currencyId
     };
-    return data 
+    return data;
   } catch (error) {
-    console.log(error)
+    console.log(error);
     throw Error(error);
   }
-}
+};
 
-export const getDashboardData = async (userId:number) => {
+export const getDashboardData = async (userId: number) => {
   try {
     const dashboard = (await prisma.$queryRaw`
       SELECT * FROM  
@@ -256,7 +252,7 @@ export const getDashboardData = async (userId:number) => {
         (SELECT IFNULL(SUM(amount),0) AS win, receiverId FROM Transactions WHERE receiverId = ${userId} AND type = 'win' GROUP BY receiverId) AS win ON win.receiverId = User.id LEFT JOIN
         (SELECT IFNULL(SUM(amount),0) AS charge, receiverId FROM Transactions WHERE receiverId = ${userId} AND type = 'charge' GROUP BY receiverId) AS charge ON charge.receiverId = User.id 
     `) as any;
-    
+
     const item = dashboard[0];
     const data = {
       userId: item.id,
@@ -268,23 +264,25 @@ export const getDashboardData = async (userId:number) => {
       agentId: item.agentId,
       balance: {
         balance: item.balance ?? 0,
-        calculatedBalance: (item.receive ?? 0 + item.win ?? 0) - (item.sendOut ?? 0 + item.bet ?? 0 + item.charge ?? 0),
+        calculatedBalance:
+          (item.receive ?? 0 + item.win ?? 0) -
+          (item.sendOut ?? 0 + item.bet ?? 0 + item.charge ?? 0),
         sendOut: item.sendOut ?? 0,
         receive: item.receive ?? 0,
         bet: item.bet ?? 0,
         win: item.win ?? 0,
-        charge: item.charge ?? 0,
-      } 
-    }
+        charge: item.charge ?? 0
+      }
+    };
 
-    return data
+    return data;
   } catch (error) {
-    console.log(error)
+    console.log(error);
     throw Error(error);
   }
-}
+};
 
-export const getAllByAgentId = async (query:any, id:number) => {
+export const getAllByAgentId = async (query: any, id: number) => {
   try {
     const {
       page = 0,
@@ -365,10 +363,9 @@ export const getAllByAgentId = async (query:any, id:number) => {
       prisma.users.findMany(filter)
     ]);
 
-    return { totalItems, data, page, size }
-
+    return { totalItems, data, page, size };
   } catch (error) {
-    console.log(error)
+    console.log(error);
     throw Error(error);
   }
-}
+};

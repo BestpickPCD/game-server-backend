@@ -31,7 +31,11 @@ export const removeRedisKeys = async (key: string): Promise<any> => {
   }
 };
 
-export const getRedisData =async (id:number, name:string, invalidMessage:string) => {
+export const getRedisData = async (
+  id: number,
+  name: string,
+  invalidMessage: string
+) => {
   try {
     if (!Number(id)) {
       throw Error(invalidMessage);
@@ -39,10 +43,9 @@ export const getRedisData =async (id:number, name:string, invalidMessage:string)
     const redisKeyWithId = `${name}-${id}`;
     const redisData = await redis.get(redisKeyWithId);
 
-    return {redisData, redisKeyWithId}
-    
+    return { redisData, redisKeyWithId };
   } catch (error) {
-    console.log(error)
+    console.log(error);
     return Promise.reject(error);
   }
-}
+};

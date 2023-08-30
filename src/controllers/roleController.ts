@@ -23,7 +23,7 @@ export const getRoles = async (
     let data = [];
     if (redisData) {
       data = JSON.parse(redisData);
-    }else{
+    } else {
       data = await getAll();
     }
     await Redis.set(redisKey, JSON.stringify(data));
@@ -51,7 +51,7 @@ export const getRolesById = async (
     let data: Roles;
     if (redisData) {
       data = JSON.parse(redisData);
-    }else{
+    } else {
       data = (await getById({ id: Number(id) })) as Roles;
     }
     !redisData && (await Redis.set(redisKeyWithId, JSON.stringify(data)));

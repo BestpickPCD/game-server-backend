@@ -7,7 +7,13 @@ import {
 } from './utilities.ts';
 import Redis, { getRedisData } from '../../config/redis/index.ts';
 import { RequestWithUser } from '../../models/customInterfaces.ts';
-import { getAll, getAllByAgentId, getAllWithBalance, getById, getDashboardData } from '../../services/usersService.ts';
+import {
+  getAll,
+  getAllByAgentId,
+  getAllWithBalance,
+  getById,
+  getDashboardData
+} from '../../services/usersService.ts';
 const prisma = new PrismaClient();
 
 export const getAllUsersWithBalances = async (
@@ -17,12 +23,16 @@ export const getAllUsersWithBalances = async (
 ): Promise<any> => {
   try {
     const { id } = (req as any).user;
-    const {redisData, redisKeyWithId} = await getRedisData(id, 'users', 'Invalid users Id')
+    const { redisData, redisKeyWithId } = await getRedisData(
+      id,
+      'users',
+      'Invalid users Id'
+    );
     let data: any;
     if (redisData) {
       data = JSON.parse(redisData);
-    }else{
-      data = await getAllWithBalance(id) as any;
+    } else {
+      data = (await getAllWithBalance(id)) as any;
     }
     !redisData && (await Redis.set(redisKeyWithId, JSON.stringify(data)));
 
@@ -45,26 +55,30 @@ export const getAllUsers = async (
   req: RequestWithUser,
   res: Response
 ): Promise<any> => {
-  try { 
+  try {
     const { id } = (req as any).user;
-    const {redisData, redisKeyWithId} = await getRedisData(id, 'users', 'Invalid users Id')
+    const { redisData, redisKeyWithId } = await getRedisData(
+      id,
+      'users',
+      'Invalid users Id'
+    );
     let data: any;
     if (redisData) {
       data = JSON.parse(redisData);
-    }else{
-      data = await getAll(req.query, id) as any;
+    } else {
+      data = (await getAll(req.query, id)) as any;
     }
     !redisData && (await Redis.set(redisKeyWithId, JSON.stringify(data)));
 
     return res.status(200).json({
-        data: {
-          data: data.data,
-          totalItems: data.totalItems,
-          page: Number(data.page),
-          size: Number(data.size)
-        },
-        message: message.SUCCESS
-      });
+      data: {
+        data: data.data,
+        totalItems: data.totalItems,
+        page: Number(data.page),
+        size: Number(data.size)
+      },
+      message: message.SUCCESS
+    });
   } catch (error) {
     console.log(error);
     return res.status(500).json({ message: message.INTERNAL_SERVER_ERROR });
@@ -72,24 +86,28 @@ export const getAllUsers = async (
 };
 
 export const updateUser = async (req: Request, res: Response): Promise<any> => {
-
   try {
     const { userId } = req.params;
-    const redisKey = 'userById'
-    const {redisData, redisKeyWithId} = await getRedisData(parseInt(userId), redisKey, 'Invalid users Id')
+    const redisKey = 'userById';
+    const { redisData, redisKeyWithId } = await getRedisData(
+      parseInt(userId),
+      redisKey,
+      'Invalid users Id'
+    );
     let data: any;
     if (redisData) {
       data = JSON.parse(redisData);
-    }else{
-      data = await getById(parseInt(userId)) as any;
+    } else {
+      data = (await getById(parseInt(userId))) as any;
     }
     !redisData && (await Redis.set(redisKeyWithId, JSON.stringify(data)));
- 
+
     if (!data) {
       return res.status(404).json({ message: message.NOT_FOUND });
     }
 
-    const { name, email, roleId, currencyId, agentId, parentAgentId } = req.body;
+    const { name, email, roleId, currencyId, agentId, parentAgentId } =
+      req.body;
     const updatedUser = {
       ...(name && { name }),
       ...(email && { email }),
@@ -107,7 +125,7 @@ export const updateUser = async (req: Request, res: Response): Promise<any> => {
     if (newUser && newUser.type == 'player') {
       return _updatePlayer(newUser, agentId, res);
     } else if (newUser && newUser.type == 'agent') {
-      return _updateAgent(newUser, parentAgentId, res); 
+      return _updateAgent(newUser, parentAgentId, res);
     }
 
     return res.status(404).json({ message: message.USER_TYPE_NOT_FOUND });
@@ -143,18 +161,22 @@ export const getUserById = async (
 ): Promise<any> => {
   try {
     const { userId } = req.params;
-    const {redisData, redisKeyWithId} = await getRedisData(parseInt(userId), 'userById', 'Invalid users Id')
+    const { redisData, redisKeyWithId } = await getRedisData(
+      parseInt(userId),
+      'userById',
+      'Invalid users Id'
+    );
     let data: any;
     if (redisData) {
       data = JSON.parse(redisData);
-    }else{
-      data = await getById(parseInt(userId)) as any;
+    } else {
+      data = (await getById(parseInt(userId))) as any;
     }
     !redisData && (await Redis.set(redisKeyWithId, JSON.stringify(data)));
 
     if (!data) {
       return res.status(404).json({ message: message.NOT_FOUND });
-    } 
+    }
 
     return res.status(200).json({ message: message.SUCCESS, data });
   } catch (error) {
@@ -167,13 +189,17 @@ export const getUserById = async (
 export const deleteUser = async (req: Request, res: Response): Promise<any> => {
   try {
     const { userId } = req.params;
-    const redisKey = 'userById'
-    const {redisData, redisKeyWithId} = await getRedisData(parseInt(userId), redisKey, 'Invalid users Id')
+    const redisKey = 'userById';
+    const { redisData, redisKeyWithId } = await getRedisData(
+      parseInt(userId),
+      redisKey,
+      'Invalid users Id'
+    );
     let data: any;
     if (redisData) {
       data = JSON.parse(redisData);
-    }else{
-      data = await getById(parseInt(userId)) as any;
+    } else {
+      data = (await getById(parseInt(userId))) as any;
     }
     !redisData && (await Redis.set(redisKeyWithId, JSON.stringify(data)));
 
@@ -198,18 +224,21 @@ export const getDashboard = async (
   req: RequestWithUser,
   res: Response
 ): Promise<any> => {
-  try { 
+  try {
     const { id } = (req as any).user;
-    const {redisData, redisKeyWithId} = await getRedisData(id, 'dashboard', 'Invalid users Id')
+    const { redisData, redisKeyWithId } = await getRedisData(
+      id,
+      'dashboard',
+      'Invalid users Id'
+    );
     let data: any;
     if (redisData) {
       data = JSON.parse(redisData);
-    }else{
-      data = await getDashboardData(id) as any;
+    } else {
+      data = (await getDashboardData(id)) as any;
     }
     !redisData && (await Redis.set(redisKeyWithId, JSON.stringify(data)));
     return res.status(200).json(data);
-
   } catch (error) {
     return res
       .status(500)
@@ -227,7 +256,7 @@ const _updateAgent = async (
       return res
         .status(400)
         .json({ message: 'Parent agent cannot be yourself' });
-    } 
+    }
     const details: any = await getParentAgentIdsByParentAgentId(parentAgentId);
     const agent = await prisma.agents.update({
       where: { id: user.id },
@@ -263,15 +292,19 @@ export const getAllUsersByAgentId = async (
 ): Promise<any> => {
   try {
     const { id } = (req as any).user;
-    const {redisData, redisKeyWithId} = await getRedisData(id, 'userByAgentId', 'Invalid users Id')
+    const { redisData, redisKeyWithId } = await getRedisData(
+      id,
+      'userByAgentId',
+      'Invalid users Id'
+    );
     let data: any;
     if (redisData) {
       data = JSON.parse(redisData);
-    }else{
-      data = await getAllByAgentId(req.query, id) as any;
+    } else {
+      data = (await getAllByAgentId(req.query, id)) as any;
     }
     !redisData && (await Redis.set(redisKeyWithId, JSON.stringify(data)));
-    const { totalItems, page, size } = data
+    const { totalItems, page, size } = data;
     return res.status(200).json({
       data: {
         data: data.data,

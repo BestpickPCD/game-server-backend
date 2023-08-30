@@ -1,13 +1,7 @@
-import { Roles } from '@prisma/client';
 import { NextFunction, Response } from 'express';
+import { PermissionType, RouteType } from '../models/permission.ts';
+import { getById } from '../services/roleService.ts';
 import { message } from '../utilities/constants/index.ts';
-import {
-  permissions,
-  RouteType,
-  PermissionType,
-  roles,
-  RoleType
-} from '../models/permission.ts';
 
 export const permission =
   (router: RouteType, method: PermissionType): any =>
@@ -16,18 +10,13 @@ export const permission =
       if (!(req as any).user) {
         return res.status(401).json({ message: message.UNAUTHORIZED });
       }
-      const { role }: { role: Roles } = (req as any).user;
-
-      const hasRoles = roles.indexOf(role.name as RoleType);
-      if (hasRoles === -1 && roles[hasRoles]) {
-        return res
-          .status(404)
-          .json({ message: message.NOT_FOUND, subMessage: 'Role not found' });
-      }
-
-      const hasPermission =
-        permissions[roles[hasRoles]][router].includes(method);
-      if (!hasPermission) {
+      const { roleId } = (req as any).user;
+      const roleById = await getById({ id: Number(roleId) });
+      if (roleById && router) {
+        const permissions = (roleById as any)?.permissions[router];
+        if (permissions.includes(method)) {
+          return next();
+        }
         return res.status(403).json({ message: message.FORBIDDEN });
       }
 

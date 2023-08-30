@@ -3,6 +3,7 @@ const prisma = new PrismaClient();
 
 const NOT_FOUND = 'Roles not found';
 const EXISTED = 'Roles existed';
+
 export const getAll = async (): Promise<Roles[]> => {
   try {
     const roles = await prisma.roles.findMany({
@@ -26,16 +27,17 @@ export const getById = async ({
     const filter = {
       ...(id ? { id } : { name })
     };
-    const role = await prisma.roles.findFirst({
+
+    const role = await prisma.roles.findUnique({
       where: { deletedAt: null, ...filter }
     });
-    console.log(role);
 
     if ((name && role) || (id && role)) {
       return role;
     } else if (name && !role) {
       return false;
     }
+
     throw Error(NOT_FOUND);
   } catch (error) {
     throw Error(error.message);
@@ -51,8 +53,9 @@ export const create = async (
     if (role) {
       throw Error(EXISTED);
     }
+
     const newRole = await prisma.roles.create({
-      data: { name, permissions: permissions || {} }
+      data: { name, permissions }
     });
     return newRole;
   } catch (error) {
@@ -64,14 +67,13 @@ export const update = async (
   id: number,
   name: string,
   permissions: any
-): Promise<any> => {
+): Promise<Roles> => {
   try {
     await getById({ id });
     const updatedRole = await prisma.roles.update({
       where: { id },
       data: { name, permissions }
     });
-    console.log(updatedRole);
 
     return updatedRole;
   } catch (error) {
@@ -83,9 +85,12 @@ export const deleteRole = async (id: number): Promise<Roles> => {
   try {
     await getById({ id });
     const updatedRole = await prisma.roles.update({
-      where: { id },
+      where: { id, deletedAt: null },
       data: { deletedAt: new Date() }
     });
+    if (!updatedRole) {
+      throw Error(NOT_FOUND);
+    }
     return updatedRole;
   } catch (error) {
     throw Error(error.message);

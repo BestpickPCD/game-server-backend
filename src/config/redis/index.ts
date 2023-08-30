@@ -35,7 +35,7 @@ export const getRedisData = async (
   id: number,
   name: string,
   invalidMessage: string
-) => {
+):Promise<any> => {
   try {
     if (!Number(id)) {
       throw Error(invalidMessage);

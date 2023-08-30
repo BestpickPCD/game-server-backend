@@ -66,11 +66,13 @@ export const permissions: Permissions = {
 
 export const defaultPermission = {
   users: [...commonPermissions],
-  permissions: [...commonPermissions],
+  permissions: [...commonPermissions, '123'],
   agents: [...commonPermissions],
   roles: [...commonPermissions],
   transactions: [...commonPermissions],
   players: [...commonPermissions],
   currencies: [...commonPermissions],
-  games: [...commonPermissions]
+  games: [...commonPermissions],
+  abc: [...commonPermissions],
+  def: [...commonPermissions]
 };

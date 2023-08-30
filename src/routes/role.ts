@@ -3,8 +3,8 @@ import {
   addRole,
   deleteRole,
   getRoles,
-  getRolesById,
-  updateRole
+  updateRole,
+  getRolesById
 } from '../controllers/roleController.ts';
 import { authentication } from '../middleware/authentication.ts';
 import { permission } from '../middleware/permission.ts';
@@ -15,10 +15,10 @@ router.get('/roles', authentication, permission('roles', 'get'), getRoles);
 router.get(
   '/roles/:id',
   authentication,
-  permission('roles', 'getById'),
+  permission('roles', 'get'),
   getRolesById
 );
-router.post('/role', authentication, permission('roles', 'create'), addRole);
+router.post('/roles', authentication, permission('roles', 'create'), addRole);
 router.put(
   '/roles/:roleId',
   authentication,

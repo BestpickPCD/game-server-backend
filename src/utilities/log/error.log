@@ -5750,3 +5750,437 @@
   level: 'error',
   timestamp: '2023-08-28T10:55:50.084Z'
 }
+{
+  userId: 3,
+  url: '/agents/1',
+  body: { name: 'admin' },
+  query: {},
+  status: 400,
+  message: 'Parent Agent not valid',
+  level: 'error',
+  timestamp: '2023-08-29T09:42:21.778Z'
+}
+{
+  userId: 3,
+  url: '/roles/undefined',
+  body: {
+    name: 'admin',
+    permissions: {
+      games: [ 'get', 'getById', 'update', 'create', 'delete' ],
+      roles: [ 'get', 'getById', 'update', 'create', 'delete' ],
+      users: [ 'get', 'getById', 'update', 'create', 'delete' ],
+      agents: [ 'get', 'getById', 'update', 'create', 'delete' ],
+      players: [ 'get', 'getById', 'update', 'create', 'delete' ],
+      currencies: [ 'get', 'getById', 'update', 'create', 'delete' ],
+      permissions: [],
+      transactions: [ 'get', 'getById', 'update', 'create', 'delete' ]
+    }
+  },
+  query: {},
+  status: 400,
+  message: 'Invalid Role Id',
+  level: 'error',
+  timestamp: '2023-08-29T09:47:26.697Z'
+}
+{
+  userId: 3,
+  url: '/roles',
+  body: {
+    name: '123',
+    permissions: {
+      users: [],
+      permissions: [],
+      agents: [],
+      roles: [],
+      transactions: [],
+      players: [],
+      currencies: [ 'get', 'update', 'delete', 'getById', 'create' ],
+      games: []
+    }
+  },
+  query: {},
+  status: 400,
+  message: 'WRONGTYPE Operation against a key holding the wrong kind of value',
+  level: 'error',
+  timestamp: '2023-08-29T10:11:47.198Z'
+}
+{
+  userId: 3,
+  url: '/roles',
+  body: {
+    name: 'asfasfasf',
+    permissions: {
+      users: [],
+      permissions: [],
+      agents: [],
+      roles: [],
+      transactions: [],
+      players: [],
+      currencies: [ 'get', 'update', 'delete', 'getById', 'create' ],
+      games: []
+    }
+  },
+  query: {},
+  status: 400,
+  message: 'WRONGTYPE Operation against a key holding the wrong kind of value',
+  level: 'error',
+  timestamp: '2023-08-29T10:14:30.577Z'
+}
+{
+  userId: 3,
+  url: '/roles',
+  body: {
+    name: 'asfasfasf',
+    permissions: {
+      users: [],
+      permissions: [],
+      agents: [],
+      roles: [],
+      transactions: [],
+      players: [],
+      currencies: [ 'get', 'update', 'delete', 'getById', 'create' ],
+      games: []
+    }
+  },
+  query: {},
+  status: 400,
+  message: 'Roles existed',
+  level: 'error',
+  timestamp: '2023-08-29T10:15:23.199Z'
+}
+{
+  userId: 3,
+  url: '/roles',
+  body: {
+    name: 'asfasfasf',
+    permissions: {
+      users: [],
+      permissions: [],
+      agents: [],
+      roles: [],
+      transactions: [],
+      players: [],
+      currencies: [ 'get', 'update', 'delete', 'getById', 'create' ],
+      games: []
+    }
+  },
+  query: {},
+  status: 400,
+  message: 'Roles existed',
+  level: 'error',
+  timestamp: '2023-08-29T10:15:26.013Z'
+}
+{
+  userId: 3,
+  url: '/roles',
+  body: {
+    name: 'asfasfasf',
+    permissions: {
+      users: [],
+      permissions: [],
+      agents: [],
+      roles: [],
+      transactions: [],
+      players: [],
+      currencies: [ 'get', 'update', 'delete', 'getById', 'create' ],
+      games: []
+    }
+  },
+  query: {},
+  status: 400,
+  message: 'Roles existed',
+  level: 'error',
+  timestamp: '2023-08-29T10:15:33.264Z'
+}
+{
+  userId: 3,
+  url: '/roles',
+  body: {
+    name: 'asfasfasf',
+    permissions: {
+      users: [],
+      permissions: [],
+      agents: [],
+      roles: [],
+      transactions: [],
+      players: [],
+      currencies: [ 'get', 'update', 'delete', 'getById', 'create' ],
+      games: []
+    }
+  },
+  query: {},
+  status: 400,
+  message: 'Roles existed',
+  level: 'error',
+  timestamp: '2023-08-29T10:15:52.244Z'
+}
+{
+  userId: 3,
+  url: '/roles',
+  body: {
+    name: 'xfgdfg',
+    permissions: {
+      users: [],
+      permissions: [],
+      agents: [],
+      roles: [],
+      transactions: [],
+      players: [],
+      currencies: [],
+      games: []
+    }
+  },
+  query: {},
+  status: 400,
+  message: 'WRONGTYPE Operation against a key holding the wrong kind of value',
+  level: 'error',
+  timestamp: '2023-08-29T10:16:50.071Z'
+}
+{
+  userId: 3,
+  url: '/roles',
+  body: {
+    name: 'xfgdfg',
+    permissions: {
+      users: [],
+      permissions: [],
+      agents: [],
+      roles: [],
+      transactions: [],
+      players: [],
+      currencies: [],
+      games: []
+    }
+  },
+  query: {},
+  status: 400,
+  message: 'Roles existed',
+  level: 'error',
+  timestamp: '2023-08-29T10:17:20.484Z'
+}
+{
+  userId: 3,
+  url: '/roles',
+  body: {
+    name: 'xfgdfgasdasd',
+    permissions: {
+      users: [],
+      permissions: [],
+      agents: [],
+      roles: [],
+      transactions: [],
+      players: [],
+      currencies: [],
+      games: []
+    }
+  },
+  query: {},
+  status: 400,
+  message: 'WRONGTYPE Operation against a key holding the wrong kind of value',
+  level: 'error',
+  timestamp: '2023-08-29T10:17:28.904Z'
+}
+{
+  userId: 3,
+  url: '/roles',
+  body: {
+    name: 'xfgdfgasdasd',
+    permissions: {
+      users: [],
+      permissions: [],
+      agents: [],
+      roles: [],
+      transactions: [],
+      players: [],
+      currencies: [],
+      games: []
+    }
+  },
+  query: {},
+  status: 400,
+  message: 'Roles existed',
+  level: 'error',
+  timestamp: '2023-08-29T10:17:35.714Z'
+}
+{
+  userId: 3,
+  url: '/roles',
+  body: {
+    name: 'sdgsdg',
+    permissions: {
+      users: [],
+      permissions: [],
+      agents: [],
+      roles: [],
+      transactions: [],
+      players: [],
+      currencies: [],
+      games: []
+    }
+  },
+  query: {},
+  status: 400,
+  message: 'JSON.parse(...).unshift is not a function',
+  level: 'error',
+  timestamp: '2023-08-29T10:22:09.080Z'
+}
+{
+  userId: 3,
+  url: '/roles',
+  body: {
+    name: 'sdgsdg',
+    permissions: {
+      users: [],
+      permissions: [],
+      agents: [],
+      roles: [],
+      transactions: [],
+      players: [],
+      currencies: [],
+      games: []
+    }
+  },
+  query: {},
+  status: 400,
+  message: 'Roles existed',
+  level: 'error',
+  timestamp: '2023-08-29T10:22:30.472Z'
+}
+{
+  userId: 3,
+  url: '/roles',
+  body: {
+    name: 'sdgsdg',
+    permissions: {
+      users: [],
+      permissions: [],
+      agents: [],
+      roles: [],
+      transactions: [],
+      players: [],
+      currencies: [],
+      games: []
+    }
+  },
+  query: {},
+  status: 400,
+  message: 'Roles existed',
+  level: 'error',
+  timestamp: '2023-08-29T10:22:36.554Z'
+}
+{
+  userId: 3,
+  url: '/roles',
+  body: {
+    name: 'sdgsdg',
+    permissions: {
+      users: [],
+      permissions: [],
+      agents: [],
+      roles: [],
+      transactions: [],
+      players: [],
+      currencies: [],
+      games: []
+    }
+  },
+  query: {},
+  status: 400,
+  message: 'Roles existed',
+  level: 'error',
+  timestamp: '2023-08-29T10:22:39.729Z'
+}
+{
+  userId: 3,
+  url: '/roles',
+  body: {
+    name: '1sdgsdg123',
+    permissions: {
+      users: [],
+      permissions: [],
+      agents: [],
+      roles: [],
+      transactions: [],
+      players: [],
+      currencies: [],
+      games: []
+    }
+  },
+  query: {},
+  status: 400,
+  message: 'JSON.parse(...).unshift is not a function',
+  level: 'error',
+  timestamp: '2023-08-29T10:22:44.311Z'
+}
+{
+  userId: 1,
+  url: '/roles',
+  body: {
+    name: 'distributor',
+    permissions: {
+      games: [ 'get', 'getById', 'update', 'create', 'delete' ],
+      roles: [ 'get', 'getById', 'update', 'create', 'delete' ],
+      users: [ 'get', 'getById', 'update', 'create', 'delete' ],
+      agents: [ 'get', 'getById', 'update', 'create', 'delete' ],
+      players: [],
+      currencies: [ 'get', 'getById', 'update', 'create', 'delete' ],
+      permissions: [ 'get', 'getById', 'update', 'create', 'delete' ],
+      transactions: [ 'get', 'update', 'delete' ]
+    }
+  },
+  query: {},
+  status: 400,
+  message: 'Roles existed',
+  level: 'error',
+  timestamp: '2023-08-30T03:09:18.727Z'
+}
+{
+  userId: 1,
+  url: '/roles',
+  body: {
+    name: 'distributor',
+    permissions: {
+      games: [ 'get', 'getById', 'update', 'create', 'delete' ],
+      roles: [ 'get', 'getById', 'update', 'create', 'delete' ],
+      users: [ 'get', 'getById', 'update', 'create', 'delete' ],
+      agents: [ 'get', 'getById', 'update', 'create', 'delete' ],
+      players: [],
+      currencies: [ 'get', 'getById', 'update', 'create', 'delete' ],
+      permissions: [ 'get', 'getById', 'update', 'create', 'delete' ],
+      transactions: [ 'get', 'update', 'delete' ]
+    }
+  },
+  query: {},
+  status: 400,
+  message: 'Roles existed',
+  level: 'error',
+  timestamp: '2023-08-30T03:09:28.845Z'
+}
+{
+  userId: 1,
+  url: '/roles',
+  body: {
+    name: 'Trương Nguyên',
+    permissions: {
+      users: [],
+      permissions: [ 'delete', 'update', 'get' ],
+      agents: [],
+      roles: [ 'update', 'get', 'delete' ],
+      transactions: [],
+      players: [ 'get', 'update', 'delete' ],
+      currencies: [],
+      games: [ 'update', 'get' ],
+      abc: [ 'getById', 'create' ],
+      def: [ 'get', 'update', 'delete' ]
+    }
+  },
+  query: {},
+  status: 400,
+  message: '\n' +
+    'Invalid `prisma.roles.create()` invocation:\n' +
+    '\n' +
+    '\n' +
+    'Unique constraint failed on the constraint: `Roles_name_key`',
+  level: 'error',
+  timestamp: '2023-08-30T07:06:43.353Z'
+}

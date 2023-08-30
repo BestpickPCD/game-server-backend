@@ -5,29 +5,36 @@ import { AsyncResponse } from '../models/type.ts';
 import {
   create,
   deleteRole as deleteRoleService,
-  getAll,
   getById,
-  update
+  update,
+  getAll
 } from '../services/roleService.ts';
 import { message } from '../utilities/constants/index.ts';
 
 const redisKey = 'roles';
 const INVALID = 'Invalid Role Id';
+
 export const getRoles = async (
   _: Request,
   res: Response,
   next: NextFunction
 ): Promise<AsyncResponse<Roles[]> | void> => {
   try {
+    let data: Roles[] = [];
     const redisData = await Redis.get(redisKey);
-    let data = [];
     if (redisData) {
       data = JSON.parse(redisData);
+    } else {
+      data = await getAll();
+      await Redis.set(redisKey, JSON.stringify(data));
     }
-    data = await getAll();
-    await Redis.set(redisKey, JSON.stringify(data));
     return res.status(200).json({
-      data,
+      data: {
+        data,
+        page: 0,
+        size: data.length,
+        totalItems: data.length
+      },
       message: message.SUCCESS
     });
   } catch (error) {
@@ -41,17 +48,19 @@ export const getRolesById = async (
   next: NextFunction
 ): Promise<AsyncResponse<Roles> | void> => {
   try {
-    const { id } = req.params;
-    if (!Number(id)) {
+    const { roleId } = (req as any).user;
+    const { id: roleIdUrl } = req.params;
+
+    if (!Number(roleIdUrl || roleId)) {
       throw Error(INVALID);
     }
-    const redisKeyWithId = `${redisKey}-${id}`;
+    const redisKeyWithId = `${redisKey}-${roleIdUrl || roleId}`;
     const redisData = await Redis.get(redisKeyWithId);
     let data: Roles;
     if (redisData) {
       data = JSON.parse(redisData);
     }
-    data = (await getById({ id: Number(id) })) as Roles;
+    data = (await getById({ id: Number(roleIdUrl || roleId) })) as Roles;
     !redisData && (await Redis.set(redisKeyWithId, JSON.stringify(data)));
     return res.status(200).json({ data, message: message.SUCCESS });
   } catch (error) {
@@ -66,9 +75,16 @@ export const addRole = async (
 ): Promise<AsyncResponse<Roles> | void> => {
   try {
     const { name, permissions } = req.body;
+    if (!name) {
+      throw Error('Name is required');
+    }
     const newRoles = await create(name, permissions);
-    if (await Redis.get(redisKey)) {
-      await Redis.lpush(redisKey, JSON.stringify(newRoles));
+    const redisData = await Redis.get(redisKey);
+    await Redis.set(`${redisKey}-${newRoles.id}`, JSON.stringify(newRoles));
+    if (redisData) {
+      const parseRedisData = JSON.parse(redisData);
+      const updatedRedisData = [newRoles, ...parseRedisData];
+      await Redis.set(redisKey, JSON.stringify(updatedRedisData));
     }
     return res.status(201).json({ data: newRoles, message: message.CREATED });
   } catch (error) {
@@ -95,17 +111,17 @@ export const updateRole = async (
     }
     const redisData = await Redis.get(redisKey);
     if (redisData) {
-      const parseRedisData = JSON.parse(redisData) as Roles[];
-      const updatedRedisData = parseRedisData.map((role: Roles) => {
-        if (role.id === Number(roleId)) {
-          return updatedRole;
+      const updatedRedisData = await JSON.parse(redisData).map(
+        (role: Roles) => {
+          if (Number(role.id) === Number(roleId)) {
+            return updatedRole;
+          }
+          return role;
         }
-        return role;
-      });
-      console.log(updatedRedisData);
-
+      );
       await Redis.set(redisKey, JSON.stringify(updatedRedisData));
     }
+
     return res
       .status(200)
       .json({ data: updatedRole, message: message.UPDATED });
@@ -125,18 +141,14 @@ export const deleteRole = async (
       throw Error(INVALID);
     }
     await deleteRoleService(Number(roleId));
+    const redisKeyWithId = `${redisKey}-${roleId}`;
+    await Redis.del(redisKeyWithId);
     const redisData = await Redis.get(redisKey);
     if (redisData) {
-      const parseRedisData = JSON.parse(redisData) as Roles[];
-      const deleteRedisData = parseRedisData.filter(
-        (role: Roles) => role.id !== Number(roleId)
+      const updatedRedisData = await JSON.parse(redisData).filter(
+        (role: Roles) => Number(role.id) !== Number(roleId)
       );
-      await Redis.set(redisKey, JSON.stringify(deleteRedisData));
-    }
-    const redisKeyWithId = `${redisKey}-${roleId}`;
-    const redisDataById = await Redis.get(redisKeyWithId);
-    if (redisDataById) {
-      await Redis.del(redisKeyWithId);
+      await Redis.set(redisKey, JSON.stringify(updatedRedisData));
     }
     return res.status(200).json({ message: message.DELETED });
   } catch (error) {

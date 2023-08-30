@@ -174,3 +174,79 @@ export const getByIdWithType = async (userId: number, arrayTypes: string[]) => {
     throw Error(error);
   }
 };
+
+export const getDetailsById = async (id:number, userId:number) => {
+    try {
+        //* check userId of transaction is in senderId or receiverId to avoid exceptions
+        const filterOr = {
+            OR: [
+            {
+                Agents: {
+                OR: [
+                    {
+                    parentAgentIds: {
+                        array_contains: [Number(userId)]
+                    }
+                    },
+                    {
+                    id: Number(userId)
+                    }
+                ]
+                }
+            },
+            {
+                Players: {
+                OR: [
+                    {
+                    agentId: Number(userId)
+                    },
+                    {
+                    agent: {
+                        parentAgentIds: {
+                        array_contains: [Number(userId)]
+                        }
+                    }
+                    }
+                ]
+                }
+            }
+            ]
+        };
+        const transaction = await prisma.transactions.findUnique({
+            select: {
+                id: true,
+                amount: true,
+                token: true,
+                receiverId: true,
+                senderId: true,
+                note: true,
+                type: true,
+                status: true,
+                updatedAt: true,
+                createdAt: true,
+                currencyId: true,
+                receiver: {
+                    select: {
+                        name: true
+                    }
+                },
+                sender: {
+                    select: {
+                        name: true
+                    }
+                }
+            },
+            where: {
+                id: Number(id),
+                OR: [
+                    { sender: filterOr },
+                    { receiver: filterOr }
+                ]
+            }
+        });
+        return transaction
+    } catch (error) {
+        console.log(error);
+        throw Error(error);
+    }
+}

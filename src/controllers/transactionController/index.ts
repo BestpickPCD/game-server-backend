@@ -10,10 +10,7 @@ import {
   updateBalance
 } from './utilities.ts';
 import Redis, { getRedisData } from '../../config/redis/index.ts';
-import {
-  getAllById,
-  getByIdWithType
-} from '../../services/transactionsService.ts';
+import { getAllById, getByIdWithType, getDetailsById } from '../../services/transactionsService.ts';
 const prisma = new PrismaClient();
 
 export const getTransactions = async (
@@ -22,22 +19,18 @@ export const getTransactions = async (
 ): Promise<any> => {
   try {
     const { id } = (req as any).user;
-    const redisKey = 'transactions';
-    const { redisData, redisKeyWithId } = await getRedisData(
-      id,
-      redisKey,
-      'Invalid users Id'
-    );
+    const redisKey = 'transactions'
+    const {redisData, redisKeyWithId} = await getRedisData(id, redisKey, 'Invalid users Id')
     let data: any;
     if (redisData) {
       data = JSON.parse(redisData);
-    } else {
-      data = (await getAllById(req.query, id)) as any;
+    }else{
+      data = await getAllById(req.query, id) as any;
     }
     !redisData && (await Redis.set(redisKeyWithId, JSON.stringify(data)));
 
-    const { transactions, count, page, size } = data;
-
+    const {transactions, count, page, size} = data
+    
     return res.status(200).json({
       message: message.SUCCESS,
       data: {
@@ -217,19 +210,20 @@ export const getTransactionDetailsByUserId = async (
   try {
     const userId = parseInt(req.params.userId);
     const type = req.query.type as string;
-    const arrayTypes = type.split(',');
+    let arrayTypes:string[]
+    if(type) {
+      arrayTypes = type.split(',');
+    } else {
+      arrayTypes = [];
+    }
 
-    const redisKey = 'transactionById';
-    const { redisData, redisKeyWithId } = await getRedisData(
-      userId,
-      redisKey,
-      'Invalid users Id'
-    );
+    const redisKey = 'transactionById'
+    const {redisData, redisKeyWithId} = await getRedisData(userId, redisKey, 'Invalid users Id')
     let data: any;
     if (redisData) {
       data = JSON.parse(redisData);
-    } else {
-      data = (await getByIdWithType(userId, arrayTypes)) as any;
+    }else{
+      data = await getByIdWithType(userId, arrayTypes) as any;
     }
     !redisData && (await Redis.set(redisKeyWithId, JSON.stringify(data)));
 
@@ -249,81 +243,21 @@ export const getTransactionDetail = async (
   try {
     const { id } = req.params;
     const { id: userId } = (req as any).user;
-    //* check userId of transaction is in senderId or receiverId to avoid exceptions
-    const filterOr = {
-      OR: [
-        {
-          Agents: {
-            OR: [
-              {
-                parentAgentIds: {
-                  array_contains: [Number(userId)]
-                }
-              },
-              {
-                id: Number(userId)
-              }
-            ]
-          }
-        },
-        {
-          Players: {
-            OR: [
-              {
-                agentId: Number(userId)
-              },
-              {
-                agent: {
-                  parentAgentIds: {
-                    array_contains: [Number(userId)]
-                  }
-                }
-              }
-            ]
-          }
-        }
-      ]
-    };
-    const transaction = await prisma.transactions.findUnique({
-      select: {
-        id: true,
-        amount: true,
-        token: true,
-        receiverId: true,
-        senderId: true,
-        note: true,
-        type: true,
-        status: true,
-        updatedAt: true,
-        createdAt: true,
-        currencyId: true,
-        receiver: {
-          select: {
-            name: true
-          }
-        },
-        sender: {
-          select: {
-            name: true
-          }
-        }
-      },
-      where: {
-        id: Number(id),
-        OR: [
-          {
-            sender: filterOr
-          },
-          { receiver: filterOr }
-        ]
-      }
-    });
-    if (!transaction) {
+    const redisKey = 'transactionDetails'
+    const {redisData, redisKeyWithId} = await getRedisData(parseInt(id), redisKey, 'Invalid users Id')
+    let data: any;
+    if (redisData) {
+      data = JSON.parse(redisData);
+    }else{
+      data = await getDetailsById(parseInt(id), userId) as any;
+    }
+    !redisData && (await Redis.set(redisKeyWithId, JSON.stringify(data)));
+    if (!data) {
       throw Error(message.NOT_FOUND);
     }
     return res
       .status(200)
-      .json({ message: message.SUCCESS, data: transaction });
+      .json({ message: message.SUCCESS, data });
   } catch (error) {
     if (error.message) {
       return res.status(404).json({ message: error.message });

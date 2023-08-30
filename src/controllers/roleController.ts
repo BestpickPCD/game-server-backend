@@ -50,7 +50,7 @@ export const getRolesById = async (
   try {
     const { roleId } = (req as any).user;
     const { id: roleIdUrl } = req.params;
-    const id = 1
+    const id = 1;
     if (!Number(roleIdUrl || roleId)) {
       throw Error(INVALID);
     }

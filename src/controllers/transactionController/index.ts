@@ -183,6 +183,9 @@ export const addTransaction = async (
           }
         });
 
+        const redisKey = 'transactions';
+        await Redis.del(redisKey);
+        await Redis.del(`${redisKey}-${req?.user?.id}`);
         if (senderId) {
           await updateBalance(senderId);
         }

@@ -32,8 +32,11 @@ export const getAllUsersWithBalances = async (
     // if (redisData) {
     //   data = JSON.parse(redisData);
     // } else {
-      // data = (await getAllWithBalance(id)) as any;
-    const  {userDetails, page, size} = (await getAllWithBalance(req.query, id)) as any;
+    // data = (await getAllWithBalance(id)) as any;
+    const { userDetails, page, size } = (await getAllWithBalance(
+      req.query,
+      id
+    )) as any;
     // }
     // !redisData && (await Redis.set(redisKeyWithId, JSON.stringify(data)));
 

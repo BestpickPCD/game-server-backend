@@ -227,13 +227,14 @@ export const getTransactionDetailsByUserId = async (
     } else {
       arrayTypes = [];
     }
-
     const redisKey = 'transactionById';
     const { redisData, redisKeyWithId } = await getRedisData(
       userId,
       redisKey,
       'Invalid users Id'
     );
+    await Redis.del(redisKey);
+    await Redis.del(redisKeyWithId);
     let data: any;
     if (redisData) {
       data = JSON.parse(redisData);

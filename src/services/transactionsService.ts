@@ -110,7 +110,7 @@ export const getAllById = async (queryParams: any, id: number) => {
             ${userId ? ` AND ${filter}` : ''}
             ${gameId ? ` AND ${gameId}` : ''}
           `;
-    console.log(`${normalSelect} ${query} ${pageSize}`);
+
     const [transactions, [{ count }]]: any = await prisma.$transaction([
       prisma.$queryRawUnsafe(`${normalSelect} ${query} ${pageSize}`),
       prisma.$queryRawUnsafe(`${countSelect} ${query}`)
@@ -125,6 +125,7 @@ export const getAllById = async (queryParams: any, id: number) => {
 
 export const getByIdWithType = async (userId: number, arrayTypes: string[]) => {
   try {
+    console.log(33333);
     const transactions = (await prisma.transactions.findMany({
       where: {
         OR: [{ senderId: userId }, { receiverId: userId }],

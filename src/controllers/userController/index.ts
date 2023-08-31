@@ -23,25 +23,26 @@ export const getAllUsersWithBalances = async (
 ): Promise<any> => {
   try {
     const { id } = (req as any).user;
-    const { redisData, redisKeyWithId } = await getRedisData(
-      id,
-      'users',
-      'Invalid users Id'
-    );
-    let data: any;
-    if (redisData) {
-      data = JSON.parse(redisData);
-    } else {
-      data = (await getAllWithBalance(id)) as any;
-    }
-    !redisData && (await Redis.set(redisKeyWithId, JSON.stringify(data)));
+    // const { redisData, redisKeyWithId } = await getRedisData(
+    //   id,
+    //   'users',
+    //   'Invalid users Id'
+    // );
+    // let data: any;
+    // if (redisData) {
+    //   data = JSON.parse(redisData);
+    // } else {
+      // data = (await getAllWithBalance(id)) as any;
+    const  {userDetails, page, size} = (await getAllWithBalance(req.query, id)) as any;
+    // }
+    // !redisData && (await Redis.set(redisKeyWithId, JSON.stringify(data)));
 
     return res.status(200).json({
       data: {
-        data,
-        totalItems: data.length,
-        page: Number(1),
-        size: Number(200)
+        data: userDetails,
+        totalItems: 200,
+        page: Number(page),
+        size: Number(size)
       },
       message: message.SUCCESS
     });

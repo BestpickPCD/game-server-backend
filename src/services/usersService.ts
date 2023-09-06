@@ -29,21 +29,23 @@ export const getAllWithBalance = async (query: any, userId: number) => {
     (SELECT SUM(amount) AS betGameAmount, senderId FROM Transactions transactions WHERE TYPE IN ('bet') GROUP BY senderId ) AS betGamers ON betGamers.senderId = users.id LEFT JOIN 
     (SELECT SUM(amount) AS chargeGameAmount, receiverId FROM Transactions transactions WHERE TYPE IN ('charge') GROUP BY receiverId ) AS chargeGamers ON chargeGamers.receiverId = users.id 
     WHERE 1=1 
-    ${agentId ? 
-      `AND players.agentId = ${agentId}`:``
-    }
-    ${search ? 
-      `AND (
+    ${agentId ? `AND players.agentId = ${agentId}` : ``}
+    ${
+      search
+        ? `AND (
         users.name LIKE '%${search}%' OR 
         users.username LIKE '%${search}%' OR 
         users.email LIKE '%${search}%'
-      )` : ``
+      )`
+        : ``
     }
-    ${(dateFrom && dateTo) ? 
-    `AND (
+    ${
+      dateFrom && dateTo
+        ? `AND (
       users.updatedAt >= ${dateFrom} OR ${dateFrom} IS NULL
       AND users.updatedAt <= ${dateTo} OR ${dateTo} IS NULL
-    )` : ``
+    )`
+        : ``
     }
     ORDER BY users.updatedAt DESC
     LIMIT ${size} OFFSET ${page * size}

@@ -115,7 +115,6 @@ export const getAllById = async (queryParams: any, id: number) => {
       prisma.$queryRawUnsafe(`${normalSelect} ${query} ${pageSize}`),
       prisma.$queryRawUnsafe(`${countSelect} ${query}`)
     ]);
-    console.log(transactions, count);
     return { transactions, count: parseInt(count), page, size };
   } catch (error) {
     console.log(error);
@@ -125,7 +124,6 @@ export const getAllById = async (queryParams: any, id: number) => {
 
 export const getByIdWithType = async (userId: number, arrayTypes: string[]) => {
   try {
-    console.log(33333);
     const transactions = (await prisma.transactions.findMany({
       where: {
         OR: [{ senderId: userId }, { receiverId: userId }],

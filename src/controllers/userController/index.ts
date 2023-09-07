@@ -110,7 +110,7 @@ export const updateUser = async (req: Request, res: Response): Promise<any> => {
       return res.status(404).json({ message: message.NOT_FOUND });
     }
 
-    const { name, email, roleId, currencyId, agentId, parentAgentId } =
+    const { name, email, roleId, currencyId, parentAgentId } =
       req.body;
     const updatedUser = {
       ...(name && { name }),
@@ -126,9 +126,7 @@ export const updateUser = async (req: Request, res: Response): Promise<any> => {
 
     await Redis.del(redisKey);
     await Redis.del(redisKeyWithId);
-    if (newUser && newUser.type == 'player') {
-      return _updatePlayer(newUser, agentId, res);
-    } else if (newUser && newUser.type == 'agent') {
+    if (newUser && newUser.type == 'agent') {
       return _updateAgent(newUser, parentAgentId, res);
     }
 
@@ -262,7 +260,7 @@ const _updateAgent = async (
         .json({ message: 'Parent agent cannot be yourself' });
     }
     const details: any = await getParentAgentIdsByParentAgentId(parentAgentId);
-    const agent = await prisma.agents.update({
+    const agent = await prisma.users.update({
       where: { id: user.id },
       data: {
         parentAgentId,
@@ -277,18 +275,18 @@ const _updateAgent = async (
   }
 };
 
-const _updatePlayer = async (user: any, agentId: number, res: Response) => {
-  try {
-    const player = await prisma.players.update({
-      where: { id: user.id },
-      data: { agentId }
-    });
-    return res.status(200).json({ data: player, message: message.UPDATED });
-  } catch (error) {
-    console.log(error);
-    return res.status(500).json({ message: 'Internal server error' });
-  }
-};
+// const _updatePlayer = async (user: any, agentId: number, res: Response) => {
+//   try {
+//     const player = await prisma.players.update({
+//       where: { id: user.id },
+//       data: { agentId }
+//     });
+//     return res.status(200).json({ data: player, message: message.UPDATED });
+//   } catch (error) {
+//     console.log(error);
+//     return res.status(500).json({ message: 'Internal server error' });
+//   }
+// };
 
 export const getAllUsersByAgentId = async (
   req: Request,

@@ -178,38 +178,18 @@ export const getDetailsById = async (id: number, userId: number) => {
   try {
     //* check userId of transaction is in senderId or receiverId to avoid exceptions
     const filterOr = {
-      OR: [
-        {
-          Agents: {
-            OR: [
-              {
-                parentAgentIds: {
-                  array_contains: [Number(userId)]
-                }
-              },
-              {
-                id: Number(userId)
-              }
-            ]
-          }
-        },
-        {
-          Players: {
-            OR: [
-              {
-                agentId: Number(userId)
-              },
-              {
-                agent: {
-                  parentAgentIds: {
-                    array_contains: [Number(userId)]
-                  }
-                }
-              }
-            ]
-          }
-        }
-      ]
+      OR: 
+        [
+          {
+            parentAgentIds: { array_contains: [userId] }
+          },
+          {
+            id: userId 
+          },
+          {
+            agentId: Number(userId)
+          },
+        ]
     };
     const transaction = await prisma.transactions.findUnique({
       select: {

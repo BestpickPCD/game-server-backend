@@ -1,12 +1,25 @@
 import bcrypt from 'bcrypt';
 import { faker } from '@faker-js/faker';
 import { PrismaClient } from '@prisma/client';
-import { evolution, PragmaticPlay, Habanero, ezugi } from './fakedData.ts';
+import { evolution, PragmaticPlay, Habanero, ezugi, permissions } from './fakedData.ts';
 const prisma = new PrismaClient();
 
 async function main() {
   await prisma.roles.createMany({
-    data: [{ name: 'admin' }, { name: 'operator' }, { name: 'distributor' }],
+    data: [
+      { 
+        name: 'admin', 
+        permissions
+      }, 
+      { 
+        name: 'operator', 
+        permissions 
+      }, 
+      { 
+        name: 'distributor', 
+        permissions 
+      }
+    ],
     skipDuplicates: true
   });
   await prisma.currencies.create({
@@ -39,37 +52,35 @@ async function main() {
       }
     ]
   });
-  for (let i = 1; i <= 400; i++) {
+  for (let i = 1; i <= 100; i++) {
     await prisma.users.create({
       data: {
         name: faker.person.fullName(),
         username: `user.master.${String(i)}`,
-        type: i % 2 === 0 ? 'player' : 'agent',
+        type: 'agent',
+        level: i === 1 ? 1 : 2,
+        parentAgentId: i === 1 ? null : 1,
+        parentAgentIds: i === 1 ? [] : [1],
         password: await bcrypt.hash('admin.master.1', 10),
         email: `admin@master.com${i}`,
         roleId: 1,
         currencyId: 1
       }
     });
-    if (i % 2 !== 0) {
-      await prisma.agents.create({
-        data: {
-          id: i,
-          level: i === 1 ? 1 : 2,
-          parentAgentId: i === 1 ? null : 1,
-          parentAgentIds: i === 1 ? [] : [1]
-        }
-      });
-
-      await prisma.agentVendor.create({
-        data: {
-          agentId: i,
-          vendorId: 1
-        }
-      });
-    } else {
+    await prisma.userVendor.create({
+      data: {
+        userId: i,
+        vendorId: 1
+      }
+    });
+  }
+  for (let a = 1; a <= 100; a++) {
+    for (let b = 0; b < 3; b++) {
       await prisma.players.create({
-        data: { id: i, agentId: i - 1 }
+        data: {
+          userId: a,
+          username: `${faker.person.firstName()}_${faker.person.lastName()}`
+        }
       });
     }
   }

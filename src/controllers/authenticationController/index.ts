@@ -10,7 +10,7 @@ import {
   findCurrencyById,
   getParentAgentIdsByParentAgentId
 } from '../userController/utilities.ts';
-import { generateApiKey } from './utilities.ts';
+import { checkUserExist, generateApiKey } from './utilities.ts';
 const prisma = new PrismaClient();
 
 export const refreshToken = async (
@@ -117,52 +117,51 @@ export const register = async (req: Request, res: Response): Promise<any> => {
       firstName,
       lastName,
       username,
+      nickname,
       email,
       password,
       confirmPassword,
       roleId,
       type,
-      agentId,
       parentAgentId
     } = req.body;
 
-    const existingUser = await prisma.users.findMany({
-      select: {
-        email: true,
-        username: true
-      },
-      where: {
-        OR: [{ email }, { username }]
-      }
-    });
-
-    if (existingUser.length > 0) {
+    const can = await checkUserExist(req.body);
+    
+    if (!can) {
       return res.status(400).json({
         message: message.DUPLICATE,
         subMessage: 'Email or Username already exists'
       });
     }
-    if (password !== confirmPassword) {
-      return res.status(400).json({
-        message: message.INVALID,
-        subMessage: "Password and Confirm Password did't match"
-      });
-    }
-    const hashedPassword = await bcrypt.hash(password, 10);
     try {
-      const userSchema = {
-        name: `${firstName} ${lastName}`,
-        username,
-        email,
-        type,
-        roleId,
-        password: hashedPassword,
-        currencyId: 1
-      };
-      if (type == 'player') {
-        return _playerInsert(userSchema, agentId, res);
-      } else if (type == 'agent') {
-        return _agentInsert(userSchema, parentAgentId, res);
+
+      if(type == "agent") {
+        
+        if (password !== confirmPassword) {
+          return res.status(400).json({
+            message: message.INVALID,
+            subMessage: "Password and Confirm Password did't match"
+          });
+        }
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const userSchema = {
+          name: `${firstName} ${lastName}`,
+          username,
+          email,
+          type,
+          roleId,
+          password: hashedPassword,
+          currencyId: 1
+        }; 
+        return _agentInsert(userSchema, parentAgentId, res); 
+
+      } else if (type == "player") {
+        const userSchema = {
+          username,
+          nickname,
+        };
+        return _playerInsert(userSchema, parentAgentId, res); 
       }
     } catch (error) {
       return res
@@ -176,25 +175,20 @@ export const register = async (req: Request, res: Response): Promise<any> => {
 
 const _playerInsert = async (
   userSchema: any,
-  agentId: number,
+  userId: number,
   res: Response
 ) => {
-  try {
-    const newUser: any = await _userInsert(userSchema);
+  try { 
+    const {username, nickname} = userSchema
     const userInsert = (await prisma.players.create({
       data: {
-        id: newUser.id,
-        agentId
+        userId,
+        username,
+        nickname,
       }
-    })) as any;
-
-    const userResponse = {
-      userId: userInsert.id,
-      username: newUser.username
-    };
-
+    })) as any; 
     return res.status(201).json({
-      data: userResponse,
+      data: userInsert,
       message: message.CREATED
     });
   } catch (error) {
@@ -213,9 +207,9 @@ const _agentInsert = async (
   try {
     const newUser: any = await _userInsert(userSchema);
     const details: any = await getParentAgentIdsByParentAgentId(parentAgentId);
-    const userInsert = (await prisma.agents.create({
+    const userInsert = (await prisma.users.update({
+      where:{id: newUser.id},
       data: {
-        id: newUser.id,
         parentAgentId,
         parentAgentIds: details.parentAgentIds,
         level: details.level

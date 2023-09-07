@@ -116,47 +116,19 @@ export const addTransaction = async (
         const user = await prisma.users.findUnique({
           where: {
             id: Number(receiverId),
-            OR: [
-              {
-                Players: {
-                  OR: [
-                    {
-                      agentId: Number(senderId)
-                    },
-                    {
-                      agent: {
-                        parentAgentIds: {
-                          array_contains: [Number(senderId)]
-                        }
-                      }
-                    }
-                  ]
-                }
-              },
-              {
-                Agents: {
-                  parentAgentIds: {
-                    array_contains: [Number(senderId)]
-                  }
-                }
-              }
-            ]
+            parentAgentIds: { array_contains: [Number(senderId)] }
           },
           select: {
             id: true,
             Players: {
               select: {
-                agent: {
+                user: {
                   select: {
                     id: true,
-                    user: true
+                    name: true,
+                    parentAgentIds: true
                   }
                 }
-              }
-            },
-            Agents: {
-              select: {
-                parentAgentIds: true
               }
             }
           }

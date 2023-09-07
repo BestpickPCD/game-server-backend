@@ -16,12 +16,12 @@ export const getVendors = async (
         name: true,
         url: true,
         fetchGames: true,
-        agents: {
+        users: {
           select: {
             vendorId: true
           },
           where: {
-            agentId: req.user?.id
+            userId: req.user?.id
           }
         }
       },
@@ -31,8 +31,8 @@ export const getVendors = async (
     });
 
     const rearrangedVendors = vendors.map((vendor) => {
-      const canSee = vendor.agents.length == 1 ? true : false; // Check if there agent is linked to vendor
-      const { fetchGames, agents, ...data } = {
+      const canSee = vendor.users.length == 1 ? true : false; // Check if there agent is linked to vendor
+      const { fetchGames, users, ...data } = {
         ...vendor,
         gamesTotal: (vendor.fetchGames as [])?.length ?? 0,
         canSee
@@ -55,9 +55,9 @@ export const getGameVendors = async (
     const queryParams = req.query;
     const vendorStr = queryParams.vendors as string;
     const vendors: string[] = vendorStr.split(',');
-    const games = await prisma.agentVendor.findMany({
+    const games = await prisma.userVendor.findMany({
       where: {
-        agentId: req.user?.id,
+        userId: req.user?.id,
         vendor: {
           name: {
             in: vendors
@@ -101,10 +101,10 @@ export const getGameContractByAgentId = async (
   res: Response
 ): Promise<any> => {
   try {
-    const agentId = parseInt(req.params.agentId);
-    const contracts = await prisma.agentVendor.findMany({
+    const userId = parseInt(req.params.userId);
+    const contracts = await prisma.userVendor.findMany({
       where: {
-        agentId
+        userId
       },
       select: {
         vendor: {
@@ -132,7 +132,7 @@ export const gameContract = async (
   try {
     const { agentId, vendorId } = req.body;
     const data = { agentId, vendorId };
-    await prisma.agentVendor.create({
+    await prisma.userVendor.create({
       data
     });
     return res.status(200).json({ message: 'Contract created' });

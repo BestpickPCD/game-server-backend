@@ -1,4 +1,4 @@
-import { Agents, Prisma, PrismaClient, Users } from '@prisma/client';
+import { Prisma, PrismaClient, Users } from '@prisma/client';
 const prisma = new PrismaClient();
 
 const NOT_FOUND = 'Agent not found';
@@ -53,27 +53,17 @@ export const getAll = async ({
         createdAt: true,
         updatedAt: true,
         balance: true,
-        Agents: {
-          select: {
-            level: true,
-            parentAgent: {
-              select: {
-                name: true,
-                id: true
-              }
-            }
-          }
-        }
+        level: true,
+        parentAgentId: true,
+        parentAgentIds: true,
       },
       where: {
         deletedAt: null,
         type: 'agent',
-        Agents: {
-          parentAgentIds: {
-            array_contains: [id] as number[]
-          },
-          ...(level && { level })
+        parentAgentIds: {
+          array_contains: [id] as number[]
         },
+        ...(level && { level }),
         OR: [
           {
             name: {
@@ -109,7 +99,7 @@ export const getAll = async ({
   }
 };
 
-export const getById = async ({ id, userId }: AgentsParams): Promise<any> => {
+export const getById = async ({ id }: AgentsParams): Promise<any> => {
   try {
     const agent = await prisma.users.findUnique({
       select: {
@@ -122,27 +112,17 @@ export const getById = async ({ id, userId }: AgentsParams): Promise<any> => {
         createdAt: true,
         updatedAt: true,
         balance: true,
-        Agents: {
-          select: {
-            level: true,
-            parentAgent: {
-              select: {
-                name: true,
-                id: true
-              }
-            }
-          }
-        }
+        level: true,
+        parentAgentId: true,
+        parentAgentIds: true,
       },
       where: {
         id,
         deletedAt: null,
         type: 'agent',
-        Agents: {
-          parentAgentIds: {
-            array_contains: [userId] as number[]
-          }
-        }
+        parentAgentIds: {
+          array_contains: [id] as number[]
+        },
       }
     });
     if (!agent) {
@@ -156,17 +136,13 @@ export const getById = async ({ id, userId }: AgentsParams): Promise<any> => {
 
 const getAgentById = async (agentId: number): Promise<any> => {
   try {
-    const agent = await prisma.agents.findUnique({
+    const agent = await prisma.users.findUnique({
       select: {
         parentAgentIds: true,
         level: true,
         parentAgentId: true,
-        user: {
-          select: {
-            currencyId: true,
-            roleId: true
-          }
-        }
+        currencyId: true,
+        roleId: true,
       },
       where: {
         id: agentId
@@ -212,7 +188,7 @@ const validateUpdateData = async ({
     }
     const [parentAgent, role, currency] = await Promise.all([
       parentAgentIdNumber && agent.parentAgentId
-        ? prisma.agents.findUnique({ where: { id: parentAgentIdNumber } })
+        ? prisma.users.findUnique({ where: { id: parentAgentIdNumber } })
         : null,
       roleIdNumber && roleIdNumber !== agent.user?.roleId
         ? prisma.roles.findUnique({ where: { id: roleIdNumber } })
@@ -247,11 +223,11 @@ const updateChildAgent = async ({
   parentAgent
 }: {
   agentId: number;
-  agent: Agents;
-  parentAgent: Agents | null;
+  agent: Users;
+  parentAgent: Users | null;
 }) => {
   try {
-    const agentChildren: Agents[] = await prisma.agents.findMany({
+    const agentChildren: Users[] = await prisma.users.findMany({
       where: {
         parentAgentIds: {
           array_contains: [agentId]
@@ -268,7 +244,7 @@ const updateChildAgent = async ({
             ? ([...(parentAgent?.parentAgentIds as any), parentAgent.id] as any)
             : agent.parentAgentIds
         ) as any;
-        await prisma.agents.update({
+        await prisma.users.update({
           where: {
             id: agentChildren[i].id
           },
@@ -300,7 +276,7 @@ export const update = async ({
         roleId
       });
     const [updatedAgent] = await prisma.$transaction([
-      prisma.agents.update({
+      prisma.users.update({
         where: { id: agentId },
         data: {
           parentAgentId: parentAgentId || agent.parentAgentId,

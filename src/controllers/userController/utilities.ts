@@ -4,7 +4,7 @@ const prisma = new PrismaClient();
 export const getParentAgentIdsByParentAgentId = async (
   parentAgentId: number
 ): Promise<any> => {
-  const agent = (await prisma.agents.findUnique({
+  const agent = (await prisma.users.findUnique({
     where: {
       id: parentAgentId
     }

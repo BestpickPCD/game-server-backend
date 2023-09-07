@@ -110,8 +110,7 @@ export const updateUser = async (req: Request, res: Response): Promise<any> => {
       return res.status(404).json({ message: message.NOT_FOUND });
     }
 
-    const { name, email, roleId, currencyId, parentAgentId } =
-      req.body;
+    const { name, email, roleId, currencyId, parentAgentId } = req.body;
     const updatedUser = {
       ...(name && { name }),
       ...(email && { email }),

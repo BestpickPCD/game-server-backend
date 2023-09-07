@@ -1,23 +1,29 @@
 import bcrypt from 'bcrypt';
 import { faker } from '@faker-js/faker';
 import { PrismaClient } from '@prisma/client';
-import { evolution, PragmaticPlay, Habanero, ezugi, permissions } from './fakedData.ts';
+import {
+  evolution,
+  PragmaticPlay,
+  Habanero,
+  ezugi,
+  permissions
+} from './fakedData.ts';
 const prisma = new PrismaClient();
 
 async function main() {
   await prisma.roles.createMany({
     data: [
-      { 
-        name: 'admin', 
+      {
+        name: 'admin',
         permissions
-      }, 
-      { 
-        name: 'operator', 
-        permissions 
-      }, 
-      { 
-        name: 'distributor', 
-        permissions 
+      },
+      {
+        name: 'operator',
+        permissions
+      },
+      {
+        name: 'distributor',
+        permissions
       }
     ],
     skipDuplicates: true

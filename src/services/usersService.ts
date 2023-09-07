@@ -50,7 +50,7 @@ export const getAllWithBalance = async (query: any, userId: number) => {
     ORDER BY users.updatedAt DESC
     LIMIT ${size} OFFSET ${page * size}
     `;
-    
+
     const users = (await prisma.$queryRawUnsafe(`${rawQuery}`)) as any;
 
     const userDetails = users.map((row: any) => {
@@ -213,13 +213,13 @@ export const getPlayerById = async (id: number, userId: number) => {
   try {
     const user = (await prisma.users.findUnique({
       where: {
-        id: Number(userId), 
+        id: Number(userId),
         Players: {
           some: {
             userId: Number(id)
           }
         }
-      }, 
+      },
       select: {
         id: true,
         name: true,
@@ -311,9 +311,9 @@ export const getAllByAgentId = async (query: any, id: number) => {
   try {
     const {
       page = 0,
-      size = 10,
-      // search = ''
-    }: {
+      size = 10
+    } // search = ''
+    : {
       page?: number;
       size?: number;
       // search?: string;
@@ -335,14 +335,14 @@ export const getAllByAgentId = async (query: any, id: number) => {
             parentAgentIds: { array_contains: [Number(id)] }
           },
           {
-            Players: { 
+            Players: {
               some: {
                 userId: Number(id)
               }
             }
           }
-        ],
-      }, 
+        ]
+      },
       orderBy: {
         updatedAt: 'desc'
       },

@@ -127,7 +127,7 @@ export const register = async (req: Request, res: Response): Promise<any> => {
     } = req.body;
 
     const can = await checkUserExist(req.body);
-    
+
     if (!can) {
       return res.status(400).json({
         message: message.DUPLICATE,
@@ -135,9 +135,7 @@ export const register = async (req: Request, res: Response): Promise<any> => {
       });
     }
     try {
-
-      if(type == "agent") {
-        
+      if (type == 'agent') {
         if (password !== confirmPassword) {
           return res.status(400).json({
             message: message.INVALID,
@@ -153,15 +151,14 @@ export const register = async (req: Request, res: Response): Promise<any> => {
           roleId,
           password: hashedPassword,
           currencyId: 1
-        }; 
-        return _agentInsert(userSchema, parentAgentId, res); 
-
-      } else if (type == "player") {
+        };
+        return _agentInsert(userSchema, parentAgentId, res);
+      } else if (type == 'player') {
         const userSchema = {
           username,
-          nickname,
+          nickname
         };
-        return _playerInsert(userSchema, parentAgentId, res); 
+        return _playerInsert(userSchema, parentAgentId, res);
       }
     } catch (error) {
       return res
@@ -178,15 +175,15 @@ const _playerInsert = async (
   userId: number,
   res: Response
 ) => {
-  try { 
-    const {username, nickname} = userSchema
+  try {
+    const { username, nickname } = userSchema;
     const userInsert = (await prisma.players.create({
       data: {
         userId,
         username,
-        nickname,
+        nickname
       }
-    })) as any; 
+    })) as any;
     return res.status(201).json({
       data: userInsert,
       message: message.CREATED
@@ -208,7 +205,7 @@ const _agentInsert = async (
     const newUser: any = await _userInsert(userSchema);
     const details: any = await getParentAgentIdsByParentAgentId(parentAgentId);
     const userInsert = (await prisma.users.update({
-      where:{id: newUser.id},
+      where: { id: newUser.id },
       data: {
         parentAgentId,
         parentAgentIds: details.parentAgentIds,

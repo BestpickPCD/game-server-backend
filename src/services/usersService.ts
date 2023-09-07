@@ -311,9 +311,8 @@ export const getAllByAgentId = async (query: any, id: number) => {
   try {
     const {
       page = 0,
-      size = 10
-    } // search = ''
-    : {
+      size = 10 // search = ''
+    }: {
       page?: number;
       size?: number;
       // search?: string;

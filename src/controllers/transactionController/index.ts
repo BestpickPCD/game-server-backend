@@ -1,4 +1,7 @@
-import { PrismaClient, Users } from '@prisma/client';
+import {
+  PrismaClient,
+  Users
+} from '../../config/prisma/generated/base-default/index.js';
 import { Request, Response } from 'express';
 import { RequestWithUser } from '../../models/customInterfaces.ts';
 import { message } from '../../utilities/constants/index.ts';
@@ -16,6 +19,33 @@ import {
   getDetailsById
 } from '../../services/transactionsService.ts';
 const prisma = new PrismaClient();
+
+import { PrismaClient as PrismaClientTransaction } from '../../config/prisma/generated/transactions/index.js';
+const prismaTransacrtion = new PrismaClientTransaction();
+
+export const testTransaction = async (
+  _: Request,
+  res: Response
+): Promise<any> => {
+  try {
+    const result = await prismaTransacrtion.transactionTests.create({
+      data: {
+        senderId: 1,
+        receiverId: 2,
+        gameId: '123AAA',
+        type: 'add',
+        amount: 100,
+        note: 'note',
+        status: 'success',
+        currencyId: 1
+      }
+    });
+
+    return res.json({ result });
+  } catch (error) {
+    console.log(error);
+  }
+};
 
 export const getTransactions = async (
   req: Request,

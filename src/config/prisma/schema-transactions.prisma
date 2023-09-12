@@ -8,7 +8,7 @@ datasource db {
   url      = env("DATABASE_TRANSACTION")
 }
 
-model TransactionTests {
+model Transactions {
   id    String @id @default(auto()) @map("_id") @db.ObjectId
   senderId     Int?
   receiverId   Int?

@@ -1,9 +1,12 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '../config/prisma/generated/base-default/index.js';
 import {
   arrangeTransactionDetails,
   paramsToArray
 } from '../controllers/transactionController/utilities.ts';
 const prisma = new PrismaClient();
+
+import { PrismaClient as PrismaClientTransaction } from '../config/prisma/generated/transactions/index.js';
+const prismaTransaction = new PrismaClientTransaction();
 
 export const getAllById = async (queryParams: any, id: number) => {
   try {
@@ -28,7 +31,7 @@ export const getAllById = async (queryParams: any, id: number) => {
              senderId IN (
               SELECT id
               FROM Agents
-              WHERE JSON_CONTAINS(parentAgentIds, JSON_ARRAY(${Number(id)}))) 
+              WHERE JSON_CONTAINS(parentAgentIds, JSON_ARRAY(${Number(id)})))
                 OR receiverId IN (
                   SELECT id
                   FROM Agents
@@ -60,7 +63,7 @@ export const getAllById = async (queryParams: any, id: number) => {
             ) `;
     const pageSize = `
             order By id
-            LIMIT ${Number(size || 10)} 
+            LIMIT ${Number(size || 10)}
             OFFSET ${Number(size ?? 10) * Number(page || 0)}
           `;
     const query = `
@@ -89,7 +92,7 @@ export const getAllById = async (queryParams: any, id: number) => {
                     )}))
                 )
               )
-            ) filtered_users 
+            ) filtered_users
             ON transactions.senderId = filtered_users.id OR transactions.receiverId = filtered_users.id
             JOIN Users senderUser ON senderUser.id = transactions.senderId
             JOIN Users receiverUser ON receiverUser.id = transactions.receiverId
@@ -97,10 +100,10 @@ export const getAllById = async (queryParams: any, id: number) => {
               search
                 ? `((senderUser.name LIKE '%${search}%') OR (receiverUser.name LIKE '%${search}%')) AND`
                 : ''
-            } 
+            }
             ((transactions.updatedAt >= '${
               dateFrom || '1970-01-01T00:00:00.000Z'
-            }') 
+            }')
             AND (transactions.updatedAt <= '${
               dateTo || '2100-01-01T00:00:00.000Z'
             }'))
@@ -111,10 +114,11 @@ export const getAllById = async (queryParams: any, id: number) => {
             ${gameId ? ` AND ${gameId}` : ''}
           `;
 
-    const [transactions, [{ count }]]: any = await prisma.$transaction([
-      prisma.$queryRawUnsafe(`${normalSelect} ${query} ${pageSize}`),
-      prisma.$queryRawUnsafe(`${countSelect} ${query}`)
-    ]);
+    const [transactions, [{ count }]]: any =
+      await prismaTransaction.$transaction([
+        prisma.$queryRawUnsafe(`${normalSelect} ${query} ${pageSize}`),
+        prisma.$queryRawUnsafe(`${countSelect} ${query}`)
+      ]);
     return { transactions, count: parseInt(count), page, size };
   } catch (error) {
     console.log(error);

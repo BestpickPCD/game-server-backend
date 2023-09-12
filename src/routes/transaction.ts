@@ -7,8 +7,7 @@ import {
   getTransactionDetailsByUserIdView,
   getTransactions,
   getTransactionsView,
-  landingPage,
-  testTransaction
+  landingPage
 } from '../controllers/transactionController/index.ts';
 import { authentication } from '../middleware/authentication.ts';
 import { permission } from '../middleware/permission.ts';
@@ -16,7 +15,6 @@ import { Transaction } from '../middleware/transaction.ts';
 
 const router = express.Router();
 
-router.get('/test-transaction', testTransaction);
 router.get(
   '/transactions',
   authentication,

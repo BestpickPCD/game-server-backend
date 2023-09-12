@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '../../config/prisma/generated/base-default/index.js';
 import { Request, Response } from 'express';
 import { message } from '../../utilities/constants/index.ts';
 import {

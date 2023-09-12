@@ -1,4 +1,8 @@
-import { Prisma, PrismaClient, Transactions } from '@prisma/client';
+import {
+  Prisma,
+  PrismaClient,
+  Transactions
+} from '../../config/prisma/generated/base-default/index.js';
 import { balanceSummary } from 'src/models/customInterfaces';
 const prisma = new PrismaClient();
 

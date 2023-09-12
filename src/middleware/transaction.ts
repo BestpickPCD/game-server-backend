@@ -1,5 +1,8 @@
 import { Response, NextFunction } from 'express';
-import { PrismaClient, Prisma } from '@prisma/client';
+import {
+  PrismaClient,
+  Prisma
+} from '../config/prisma/generated/base-default/index.js';
 import { RequestWithUser, balanceSummary } from '../models/customInterfaces.ts';
 const prisma = new PrismaClient();
 

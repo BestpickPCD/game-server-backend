@@ -53,7 +53,7 @@
   },
   "prisma": {
     "seed": "ts-node ./src/config/prisma/seed.ts",
-    "schema": "./src/config/prisma/schema.prisma"
+    "schema": "./src/config/prisma/schema-base-default.prisma"
   },
   "lint-staged": {
     "**/*.{js,jsx,json}": [

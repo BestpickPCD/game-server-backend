@@ -8,7 +8,7 @@ import {
   update
 } from '../services/currenciesService.ts';
 import { message } from './../utilities/constants/index.ts';
-import { Currencies } from '@prisma/client';
+import { Currencies } from '../config/prisma/generated/base-default/index.js';
 
 const redisKey = 'currencies';
 const INVALID = 'Invalid Currency Id';

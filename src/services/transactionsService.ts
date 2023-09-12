@@ -128,7 +128,7 @@ export const getAllById = async (queryParams: any, id: number) => {
 
 export const getByIdWithType = async (userId: number, arrayTypes: string[]) => {
   try {
-    const transactions = (await prisma.transactions.findMany({
+    const transactions = (await prismaTransaction.transactions.findMany({
       where: {
         OR: [{ senderId: userId }, { receiverId: userId }],
         type: {

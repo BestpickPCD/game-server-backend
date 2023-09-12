@@ -1,7 +1,13 @@
 import bcrypt from 'bcrypt';
 import { faker } from '@faker-js/faker';
 import { PrismaClient } from '../../config/prisma/generated/base-default/index.js';
-import { evolution, PragmaticPlay, Habanero, ezugi, permissions } from './fakedData.ts';
+import {
+  evolution,
+  PragmaticPlay,
+  Habanero,
+  ezugi,
+  permissions
+} from './fakedData.ts';
 const prisma = new PrismaClient();
 
 async function main() {

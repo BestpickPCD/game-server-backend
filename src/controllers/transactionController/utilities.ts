@@ -10,16 +10,15 @@ export const checkTransferAbility = async (
   senderUsername: string,
   receiverUsername: string
 ): Promise<any> => {
-
-  let result = false;  
+  let result = false;
   const reveiver = (await prisma.$queryRawUnsafe(` SELECT Users.username FROM 
     ( SELECT Users.username, Agents.parentAgentId AS agentId FROM Users JOIN Agents ON Agents.id = Users.id WHERE Users.type = "agent" AND Users.username = "${receiverUsername}"
       UNION
       SELECT Users.username, Players.agentId FROM Users JOIN Players ON Players.id = Users.id WHERE Users.type = "player" AND Users.username = "${receiverUsername}"
     ) AS Agent
     JOIN Users ON Users.id = Agent.agentId
-  `)) as any; 
-  
+  `)) as any;
+
   if (reveiver[0]?.username === senderUsername) {
     result = true;
   }
@@ -300,7 +299,9 @@ export const getBalances = async (userUsername: string): Promise<any> => {
       LEFT JOIN (
         SELECT SUM(IFNULL(amount, 0)) AS \`out\`, senderId AS id
         FROM Transactions
-        WHERE TYPE IN ('add', 'lose', 'charge', 'bet') AND senderId = ${userUsername ?? 1}
+        WHERE TYPE IN ('add', 'lose', 'charge', 'bet') AND senderId = ${
+          userUsername ?? 1
+        }
         GROUP BY senderId
       ) AS sender ON sender.id = Users.id
       LEFT JOIN (

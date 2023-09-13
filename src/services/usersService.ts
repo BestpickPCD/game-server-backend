@@ -20,21 +20,7 @@ export const getAllWithBalance = async (query: any, userId: number) => {
       agentId?: number;
     } = query;
 
-    console.log(page, search, dateFrom, dateTo, agentId, size);
-
-    let dateQuery: string;
-    if (dateFrom && dateTo) {
-      dateQuery = `
-      AND (
-        users.updatedAt >= ${dateFrom} OR ${dateFrom} IS NULL
-        AND users.updatedAt <= ${dateTo} OR ${dateTo} IS NULL
-      )
-      `;
-    } else {
-      dateQuery = ``;
-    }
-    console.log(dateQuery);
-    const users = (await prisma.$queryRaw`SELECT * FROM 
+    const rawQuery = `SELECT * FROM 
     (SELECT id, name, email, username, type, balance, currencyId, isActive, updatedAt FROM Users users WHERE deletedAt IS NULL) AS users JOIN 
     (SELECT players.agentId, players.id, agents.parentAgentIds FROM Players players JOIN Agents agents ON agents.id = players.agentId WHERE ( JSON_CONTAINS(agents.parentAgentIds, JSON_ARRAY(${userId})) OR players.agentId = ${userId})) AS players ON players.id = users.id LEFT JOIN 
     (SELECT SUM(amount) AS amountSentOut, senderId FROM Transactions transactions WHERE TYPE IN ('add') GROUP BY senderId ) AS senders ON senders.senderId = users.id LEFT JOIN 
@@ -42,10 +28,29 @@ export const getAllWithBalance = async (query: any, userId: number) => {
     (SELECT SUM(amount) AS winGameAmount, receiverId FROM Transactions transactions WHERE TYPE IN ('win') GROUP BY receiverId ) AS winGamers ON winGamers.receiverId = users.id LEFT JOIN 
     (SELECT SUM(amount) AS betGameAmount, senderId FROM Transactions transactions WHERE TYPE IN ('bet') GROUP BY senderId ) AS betGamers ON betGamers.senderId = users.id LEFT JOIN 
     (SELECT SUM(amount) AS chargeGameAmount, receiverId FROM Transactions transactions WHERE TYPE IN ('charge') GROUP BY receiverId ) AS chargeGamers ON chargeGamers.receiverId = users.id 
-    WHERE 1=1
+    WHERE 1=1 
+    ${agentId ? `AND players.agentId = ${agentId}` : ``}
+    ${
+      search
+        ? `AND (
+        users.name LIKE '%${search}%' OR 
+        users.username LIKE '%${search}%' OR 
+        users.email LIKE '%${search}%'
+      )`
+        : ``
+    }
+    ${
+      dateFrom && dateTo
+        ? `AND (
+      users.updatedAt >= ${dateFrom} OR ${dateFrom} IS NULL
+      AND users.updatedAt <= ${dateTo} OR ${dateTo} IS NULL
+    )`
+        : ``
+    }
     ORDER BY users.updatedAt DESC
     LIMIT ${size} OFFSET ${page * size}
-    `) as any;
+    `;
+    const users = (await prisma.$queryRawUnsafe(`${rawQuery}`)) as any;
 
     const userDetails = users.map((row: any) => {
       const data = {

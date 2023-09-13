@@ -92,3 +92,6 @@ export const checkStatusAndMessage = ({
     message: constantMessages.BAD_REQUEST
   };
 };
+
+export const checkType = (value: any): string =>
+  Object.prototype.toString.call(value).slice(8, -1);

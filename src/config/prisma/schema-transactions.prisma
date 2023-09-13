@@ -10,10 +10,10 @@ datasource db {
 
 model Transactions {
   id    String @id @default(auto()) @map("_id") @db.ObjectId
-  senderId     Int?
-  receiverId   Int?
+  senderUsername     String?
+  receiverUsername   String?
   gameId       String?
-  updateUserId Int?
+  updateUserUsername String?
   type         String
   amount       Float     @default(0.0)
   note         String?

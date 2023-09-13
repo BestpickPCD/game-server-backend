@@ -7,20 +7,22 @@ import { balanceSummary } from 'src/models/customInterfaces';
 const prisma = new PrismaClient();
 
 export const checkTransferAbility = async (
-  senderId: number,
-  receiverId: number
+  senderUsername: string,
+  receiverUsername: string
 ): Promise<any> => {
-  let result = false;
-  const reveiver = (await prisma.$queryRaw`
-    SELECT id, parentAgentId AS agentId FROM Agents agents WHERE id = ${receiverId}
-    UNION
-    SELECT id, agentId FROM Players players WHERE id = ${receiverId}
-  `) as any;
 
-  if (reveiver[0]?.agentId === senderId) {
+  let result = false;  
+  const reveiver = (await prisma.$queryRawUnsafe(` SELECT Users.username FROM 
+    ( SELECT Users.username, Agents.parentAgentId AS agentId FROM Users JOIN Agents ON Agents.id = Users.id WHERE Users.type = "agent" AND Users.username = "${receiverUsername}"
+      UNION
+      SELECT Users.username, Players.agentId FROM Users JOIN Players ON Players.id = Users.id WHERE Users.type = "player" AND Users.username = "${receiverUsername}"
+    ) AS Agent
+    JOIN Users ON Users.id = Agent.agentId
+  `)) as any; 
+  
+  if (reveiver[0]?.username === senderUsername) {
     result = true;
   }
-
   return result;
 };
 
@@ -286,7 +288,7 @@ export const arrangeTransactions = async (
   return details;
 };
 
-export const getBalances = async (userId: number): Promise<any> => {
+export const getBalances = async (userUsername: string): Promise<any> => {
   try {
     const rawQuery = Prisma.sql`
       SELECT
@@ -298,22 +300,22 @@ export const getBalances = async (userId: number): Promise<any> => {
       LEFT JOIN (
         SELECT SUM(IFNULL(amount, 0)) AS \`out\`, senderId AS id
         FROM Transactions
-        WHERE TYPE IN ('add', 'lose', 'charge', 'bet') AND senderId = ${userId}
+        WHERE TYPE IN ('add', 'lose', 'charge', 'bet') AND senderId = ${userUsername ?? 1}
         GROUP BY senderId
       ) AS sender ON sender.id = Users.id
       LEFT JOIN (
         SELECT SUM(IFNULL(amount, 0)) AS \`in\`, receiverId AS id
         FROM Transactions
-        WHERE TYPE IN ('add', 'win') AND receiverId = ${userId}
+        WHERE TYPE IN ('add', 'win') AND receiverId = ${userUsername ?? 1}
         GROUP BY receiverId
       ) AS receiver ON receiver.id = Users.id
       LEFT JOIN (
         SELECT SUM(IFNULL(amount, 0)) AS gameOut, receiverId AS id
         FROM Transactions
-        WHERE TYPE IN ('lose', 'charge') AND receiverId = ${userId}
+        WHERE TYPE IN ('lose', 'charge') AND receiverId = ${userUsername ?? 1}
         GROUP BY receiverId
       ) AS gameResult ON gameResult.id = Users.id
-      WHERE Users.id = ${userId};`;
+      WHERE Users.id = ${userUsername ?? 1};`;
 
     return (await prisma.$queryRaw(rawQuery)) as balanceSummary;
   } catch (error) {
@@ -327,9 +329,9 @@ export const paramsToArray = async (params: string): Promise<any> => {
   return formattedParams;
 };
 
-export const updateBalance = async (userId: number): Promise<any> => {
+export const updateBalance = async (userUsername: string): Promise<any> => {
   try {
-    const balances = await getBalances(userId);
+    const balances = await getBalances(userUsername);
     const { balance } = balances[0];
 
     const result = await prisma.users.update({
@@ -337,7 +339,7 @@ export const updateBalance = async (userId: number): Promise<any> => {
         balance
       },
       where: {
-        id: userId
+        username: userUsername
       }
     });
 

@@ -1,6 +1,4 @@
-import {
-  PrismaClient
-} from '../../config/prisma/generated/base-default/index.js';
+import { PrismaClient } from '../../config/prisma/generated/base-default/index.js';
 import { balanceSummary } from 'src/models/customInterfaces';
 const prisma = new PrismaClient();
 import { PrismaClient as PrismaClientTransaction } from '../../config/prisma/generated/transactions/index.js';
@@ -25,11 +23,7 @@ export const checkTransferAbility = async (
   return result;
 };
 
-
-
-export const arrangeTransactions = async (
-  transactions: any
-): Promise<any> => {
+export const arrangeTransactions = async (transactions: any): Promise<any> => {
   const details = transactions.map((transaction: any) => {
     const data: any = {};
     const {
@@ -83,37 +77,39 @@ export const arrangeTransactions = async (
 };
 
 export const getBalances = async (userUsername: string): Promise<any> => {
-  try { 
-
+  try {
     const sender = await prismaTransaction.transactions.aggregate({
       where: {
         senderUsername: userUsername,
-        type: { in: ['add', 'lose', 'charge', 'bet'] }, // Adjust types as needed
+        type: { in: ['add', 'lose', 'charge', 'bet'] } // Adjust types as needed
       },
-      _sum: { amount: true },
+      _sum: { amount: true }
     });
 
     const receiver = await prismaTransaction.transactions.aggregate({
       where: {
         receiverUsername: userUsername,
-        type: { in: ['add', 'win'] }, // Adjust types as needed
+        type: { in: ['add', 'win'] } // Adjust types as needed
       },
-      _sum: { amount: true },
+      _sum: { amount: true }
     });
 
     const gameResult = await prismaTransaction.transactions.aggregate({
       where: {
         receiverUsername: userUsername,
-        type: { in: ['lose', 'charge'] }, // Adjust types as needed
+        type: { in: ['lose', 'charge'] } // Adjust types as needed
       },
-      _sum: { amount: true },
+      _sum: { amount: true }
     });
 
     const balance = {
       out: sender._sum?.amount || 0,
       in: receiver._sum?.amount || 0,
       gameOut: gameResult._sum?.amount || 0,
-      balance: (receiver._sum?.amount || 0) - (sender._sum?.amount || 0) - (gameResult._sum?.amount || 0),
+      balance:
+        (receiver._sum?.amount || 0) -
+        (sender._sum?.amount || 0) -
+        (gameResult._sum?.amount || 0)
     } as balanceSummary;
 
     return balance;

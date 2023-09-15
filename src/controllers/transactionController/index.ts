@@ -7,10 +7,7 @@ import { Request, Response } from 'express';
 import { RequestWithUser } from '../../models/customInterfaces.ts';
 import { message } from '../../utilities/constants/index.ts';
 import { checkTransactionType } from './transactionTypes.ts';
-import {
-  checkTransferAbility,
-  updateBalance
-} from './utilities.ts';
+import { checkTransferAbility, updateBalance } from './utilities.ts';
 import Redis, { getRedisData } from '../../config/redis/index.ts';
 import {
   getAllById,
@@ -73,7 +70,8 @@ export const addTransaction = async (
       currencyId,
       gameId
     } = req.body;
-    const senderUsername = req.body.senderUsername ?? (req as any).user.username;
+    const senderUsername =
+      req.body.senderUsername ?? (req as any).user.username;
 
     if (senderUsername && receiverUsername) {
       if (!(await checkTransferAbility(senderUsername, receiverUsername))) {
@@ -149,7 +147,7 @@ export const addTransaction = async (
         }
       }
 
-      try { 
+      try {
         await prismaTransaction.transactions.create({
           data: {
             ...data,
@@ -221,7 +219,7 @@ export const getTransactionDetail = async (
     const { id } = req.params;
     const { id: userId } = (req as any).user;
     const data = (await getDetailsById(id, userId)) as any;
-  
+
     return res.status(200).json({ message: message.SUCCESS, data });
   } catch (error) {
     if (error.message) {

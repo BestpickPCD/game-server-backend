@@ -1,7 +1,6 @@
-import {
-  // arrangeTransactionDetails,
-  // paramsToArray
-} from '../controllers/transactionController/utilities.ts';
+import // arrangeTransactionDetails,
+// paramsToArray
+'../controllers/transactionController/utilities.ts';
 
 import { PrismaClient as PrismaClientTransaction } from '../config/prisma/generated/transactions/index.js';
 const prismaTransaction = new PrismaClientTransaction();
@@ -16,14 +15,14 @@ export const getAllById = async (queryParams: any) => {
       userId,
       type,
       gameId,
-      search,
+      search
     } = queryParams;
 
     const filter: any = {
       OR: [
-        { 'senderUsername': { contains: search, mode: 'insensitive' } },
-        { 'receiverUsername': { contains: search, mode: 'insensitive' } },
-      ],
+        { senderUsername: { contains: search, mode: 'insensitive' } },
+        { receiverUsername: { contains: search, mode: 'insensitive' } }
+      ]
     };
 
     if (dateFrom) {
@@ -44,7 +43,7 @@ export const getAllById = async (queryParams: any) => {
     const transactions = await prismaTransaction.transactions.findMany({
       // where: filter,
       // skip: page * size,
-      take: size,
+      take: size
     });
 
     const count = await prismaTransaction.transactions.count({
@@ -58,8 +57,10 @@ export const getAllById = async (queryParams: any) => {
   }
 };
 
-
-export const getByIdWithType = async (username: string, arrayTypes: string[]) => {
+export const getByIdWithType = async (
+  username: string,
+  arrayTypes: string[]
+) => {
   try {
     const transactions = (await prismaTransaction.transactions.findMany({
       where: {
@@ -128,7 +129,7 @@ export const getDetailsById = async (id: string, userId: number) => {
       ]
     };
 
-    console.log(filterOr)
+    console.log(filterOr);
 
     const transaction = await prismaTransaction.transactions.findUnique({
       select: {
@@ -144,7 +145,7 @@ export const getDetailsById = async (id: string, userId: number) => {
         createdAt: true,
         currencyId: true
       },
-      where: { 
+      where: {
         id
       }
     });

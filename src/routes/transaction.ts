@@ -2,11 +2,8 @@ import express from 'express';
 import {
   addTransaction,
   getTransactionDetail,
-  // getBalance,
   getTransactionDetailsByUserId,
-  getTransactionDetailsByUserIdView,
   getTransactions,
-  getTransactionsView,
   landingPage
 } from '../controllers/transactionController/index.ts';
 import { authentication } from '../middleware/authentication.ts';
@@ -28,7 +25,6 @@ router.get(
   permission('transactions', 'getById'),
   getTransactionDetail
 );
-// router.get("/transaction/:userId", getBalance)
 router.post(
   '/transaction',
   authentication,
@@ -36,16 +32,11 @@ router.post(
   addTransaction
 );
 router.get(
-  '/transaction-details/:userId',
+  '/transaction-details/:username',
   authentication,
   permission('transactions', 'get'),
   getTransactionDetailsByUserId
 );
-router.get(
-  '/transaction-details/view/:userId',
-  getTransactionDetailsByUserIdView
-);
-router.get('/transactions/view', getTransactionsView);
 router.get('/landing-page', landingPage);
 
 export default router;

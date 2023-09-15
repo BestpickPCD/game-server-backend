@@ -29,9 +29,6 @@ model Users {
   parentAgent             Agents[]       @relation("ParentAgent")
   Players                 Players?
   currency                Currencies?    @relation(fields: [currencyId], references: [id])
-  transactionSenders      Transactions[] @relation("TransactionSender")
-  transactionReceivers    Transactions[] @relation("TransactionReceiver")
-  transactionUpdatedUsers Transactions[] @relation("TransactionUpdatedUser")
   ip_user                 ip_user[]
 }
 
@@ -89,7 +86,6 @@ model Currencies {
   deletedAt DateTime?
 
   Users        Users[]
-  Transactions Transactions[]
 }
 
 model ip_user {
@@ -100,28 +96,6 @@ model ip_user {
   deletedAt DateTime?
 
   users Users? @relation(fields: [userId], references: [id])
-}
-
-model Transactions {
-  id           Int       @id @default(autoincrement())
-  senderId     Int?
-  receiverId   Int?
-  gameId       String?
-  updateUserId Int?
-  type         String
-  amount       Decimal   @default(0) @db.Decimal(10, 2)
-  note         String?   @db.Text
-  token        String?
-  status       String?
-  currencyId   Int?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime? @updatedAt
-  deletedAt    DateTime?
-
-  currency    Currencies? @relation(fields: [currencyId], references: [id])
-  sender      Users?      @relation("TransactionSender", fields: [senderId], references: [id])
-  receiver    Users?      @relation("TransactionReceiver", fields: [receiverId], references: [id])
-  updatedUser Users?      @relation("TransactionUpdatedUser", fields: [updateUserId], references: [id])
 }
 
 model AgentVendor {

@@ -94,7 +94,7 @@ export const updateUser = async (req: Request, res: Response): Promise<any> => {
     const { userId } = req.params;
     const redisKey = 'userById';
     const { redisData, redisKeyWithId } = await getRedisData(
-      parseInt(userId),
+      userId,
       redisKey,
       'Invalid users Id'
     );
@@ -166,7 +166,7 @@ export const getUserById = async (
   try {
     const { userId } = req.params;
     const { redisData, redisKeyWithId } = await getRedisData(
-      parseInt(userId),
+      userId,
       'userById',
       'Invalid users Id'
     );
@@ -195,7 +195,7 @@ export const deleteUser = async (req: Request, res: Response): Promise<any> => {
     const { userId } = req.params;
     const redisKey = 'userById';
     const { redisData, redisKeyWithId } = await getRedisData(
-      parseInt(userId),
+      userId,
       redisKey,
       'Invalid users Id'
     );

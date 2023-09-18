@@ -81,7 +81,14 @@ export const addTransaction = async (
       }
     }
 
-    const data: any = { type, note, token, status, amount: parseFloat(amount), gameId };
+    const data: any = {
+      type,
+      note,
+      token,
+      status,
+      amount: parseFloat(amount),
+      gameId
+    };
     const sender = await prisma.users.findUnique({
       where: {
         id: (req as any).user.id

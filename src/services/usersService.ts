@@ -4,7 +4,7 @@ import {
   Users
 } from '../config/prisma/generated/base-default/index.js';
 const prisma = new PrismaClient();
-import { PrismaClient as PrismaClientTransaction } from '../config/prisma/generated/transactions/index.js'
+import { PrismaClient as PrismaClientTransaction } from '../config/prisma/generated/transactions/index.js';
 const prismaTransaction = new PrismaClientTransaction();
 
 export const getAllWithBalance = async (query: any, userId: number) => {
@@ -57,10 +57,10 @@ export const getAllWithBalance = async (query: any, userId: number) => {
 
     const users = (await prisma.$queryRawUnsafe(`${rawQuery}`)) as any;
 
-    const winGame = await _getSumTransaction('win', 'receiverUsername')
-    const betGame = await _getSumTransaction('bet', 'senderUsername')
-    const chargeGame = await _getSumTransaction('charge', 'receiverUsername')
-    const received = await _getSumTransaction('add', 'receiverUsername')
+    const winGame = await _getSumTransaction('win', 'receiverUsername');
+    const betGame = await _getSumTransaction('bet', 'senderUsername');
+    const chargeGame = await _getSumTransaction('charge', 'receiverUsername');
+    const received = await _getSumTransaction('add', 'receiverUsername');
 
     const userDetails = users.map((row: any) => {
       const data = {
@@ -71,7 +71,8 @@ export const getAllWithBalance = async (query: any, userId: number) => {
           betGameAmount:
             ((winGame[`${row.username}`]?._sum.amount as number) ?? 0) -
               ((betGame[`${row.username}`]?._sum.amount as number) ?? 0) -
-              ((chargeGame[`${row.username}`]?._sum.amount as number) ?? 0) ?? 0,
+              ((chargeGame[`${row.username}`]?._sum.amount as number) ?? 0) ??
+            0,
           amountReceived: received[`${row.username}`]?._sum.amount ?? 0,
           winGameAmount: winGame[`${row.username}`]?._sum.amount ?? 0,
           chargeGameAmount: row.chargeGameAmount ?? 0,
@@ -297,13 +298,32 @@ export const getDashboardData = async (userId: number) => {
         (SELECT COUNT(id) AS players, agentId FROM Players WHERE agentId = ${userId} GROUP BY agentId) AS players ON players.agentId = User.id
     `) as any;
 
-
     const item = dashboard[0];
-    const winGame = await _getSumTransactionByUsername('win', 'receiverUsername', item.username)
-    const betGame = await _getSumTransactionByUsername('bet', 'senderUsername', item.username)
-    const chargeGame = await _getSumTransactionByUsername('charge', 'receiverUsername', item.username)
-    const sentOut = await _getSumTransactionByUsername('add', 'senderUsername', item.username)
-    const received = await _getSumTransactionByUsername('add', 'receiverUsername', item.username)
+    const winGame = await _getSumTransactionByUsername(
+      'win',
+      'receiverUsername',
+      item.username
+    );
+    const betGame = await _getSumTransactionByUsername(
+      'bet',
+      'senderUsername',
+      item.username
+    );
+    const chargeGame = await _getSumTransactionByUsername(
+      'charge',
+      'receiverUsername',
+      item.username
+    );
+    const sentOut = await _getSumTransactionByUsername(
+      'add',
+      'senderUsername',
+      item.username
+    );
+    const received = await _getSumTransactionByUsername(
+      'add',
+      'receiverUsername',
+      item.username
+    );
     const data = {
       userId: item.id,
       name: item.name,
@@ -316,8 +336,13 @@ export const getDashboardData = async (userId: number) => {
       balance: {
         balance: item.balance ?? 0,
         calculatedBalance:
-          (received[`${item.username}`]._sum.amount ?? 0 + winGame[`${item.username}`]._sum.amount ?? 0) -
-          (sentOut[`${item.username}`]._sum.amount ?? 0 + betGame[`${item.username}`]._sum.amount ?? 0 + chargeGame[`${item.username}`]._sum.amount ?? 0),
+          (received[`${item.username}`]._sum.amount ??
+            0 + winGame[`${item.username}`]._sum.amount ??
+            0) -
+          (sentOut[`${item.username}`]._sum.amount ??
+            0 + betGame[`${item.username}`]._sum.amount ??
+            0 + chargeGame[`${item.username}`]._sum.amount ??
+            0),
         sendOut: sentOut[`${item.username}`]._sum.amount ?? 0,
         receive: received[`${item.username}`]._sum.amount ?? 0,
         bet: betGame[`${item.username}`]._sum.amount ?? 0,
@@ -420,46 +445,45 @@ export const getAllByAgentId = async (query: any, id: number) => {
   }
 };
 
-
-
-
-const _getSumTransaction = async (type:string, groupBy:any) => {
-
-  const sumBalance = await prismaTransaction.transactions.groupBy({
+const _getSumTransaction = async (type: string, groupBy: any) => {
+  const sumBalance = (await prismaTransaction.transactions.groupBy({
     by: [groupBy],
     _sum: {
-      amount: true,
+      amount: true
     },
     where: {
-      type,
+      type
     }
-  }) as any;
-  
+  })) as any;
+
   const formattedResult = sumBalance.reduce((acc: any, item: any) => {
     acc[item.senderUsername ?? item.receiverUsername] = item;
     return acc;
   }, {});
-  
-  return formattedResult
-}
 
-const _getSumTransactionByUsername = async (type:string, groupBy:any, username:string) => {
+  return formattedResult;
+};
 
-  const sumBalance = await prismaTransaction.transactions.groupBy({
+const _getSumTransactionByUsername = async (
+  type: string,
+  groupBy: any,
+  username: string
+) => {
+  const sumBalance = (await prismaTransaction.transactions.groupBy({
     by: [groupBy],
     _sum: {
-      amount: true,
+      amount: true
     },
     where: {
       type,
       [`${groupBy}`]: username
     }
-  }) as any;
-  
+  })) as any;
+
   const formattedResult = sumBalance.reduce((acc: any, item: any) => {
     acc[item.senderUsername ?? item.receiverUsername] = item;
     return acc;
   }, {});
-  
-  return formattedResult
-}
+
+  return formattedResult;
+};

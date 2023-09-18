@@ -81,7 +81,7 @@ export const addTransaction = async (
       }
     }
 
-    const data: any = { type, note, token, status, amount, gameId };
+    const data: any = { type, note, token, status, amount: parseFloat(amount), gameId };
     const sender = await prisma.users.findUnique({
       where: {
         id: (req as any).user.id
@@ -202,10 +202,9 @@ export const getTransactionDetailsByUserId = async (
       arrayTypes = [];
     }
     const data = (await getByIdWithType(username, arrayTypes)) as any;
-    res.status(200).json(data);
+    return res.status(200).json(data);
   } catch (error) {
-    console.log(error);
-    res.status(500).json({
+    return res.status(500).json({
       message: message.INTERNAL_SERVER_ERROR
     });
   }

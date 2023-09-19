@@ -1,4 +1,7 @@
-import { Currencies, PrismaClient } from '@prisma/client';
+import {
+  Currencies,
+  PrismaClient
+} from '../config/prisma/generated/base-default/index.js';
 const prisma = new PrismaClient();
 
 const NOT_FOUND = 'Currency not found';

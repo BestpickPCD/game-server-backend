@@ -32,12 +32,12 @@ export const removeRedisKeys = async (key: string): Promise<any> => {
 };
 
 export const getRedisData = async (
-  id: number,
+  id: string,
   name: string,
   invalidMessage: string
 ): Promise<any> => {
   try {
-    if (!Number(id)) {
+    if (!id) {
       throw Error(invalidMessage);
     }
     const redisKeyWithId = `${name}-${id}`;
@@ -45,7 +45,6 @@ export const getRedisData = async (
 
     return { redisData, redisKeyWithId };
   } catch (error) {
-    console.log(error);
     return Promise.reject(error);
   }
 };

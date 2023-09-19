@@ -1,0 +1,27 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "./generated/transactions"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_TRANSACTION")
+}
+
+model Transactions {
+  id    String @id @default(auto()) @map("_id") @db.ObjectId
+  senderUsername     String?
+  receiverUsername   String?
+  gameId       String?
+  updateUserUsername String?
+  type         String
+  amount       Float     @default(0.0)
+  note         String?
+  token        String?
+  status       String?
+  currencyId   Int?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime? @updatedAt
+  deletedAt    DateTime?
+}
+

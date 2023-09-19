@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '../../config/prisma/generated/base-default/index.js';
 const prisma = new PrismaClient();
 
 export const getParentAgentIdsByParentAgentId = async (
@@ -40,7 +40,7 @@ export const getBalanceSummariesByIds = async (
 
   const usersWithBalances = await prisma.$queryRaw`
     SELECT
-      sender.id AS senderId, receiver.id AS receiverId, Users.id AS userGameId, 
+      sender.id AS senderId, receiver.id AS receiverId, Users.id AS userGameId,
       IFNULL(sender.out, 0) AS \`out\`,
       IFNULL(receiver.in, 0) AS \`in\`,
       IFNULL(gameResult.gameOut, 0) AS gameOut,

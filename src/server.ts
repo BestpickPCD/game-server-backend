@@ -7,6 +7,7 @@ import router from './routes/index.ts';
 import userSwagger from './swagger/index.ts';
 import logger from './utilities/log/index.ts';
 import { checkStatusAndMessage } from './utilities/index.ts';
+
 dotenv.config();
 
 const app = express();

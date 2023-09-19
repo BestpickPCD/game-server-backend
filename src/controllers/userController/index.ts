@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '../../config/prisma/generated/base-default/index.js';
 import { Request, Response } from 'express';
 import { message } from '../../utilities/constants/index.ts';
 import {
@@ -94,7 +94,7 @@ export const updateUser = async (req: Request, res: Response): Promise<any> => {
     const { userId } = req.params;
     const redisKey = 'userById';
     const { redisData, redisKeyWithId } = await getRedisData(
-      parseInt(userId),
+      userId,
       redisKey,
       'Invalid users Id'
     );
@@ -166,7 +166,7 @@ export const getUserById = async (
   try {
     const { userId } = req.params;
     const { redisData, redisKeyWithId } = await getRedisData(
-      parseInt(userId),
+      userId,
       'userById',
       'Invalid users Id'
     );
@@ -195,7 +195,7 @@ export const deleteUser = async (req: Request, res: Response): Promise<any> => {
     const { userId } = req.params;
     const redisKey = 'userById';
     const { redisData, redisKeyWithId } = await getRedisData(
-      parseInt(userId),
+      userId,
       redisKey,
       'Invalid users Id'
     );
@@ -230,20 +230,21 @@ export const getDashboard = async (
 ): Promise<any> => {
   try {
     const { id } = (req as any).user;
-    const { redisData, redisKeyWithId } = await getRedisData(
-      id,
-      'dashboard',
-      'Invalid users Id'
-    );
-    let data: any;
-    if (redisData) {
-      data = JSON.parse(redisData);
-    } else {
-      data = (await getDashboardData(id)) as any;
-    }
-    !redisData && (await Redis.set(redisKeyWithId, JSON.stringify(data)));
+    // const { redisData, redisKeyWithId } = await getRedisData(
+    //   id,
+    //   'dashboard',
+    //   'Invalid users Id'
+    // );
+    // let data: any;
+    // if (redisData) {
+    //   data = JSON.parse(redisData);
+    // } else {
+    const data = (await getDashboardData(id)) as any;
+    // }
+    // !redisData && (await Redis.set(redisKeyWithId, JSON.stringify(data)));
     return res.status(200).json(data);
   } catch (error) {
+    console.log(error);
     return res
       .status(500)
       .json({ message: message.INTERNAL_SERVER_ERROR, error });

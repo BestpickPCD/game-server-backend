@@ -1,4 +1,9 @@
-import { Users, Roles, Agents, Transactions } from '@prisma/client';
+import {
+  Users,
+  Roles,
+  Agents,
+  Transactions
+} from '../config/prisma/generated/base-default/index.js';
 import { Request } from 'express';
 
 export interface balanceSummary {

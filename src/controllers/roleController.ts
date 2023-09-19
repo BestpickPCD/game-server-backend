@@ -1,4 +1,4 @@
-import { Roles } from '@prisma/client';
+import { Roles } from '../config/prisma/generated/base-default/index.js';
 import { NextFunction, Request, Response } from 'express';
 import Redis from '../config/redis/index.ts';
 import { AsyncResponse } from '../models/type.ts';

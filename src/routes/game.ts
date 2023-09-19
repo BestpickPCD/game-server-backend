@@ -20,6 +20,12 @@ router.get(
   getGameVendors
 );
 router.get(
+  '/game-list-test',
+  authentication,
+  permission('games', 'get'),
+  getGameVendors
+);
+router.get(
   '/game-vendors',
   authentication,
   permission('games', 'get'),

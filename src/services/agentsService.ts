@@ -1,4 +1,9 @@
-import { Agents, Prisma, PrismaClient, Users } from '@prisma/client';
+import {
+  Agents,
+  Prisma,
+  PrismaClient,
+  Users
+} from '../config/prisma/generated/base-default/index.js';
 const prisma = new PrismaClient();
 
 const NOT_FOUND = 'Agent not found';

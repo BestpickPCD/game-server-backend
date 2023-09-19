@@ -51,9 +51,8 @@ export const getAllById = async (queryParams: any) => {
     });
 
     return { transactions, count, page, size };
-  } catch (error) {
-    console.log(error);
-    throw error;
+  } catch (error: any) {
+    throw Error(error);
   }
 };
 
@@ -86,8 +85,7 @@ export const getByIdWithType = async (
     })) as any;
 
     return transactions;
-  } catch (error) {
-    console.log(error);
+  } catch (error: any) {
     throw Error(error);
   }
 };
@@ -150,8 +148,7 @@ export const getDetailsById = async (id: string, userId: number) => {
       }
     });
     return transaction;
-  } catch (error) {
-    console.log(error);
+  } catch (error: any) {
     throw Error(error);
   }
 };

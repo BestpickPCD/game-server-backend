@@ -9,7 +9,7 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon ./src/server.ts --exec",
+    "start": "nodemon ./server.ts",
     "lint": "eslint --fix --ext .ts, .",
     "postinstall": "husky install",
     "prisma": "prisma generate --schema ./src/config/prisma/schema-base-default.prisma && prisma generate --schema ./src/config/prisma/schema-transactions.prisma "

@@ -14,7 +14,7 @@ export const getAll = async (): Promise<Currencies[]> => {
       orderBy: { updatedAt: 'asc' }
     });
     return currencies;
-  } catch (error) {
+  } catch (error: any) {
     throw Error(error.message);
   }
 };
@@ -28,7 +28,7 @@ export const getById = async (id: number): Promise<Currencies | null> => {
       throw Error(NOT_FOUND);
     }
     return currency;
-  } catch (error) {
+  } catch (error: any) {
     throw Error(error.message);
   }
 };
@@ -45,7 +45,7 @@ const getByWithNameOrCode = async (
       throw Error(EXITED);
     }
     return currencyWithNameOrCode;
-  } catch (error) {
+  } catch (error: any) {
     throw Error(error.message);
   }
 };
@@ -60,7 +60,7 @@ export const create = async (
       data: { name, code }
     });
     return newCurrency;
-  } catch (error) {
+  } catch (error: any) {
     throw Error(error.message);
   }
 };
@@ -78,7 +78,7 @@ export const update = async (
       data: { ...(name && { name }), ...(code && { code }) }
     });
     return updatedCurrency;
-  } catch (error) {
+  } catch (error: any) {
     throw Error(error.message);
   }
 };
@@ -92,7 +92,7 @@ export const deleteCurrency = async (id: number): Promise<void> => {
     if (!deleteCurrency) {
       throw Error(NOT_FOUND);
     }
-  } catch (error) {
+  } catch (error: any) {
     throw Error(error.message);
   }
 };

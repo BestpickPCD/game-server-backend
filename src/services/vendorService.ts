@@ -19,7 +19,7 @@ export const getAgentByPlayerId = async (
       throw Error('Player not found');
     }
     return player;
-  } catch (error) {
+  } catch (error: any) {
     throw Error(error.message);
   }
 };
@@ -52,7 +52,7 @@ export const getGamesByPlayerId = async (
     });
     const data = games.map((game) => game?.vendor);
     return data;
-  } catch (error) {
+  } catch (error: any) {
     throw Error(error.message);
   }
 };

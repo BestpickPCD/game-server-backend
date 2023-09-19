@@ -4,7 +4,7 @@ import {
 } from '../../config/prisma/generated/base-default/index.js';
 // import axios from 'axios';
 import { NextFunction, Response } from 'express';
-import { RequestWithUser } from '../../models/customInterfaces';
+import { RequestWithUser } from '../../models/customInterfaces.ts';
 // import agent from 'src/swagger/agent';
 import { getGamesByPlayerId as getGamesByPlayerIdService } from '../../services/vendorService.ts';
 import { message } from '../../utilities/constants/index.ts';

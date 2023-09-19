@@ -227,7 +227,7 @@ export const getTransactionDetail = async (
     const data = (await getDetailsById(id, userId)) as any;
 
     return res.status(200).json({ message: message.SUCCESS, data });
-  } catch (error) {
+  } catch (error: any) {
     if (error.message) {
       return res.status(404).json({ message: error.message });
     }

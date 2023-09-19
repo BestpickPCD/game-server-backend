@@ -8,28 +8,19 @@ import {
 } from '../controllers/roleController.ts';
 import { authentication } from '../middleware/authentication.ts';
 import { permission } from '../middleware/permission.ts';
+import { asyncHandler } from '../utilities/helpers/asyncHandler.ts';
 
 const router = express.Router();
 
-router.get('/roles', authentication, permission('roles', 'get'), getRoles);
-router.get(
-  '/roles/:id',
-  authentication,
-  permission('roles', 'get'),
-  getRolesById
-);
-router.post('/roles', authentication, permission('roles', 'create'), addRole);
-router.put(
-  '/roles/:roleId',
-  authentication,
-  permission('roles', 'update'),
-  updateRole
-);
+router.use(authentication);
+router.get('', permission('roles', 'get'), asyncHandler(getRoles));
+router.get('/:id', permission('roles', 'get'), asyncHandler(getRolesById));
+router.post('', permission('roles', 'create'), asyncHandler(addRole));
+router.put('/:roleId', permission('roles', 'update'), asyncHandler(updateRole));
 router.delete(
-  '/roles/:roleId',
-  authentication,
+  '/:roleId',
   permission('roles', 'delete'),
-  deleteRole
+  asyncHandler(deleteRole)
 );
 
 export default router;

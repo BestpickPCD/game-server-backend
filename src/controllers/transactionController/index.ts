@@ -22,7 +22,7 @@ export const getTransactions = async (
   res: Response
 ): Promise<any> => {
   try {
-    const { id } = (req as any).user;
+    const { id, username } = (req as any).user;
     const redisKey = 'transactions';
     const { redisData, redisKeyWithId } = await getRedisData(
       id,
@@ -33,7 +33,7 @@ export const getTransactions = async (
     if (redisData) {
       data = JSON.parse(redisData);
     } else {
-      data = (await getAllById(req.query)) as any;
+      data = (await getAllById(req.query, username)) as any;
     }
     !redisData && (await Redis.set(redisKeyWithId, JSON.stringify(data)));
 

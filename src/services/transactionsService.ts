@@ -5,23 +5,22 @@ import // arrangeTransactionDetails,
 import { PrismaClient as PrismaClientTransaction } from '../config/prisma/generated/transactions/index.js';
 const prismaTransaction = new PrismaClientTransaction();
 
-export const getAllById = async (queryParams: any) => {
+export const getAllById = async (queryParams: any, username: string | null) => {
   try {
     const {
       page = 1,
       size = 10,
       dateFrom,
       dateTo,
-      userId,
       type,
       gameId,
-      search
+      // search
     } = queryParams;
 
     const filter: any = {
       OR: [
-        { senderUsername: { contains: search, mode: 'insensitive' } },
-        { receiverUsername: { contains: search, mode: 'insensitive' } }
+        { senderUsername: username },
+        { receiverUsername: username }
       ]
     };
 
@@ -31,9 +30,6 @@ export const getAllById = async (queryParams: any) => {
     if (dateTo) {
       filter.createdAt = { ...filter.createdAt, lte: new Date(dateTo) };
     }
-    if (userId) {
-      filter.OR.push({ senderId: userId }, { receiverId: userId });
-    }
     if (type) {
       filter.type = { in: type.split(',') };
     }
@@ -41,9 +37,9 @@ export const getAllById = async (queryParams: any) => {
       filter.gameId = gameId;
     }
     const transactions = await prismaTransaction.transactions.findMany({
-      // where: filter,
+      where: filter,
       // skip: page * size,
-      take: size
+      // take: size
     });
 
     const count = await prismaTransaction.transactions.count({

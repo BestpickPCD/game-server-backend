@@ -356,8 +356,6 @@ export const getDashboardData = async (userId: number) => {
       }
     };
 
-    console.log(data);
-
     return data;
   } catch (error) {
     throw Error(error);

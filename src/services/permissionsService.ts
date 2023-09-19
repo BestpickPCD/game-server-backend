@@ -1,4 +1,7 @@
-import { PrismaClient, Permissions } from '@prisma/client';
+import {
+  PrismaClient,
+  Permissions
+} from '../config/prisma/generated/base-default/index.js';
 const prisma = new PrismaClient();
 
 const NOT_FOUND = 'Permissions not found';

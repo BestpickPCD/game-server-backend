@@ -11,7 +11,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "nodemon ./src/server.ts --exec",
     "lint": "eslint --fix --ext .ts, .",
-    "postinstall": "husky install"
+    "postinstall": "husky install",
+    "prisma": "prisma generate --schema ./src/config/prisma/schema-base-default.prisma && prisma generate --schema ./src/config/prisma/schema-transactions.prisma "
   },
   "author": "nguyen truong <nguyentp@bestpicktechnology.com>",
   "license": "ISC",
@@ -52,7 +53,7 @@
   },
   "prisma": {
     "seed": "ts-node ./src/config/prisma/seed.ts",
-    "schema": "./src/config/prisma/schema.prisma"
+    "schema": "./src/config/prisma/schema-base-default.prisma"
   },
   "lint-staged": {
     "**/*.{js,jsx,json}": [

@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken';
-import { Users } from '@prisma/client';
+import { Users } from '../config/prisma/generated/base-default/index.js';
 import { message as constantMessages } from './constants/index.ts';
 
 const refreshDays = '7'; // 3 days

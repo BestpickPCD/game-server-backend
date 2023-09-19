@@ -1,4 +1,7 @@
-import { PrismaClient, Users } from '@prisma/client';
+import {
+  PrismaClient,
+  Users
+} from '../../config/prisma/generated/base-default/index.js';
 import axios from 'axios';
 import bcrypt from 'bcrypt';
 import { Request, Response } from 'express';

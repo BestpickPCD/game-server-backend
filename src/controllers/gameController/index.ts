@@ -1,4 +1,7 @@
-import { PrismaClient, Vendors } from '@prisma/client';
+import {
+  PrismaClient,
+  Vendors
+} from '../../config/prisma/generated/base-default/index.js';
 // import axios from 'axios';
 import { NextFunction, Response } from 'express';
 import { RequestWithUser } from '../../models/customInterfaces';

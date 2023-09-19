@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '../config/prisma/generated/base-default/index.js';
 const prisma = new PrismaClient();
 
 export const findById = async (roleId: number) => {

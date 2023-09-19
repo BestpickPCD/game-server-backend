@@ -1,4 +1,7 @@
-import { PrismaClient, Roles } from '@prisma/client';
+import {
+  PrismaClient,
+  Roles
+} from '../config/prisma/generated/base-default/index.js';
 const prisma = new PrismaClient();
 
 const NOT_FOUND = 'Roles not found';

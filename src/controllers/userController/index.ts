@@ -239,12 +239,12 @@ export const getDashboard = async (
     // if (redisData) {
     //   data = JSON.parse(redisData);
     // } else {
-      const data = (await getDashboardData(id)) as any;
+    const data = (await getDashboardData(id)) as any;
     // }
     // !redisData && (await Redis.set(redisKeyWithId, JSON.stringify(data)));
     return res.status(200).json(data);
   } catch (error) {
-    console.log(error)
+    console.log(error);
     return res
       .status(500)
       .json({ message: message.INTERNAL_SERVER_ERROR, error });

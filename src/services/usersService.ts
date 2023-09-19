@@ -298,7 +298,7 @@ export const getDashboardData = async (userId: number) => {
         (SELECT COUNT(id) AS subAgent, parentAgentId FROM Agents WHERE parentAgentId = ${userId} GROUP BY parentAgentId) AS subAgent ON subAgent.parentAgentId = User.id LEFT JOIN
         (SELECT COUNT(id) AS players, agentId FROM Players WHERE agentId = ${userId} GROUP BY agentId) AS players ON players.agentId = User.id
     `) as any;
-    
+
     const item = dashboard[0];
     const winGame = await _getSumTransactionByUsername(
       'win',
@@ -331,7 +331,7 @@ export const getDashboardData = async (userId: number) => {
       username: item.username,
       currency: {
         name: item.currencyName,
-        code: item.currencyCode,
+        code: item.currencyCode
       },
       type: item.type,
       subAgent: parseInt(item.subAgent),
@@ -356,8 +356,8 @@ export const getDashboardData = async (userId: number) => {
       }
     };
 
-    console.log(data)
-    
+    console.log(data);
+
     return data;
   } catch (error) {
     throw Error(error);

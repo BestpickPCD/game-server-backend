@@ -230,20 +230,21 @@ export const getDashboard = async (
 ): Promise<any> => {
   try {
     const { id } = (req as any).user;
-    const { redisData, redisKeyWithId } = await getRedisData(
-      id,
-      'dashboard',
-      'Invalid users Id'
-    );
-    let data: any;
-    if (redisData) {
-      data = JSON.parse(redisData);
-    } else {
-      data = (await getDashboardData(id)) as any;
-    }
-    !redisData && (await Redis.set(redisKeyWithId, JSON.stringify(data)));
+    // const { redisData, redisKeyWithId } = await getRedisData(
+    //   id,
+    //   'dashboard',
+    //   'Invalid users Id'
+    // );
+    // let data: any;
+    // if (redisData) {
+    //   data = JSON.parse(redisData);
+    // } else {
+      const data = (await getDashboardData(id)) as any;
+    // }
+    // !redisData && (await Redis.set(redisKeyWithId, JSON.stringify(data)));
     return res.status(200).json(data);
   } catch (error) {
+    console.log(error)
     return res
       .status(500)
       .json({ message: message.INTERNAL_SERVER_ERROR, error });

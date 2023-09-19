@@ -293,11 +293,12 @@ export const getDashboardData = async (userId: number) => {
   try {
     const dashboard = (await prisma.$queryRaw`
       SELECT * FROM
-        (SELECT id, balance, name, type, username FROM Users WHERE id = ${userId}) AS USER LEFT JOIN
+        (SELECT id, balance, name, type, username, currencyId FROM Users WHERE id = ${userId}) AS USER LEFT JOIN
+        (SELECT id, name AS currencyName, code AS currencyCode FROM Currencies WHERE deletedAt IS NULL) AS Currency ON Currency.id = USER.currencyId LEFT JOIN
         (SELECT COUNT(id) AS subAgent, parentAgentId FROM Agents WHERE parentAgentId = ${userId} GROUP BY parentAgentId) AS subAgent ON subAgent.parentAgentId = User.id LEFT JOIN
         (SELECT COUNT(id) AS players, agentId FROM Players WHERE agentId = ${userId} GROUP BY agentId) AS players ON players.agentId = User.id
     `) as any;
-
+    
     const item = dashboard[0];
     const winGame = await _getSumTransactionByUsername(
       'win',
@@ -328,6 +329,10 @@ export const getDashboardData = async (userId: number) => {
       userId: item.id,
       name: item.name,
       username: item.username,
+      currency: {
+        name: item.currencyName,
+        code: item.currencyCode,
+      },
       type: item.type,
       subAgent: parseInt(item.subAgent),
       parentAgentId: item.parentAgentId,
@@ -336,21 +341,23 @@ export const getDashboardData = async (userId: number) => {
       balance: {
         balance: item.balance ?? 0,
         calculatedBalance:
-          (received[`${item.username}`]._sum.amount ??
-            0 + winGame[`${item.username}`]._sum.amount ??
+          (received[`${item.username}`]?._sum.amount ??
+            0 + winGame[`${item.username}`]?._sum.amount ??
             0) -
-          (sentOut[`${item.username}`]._sum.amount ??
-            0 + betGame[`${item.username}`]._sum.amount ??
-            0 + chargeGame[`${item.username}`]._sum.amount ??
+          (sentOut[`${item.username}`]?._sum.amount ??
+            0 + betGame[`${item.username}`]?._sum.amount ??
+            0 + chargeGame[`${item.username}`]?._sum.amount ??
             0),
-        sendOut: sentOut[`${item.username}`]._sum.amount ?? 0,
-        receive: received[`${item.username}`]._sum.amount ?? 0,
-        bet: betGame[`${item.username}`]._sum.amount ?? 0,
-        win: winGame[`${item.username}`]._sum.amount ?? 0,
-        charge: chargeGame[`${item.username}`]._sum.amount ?? 0
+        sendOut: sentOut[`${item.username}`]?._sum.amount ?? 0,
+        receive: received[`${item.username}`]?._sum.amount ?? 0,
+        bet: betGame[`${item.username}`]?._sum.amount ?? 0,
+        win: winGame[`${item.username}`]?._sum.amount ?? 0,
+        charge: chargeGame[`${item.username}`]?._sum.amount ?? 0
       }
     };
 
+    console.log(data)
+    
     return data;
   } catch (error) {
     throw Error(error);

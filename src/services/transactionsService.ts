@@ -13,15 +13,12 @@ export const getAllById = async (queryParams: any, username: string | null) => {
       dateFrom,
       dateTo,
       type,
-      gameId,
+      gameId
       // search
     } = queryParams;
 
     const filter: any = {
-      OR: [
-        { senderUsername: username },
-        { receiverUsername: username }
-      ]
+      OR: [{ senderUsername: username }, { receiverUsername: username }]
     };
 
     if (dateFrom) {
@@ -37,7 +34,7 @@ export const getAllById = async (queryParams: any, username: string | null) => {
       filter.gameId = gameId;
     }
     const transactions = await prismaTransaction.transactions.findMany({
-      where: filter,
+      where: filter
       // skip: page * size,
       // take: size
     });

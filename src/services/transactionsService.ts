@@ -43,7 +43,7 @@ export const getAllById = async (queryParams: any) => {
     const transactions = await prismaTransaction.transactions.findMany({
       // where: filter,
       // skip: page * size,
-      take: size
+      take: Number(size)
     });
 
     const count = await prismaTransaction.transactions.count({

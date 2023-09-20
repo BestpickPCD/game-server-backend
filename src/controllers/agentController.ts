@@ -53,9 +53,6 @@ export const getAllAgents = async (req: Request, res: Response) => {
   let data: any;
   const redisData = await Redis.get(redisKey);
   if (!redisData) {
-    if (Number(page) || Number(page)) {
-      throw new BAD_REQUEST(message.INVALID_ID);
-    }
     const { users, totalItems } = await getAll({
       id: Number(id),
       level: Number(level),

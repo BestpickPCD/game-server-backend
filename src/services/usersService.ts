@@ -284,14 +284,13 @@ export const getPlayerById = async (id: number, userId: number) => {
     };
     return data;
   } catch (error) {
-    console.log(error);
     throw Error(error);
   }
 };
 
-export const getDashboardData = async (userId: number) => {
+export const getUserProfile = async (userId: number) => {
   try {
-    const dashboard = (await prisma.$queryRaw`
+    const data = (await prisma.$queryRaw`
       SELECT * FROM
         (SELECT id, balance, name, type, username, currencyId FROM Users WHERE id = ${userId}) AS USER LEFT JOIN
         (SELECT id, name AS currencyName, code AS currencyCode FROM Currencies WHERE deletedAt IS NULL) AS Currency ON Currency.id = USER.currencyId LEFT JOIN
@@ -299,32 +298,37 @@ export const getDashboardData = async (userId: number) => {
         (SELECT COUNT(id) AS players, agentId FROM Players WHERE agentId = ${userId} GROUP BY agentId) AS players ON players.agentId = User.id
     `) as any;
 
-    const item = dashboard[0];
-    const winGame = await _getSumTransactionByUsername(
-      'win',
-      'receiverUsername',
-      item.username
-    );
-    const betGame = await _getSumTransactionByUsername(
-      'bet',
-      'senderUsername',
-      item.username
-    );
-    const chargeGame = await _getSumTransactionByUsername(
-      'charge',
-      'receiverUsername',
-      item.username
-    );
-    const sentOut = await _getSumTransactionByUsername(
-      'add',
-      'senderUsername',
-      item.username
-    );
-    const received = await _getSumTransactionByUsername(
-      'add',
-      'receiverUsername',
-      item.username
-    );
+    return data;
+
+  } catch (error) {
+    throw Error(error);
+  }
+}
+
+export const getDashboardData = async (userId: number) => {
+  try {
+    const item = await prisma.users.findUnique({
+      where: {
+        id: userId
+      },
+      include: {
+        Agents: {
+          select: {
+            parentAgent: {
+              select: {
+                username: true,
+                name: true,
+              }
+            },
+            parentAgentIds: true
+          }
+        }
+      }
+    }) as any;
+
+    const affiliatedAgents = await _getAffiliatedAgentsByUserId(userId);
+
+    const { winGame, betGame, chargeGame, sentOut, received } = await _getAllSumsByUsername(item.username);
     const data = {
       userId: item.id,
       name: item.name,
@@ -333,6 +337,7 @@ export const getDashboardData = async (userId: number) => {
         name: item.currencyName,
         code: item.currencyCode
       },
+      affiliatedAgents,
       type: item.type,
       subAgent: parseInt(item.subAgent),
       parentAgentId: item.parentAgentId,
@@ -449,6 +454,61 @@ export const getAllByAgentId = async (query: any, id: number) => {
     throw Error(error);
   }
 };
+
+const _getAffiliatedAgentsByUserId = async (userId:number) => {
+  try {
+
+    const affiliatedAgents = (await prisma.$queryRaw`
+      SELECT Users.id, Users.name, Users.username, Users.email
+      FROM Agents
+      JOIN Users ON Users.id = Agents.id
+      WHERE JSON_CONTAINS(Agents.parentAgentIds, JSON_ARRAY(${userId}))
+    `) as any;
+
+    return affiliatedAgents;
+
+  } catch (error) {
+    throw Error(error);
+  }
+}
+
+const _getAllSumsByUsername =async (username:string) => {
+  try {
+    const winGame = await _getSumTransactionByUsername(
+      'win',
+      'receiverUsername',
+      username
+    );
+    const betGame = await _getSumTransactionByUsername(
+      'bet',
+      'senderUsername',
+      username
+    );
+    const chargeGame = await _getSumTransactionByUsername(
+      'charge',
+      'receiverUsername',
+      username
+    );
+    const sentOut = await _getSumTransactionByUsername(
+      'add',
+      'senderUsername',
+      username
+    );
+    const received = await _getSumTransactionByUsername(
+      'add',
+      'receiverUsername',
+      username
+    );
+
+    const balance = { winGame, betGame, chargeGame, sentOut, received }
+
+    return balance;
+
+  } catch (error) {
+    console.log(error);
+    throw Error(error);
+  }
+}
 
 const _getSumTransaction = async (type: string, groupBy: any) => {
   const sumBalance = (await prismaTransaction.transactions.groupBy({

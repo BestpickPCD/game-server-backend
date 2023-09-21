@@ -299,15 +299,14 @@ export const getUserProfile = async (userId: number) => {
     `) as any;
 
     return data;
-
   } catch (error) {
     throw Error(error);
   }
-}
+};
 
 export const getDashboardData = async (userId: number) => {
   try {
-    const item = await prisma.users.findUnique({
+    const item = (await prisma.users.findUnique({
       where: {
         id: userId
       },
@@ -317,18 +316,19 @@ export const getDashboardData = async (userId: number) => {
             parentAgent: {
               select: {
                 username: true,
-                name: true,
+                name: true
               }
             },
             parentAgentIds: true
           }
         }
       }
-    }) as any;
+    })) as any;
 
     const affiliatedAgents = await _getAffiliatedAgentsByUserId(userId);
 
-    const { winGame, betGame, chargeGame, sentOut, received } = await _getAllSumsByUsername(item.username);
+    const { winGame, betGame, chargeGame, sentOut, received } =
+      await _getAllSumsByUsername(item.username);
     const data = {
       userId: item.id,
       name: item.name,
@@ -455,9 +455,8 @@ export const getAllByAgentId = async (query: any, id: number) => {
   }
 };
 
-const _getAffiliatedAgentsByUserId = async (userId:number) => {
+const _getAffiliatedAgentsByUserId = async (userId: number) => {
   try {
-
     const affiliatedAgents = (await prisma.$queryRaw`
       SELECT Users.id, Users.name, Users.username, Users.email
       FROM Agents
@@ -466,13 +465,12 @@ const _getAffiliatedAgentsByUserId = async (userId:number) => {
     `) as any;
 
     return affiliatedAgents;
-
   } catch (error) {
     throw Error(error);
   }
-}
+};
 
-const _getAllSumsByUsername =async (username:string) => {
+const _getAllSumsByUsername = async (username: string) => {
   try {
     const winGame = await _getSumTransactionByUsername(
       'win',
@@ -500,15 +498,14 @@ const _getAllSumsByUsername =async (username:string) => {
       username
     );
 
-    const balance = { winGame, betGame, chargeGame, sentOut, received }
+    const balance = { winGame, betGame, chargeGame, sentOut, received };
 
     return balance;
-
   } catch (error) {
     console.log(error);
     throw Error(error);
   }
-}
+};
 
 const _getSumTransaction = async (type: string, groupBy: any) => {
   const sumBalance = (await prismaTransaction.transactions.groupBy({

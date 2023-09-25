@@ -1,5 +1,4 @@
 import { PrismaClient } from '../../config/prisma/generated/base-default/index.js';
-import { balanceSummary } from 'src/models/customInterfaces';
 const prisma = new PrismaClient();
 import { PrismaClient as PrismaClientTransaction } from '../../config/prisma/generated/transactions/index.js';
 const prismaTransaction = new PrismaClientTransaction();
@@ -110,7 +109,7 @@ export const getBalances = async (userUsername: string): Promise<any> => {
         (receiver._sum?.amount || 0) -
         (sender._sum?.amount || 0) -
         (gameResult._sum?.amount || 0)
-    } as balanceSummary;
+    } as any;
 
     return balance;
   } catch (error) {

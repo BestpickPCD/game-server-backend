@@ -6,7 +6,8 @@ import {
   getById,
   update
 } from '../services/agentsService.ts';
-import { message } from '../utilities/constants/index.ts';
+import { DELETED, OK, UPDATED } from '../core/success.response.ts';
+import { BAD_REQUEST } from '../core/error.response.ts';
 interface AgentParams {
   page?: number;
   size?: number;
@@ -16,6 +17,15 @@ interface AgentParams {
   dateTo?: string;
   id?: number;
 }
+
+const message = {
+  GET_ALL: 'Get all agents success',
+  GET_BY_ID: 'Get agent success',
+  CREATED: 'Create agent success',
+  UPDATED: 'Update agent success',
+  DELETED: 'Delete agent success',
+  INVALID_ID: 'Invalid Agent Id'
+};
 
 const getUserId = (req: Request) =>
   Number((req as any).user.id || (req as any).user[0].id);
@@ -29,138 +39,99 @@ const removedKey = (req: Request | number) => {
   return `${defaultKey}:${getUserId(req)}`;
 };
 
-export const getAllAgents = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<any> => {
-  try {
-    const {
-      page = 0,
-      size = 10,
-      search = '',
-      level,
+export const getAllAgents = async (req: Request, res: Response) => {
+  const {
+    page = 0,
+    size = 10,
+    search = '',
+    level,
+    dateFrom,
+    dateTo
+  }: AgentParams = req.query;
+  const id = getUserId(req);
+  const redisKey = `${defaultKey}:${id}:${id}:${page}:${size}:${search}:${level}:${dateFrom}:${dateTo}`;
+  let data: any;
+  const redisData = await Redis.get(redisKey);
+  if (!redisData) {
+    const { users, totalItems } = await getAll({
+      id: Number(id),
+      level: Number(level),
+      page: Number(page),
+      size: Number(size),
+      search,
       dateFrom,
       dateTo
-    }: AgentParams = req.query;
-    const id = getUserId(req);
-    const redisKey = `${defaultKey}:${id}:${id}:${page}:${size}:${search}:${level}:${dateFrom}:${dateTo}`;
-    const redisData = await Redis.get(redisKey);
-    if (!redisData) {
-      if (!Number.isInteger(Number(page)) || !Number.isInteger(Number(page))) {
-        throw Error('Invalid page or size');
-      }
-      const { users, totalItems } = await getAll({
-        id: Number(id),
-        level: Number(null),
-        page: Number(page),
-        size: Number(size),
-        search,
-        dateFrom,
-        dateTo
-      });
-      const response = {
-        data: {
-          data: users,
-          page: Number(page),
-          size: Number(size),
-          totalItems
-        },
-        message: message.SUCCESS
-      };
-      await Redis.setex(redisKey, 300, JSON.stringify(response));
-      return res.status(200).json(response);
-    }
-    return res.status(200).json({ ...JSON.parse(redisData) });
-  } catch (error) {
-    return next(error);
+    });
+    data = {
+      data: users,
+      page: Number(page),
+      size: Number(size),
+      totalItems
+    };
+    await Redis.setex(redisKey, 300, JSON.stringify(data));
+  } else {
+    data = { ...JSON.parse(redisData) };
   }
+  return new OK({ data, message: message.GET_ALL }).send(res);
 };
 
-export const getAgentById = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  try {
-    const { id } = req.params;
-    if (!id || !Number(id)) {
-      throw Error('Invalid Id');
-    }
-    const userId = getUserId(req);
-    const redisKey = `${defaultKey}:${userId}:${id}`;
-    const redisData = await Redis.get(redisKey);
-    if (!redisData) {
-      const agent = await getById({
-        id: Number(id),
-        userId
-      });
-      await Redis.setex(
-        redisKey,
-        300,
-        JSON.stringify({ data: agent, message: message.SUCCESS })
-      );
-      return res.status(200).json({ data: agent, message: message.SUCCESS });
-    }
-    return res.status(200).json({ ...JSON.parse(redisData) });
-  } catch (error) {
-    return next(error);
+export const getAgentById = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  if (!id || !Number(id)) {
+    throw new BAD_REQUEST(message.INVALID_ID);
   }
+  const userId = getUserId(req);
+  const redisKey = `${defaultKey}:${userId}:${id}`;
+  let data: any;
+  const redisData = await Redis.get(redisKey);
+  if (!redisData) {
+    const agent = await getById({
+      id: Number(id),
+      userId
+    });
+    data = agent;
+    await Redis.setex(redisKey, 300, JSON.stringify({ data: agent }));
+  } else {
+    data = { ...JSON.parse(redisData) };
+  }
+  return new OK({ data, message: message.GET_BY_ID }).send(res);
 };
 
-export const updateAgent = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<any> => {
-  try {
-    const { id } = req.params;
-    const { parentAgentId, currencyId, name, roleId } = req.body;
+export const updateAgent = async (req: Request, res: Response) => {
+  const agentId = Number(req.params.id);
+  const { parentAgentId, currencyId, name, roleId } = req.body;
 
-    const agentId = Number(id);
+  const updatedAgent = await update({
+    agentId,
+    parentAgentId,
+    currencyId,
+    roleId,
+    name
+  });
 
-    const updatedAgent = await update({
-      agentId,
-      parentAgentId,
-      currencyId,
-      roleId,
+  await removeRedisKeys(removedKey(req));
+  await removeRedisKeys(removedKey(agentId));
+  return new UPDATED({
+    data: {
+      id: updatedAgent.id,
+      level: updatedAgent.level,
+      parentAgentIds: updatedAgent.parentAgentIds,
       name
-    });
-
-    await removeRedisKeys(removedKey(req));
-    await removeRedisKeys(removedKey(Number(id)));
-    return res.status(200).json({
-      data: {
-        id: updatedAgent.id,
-        level: updatedAgent.level,
-        parentAgentIds: updatedAgent.parentAgentIds,
-        name
-      },
-      message: message.UPDATED
-    });
-  } catch (error) {
-    return next(error);
-  }
+    },
+    message: message.UPDATED
+  }).send(res);
 };
 
-export const deleteAgent = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<any> => {
-  try {
-    const { id } = req.params;
-    const { id: userId } = (req as any).user.id;
-    if (!Number(id)) {
-      throw Error('Invalid Agent Id');
-    }
-    await deleteAgentService(Number(id), Number(userId));
-    await removeRedisKeys(removedKey(req));
-    await removeRedisKeys(removedKey(Number(id)));
-    return res.status(200).json({ message: message.DELETED });
-  } catch (error) {
-    return next(error);
+export const deleteAgent = async (req: Request, res: Response) => {
+  const id = Number(req.params.id);
+  const userId = Number((req as any).user.id);
+  if (!id) {
+    throw new BAD_REQUEST(message.INVALID_ID);
   }
+  await deleteAgentService(id, userId);
+  await removeRedisKeys(removedKey(req));
+  await removeRedisKeys(removedKey(id));
+  return new DELETED({ message: message.DELETED }).send(res);
 };
 
 // export const getUsersByAgentId = async (

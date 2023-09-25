@@ -133,7 +133,7 @@ export const updateUser = async (req: Request, res: Response): Promise<any> => {
     }
 
     return res.status(404).json({ message: message.USER_TYPE_NOT_FOUND });
-  } catch (error) {
+  } catch (error: any) {
     if (error.code === 'P2002') {
       return res.status(400).json({
         message: message.DUPLICATE,

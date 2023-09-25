@@ -145,6 +145,7 @@ export const register = async (req: Request, res: Response): Promise<any> => {
         subMessage: 'Email or Username already exists'
       });
     }
+
     if (password !== confirmPassword) {
       return res.status(400).json({
         message: message.INVALID,

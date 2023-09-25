@@ -1,29 +1,32 @@
 import { NextFunction, Response } from 'express';
 import { PermissionType, RouteType } from '../models/permission.ts';
 import { getById } from '../services/roleService.ts';
-import { message } from '../utilities/constants/index.ts';
+import { FORBIDDEN, UNAUTHORIZED } from '../core/error.response.ts';
+
+const message = {
+  UNAUTHORIZED: 'Unauthorized',
+  FORBIDDEN: 'Forbidden'
+};
 
 export const permission =
   (router: RouteType, method: PermissionType): any =>
-  async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+  async (req: Request, _: Response, next: NextFunction): Promise<any> => {
     try {
       if (!(req as any).user) {
-        return res.status(401).json({ message: message.UNAUTHORIZED });
+        throw new UNAUTHORIZED(message.UNAUTHORIZED);
       }
-      const { roleId } = (req as any).user;
-      const roleById = await getById({ id: Number(roleId) });
+      const roleId = Number((req as any)?.user?.roleId);
+      const roleById = await getById(roleId);
+
       if (roleById && router) {
         const permissions = (roleById as any)?.permissions[router];
         if (permissions.includes(method)) {
           return next();
         }
-        return res.status(403).json({ message: message.FORBIDDEN });
+        throw new FORBIDDEN(message.FORBIDDEN);
       }
-
       return next();
-    } catch (error) {
-      return res
-        .status(500)
-        .json({ message: message.INTERNAL_SERVER_ERROR, error });
+    } catch (error: any) {
+      return next(new FORBIDDEN(message.FORBIDDEN));
     }
   };

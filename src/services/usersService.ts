@@ -85,7 +85,7 @@ export const getAllWithBalance = async (query: any, userId: number) => {
     });
 
     return { userDetails, page, size };
-  } catch (error) {
+  } catch (error: any) {
     throw Error(error);
   }
 };
@@ -201,7 +201,7 @@ export const getAll = async (query: any, id: number) => {
     ]);
 
     return { data, totalItems, page, size };
-  } catch (error) {
+  } catch (error: any) {
     throw Error(error);
   }
 };
@@ -215,7 +215,7 @@ export const getById = async (id: number) => {
     })) as Users;
 
     return user;
-  } catch (error) {
+  } catch (error: any) {
     throw Error(error);
   }
 };
@@ -284,7 +284,11 @@ export const getPlayerById = async (id: number, userId: number) => {
       currencyId: user.currencyId
     };
     return data;
+<<<<<<< HEAD
   } catch (error) {
+=======
+  } catch (error: any) {
+>>>>>>> e12ac572acca5b58e45dd2df1836140e99256517
     throw Error(error);
   }
 };
@@ -363,7 +367,7 @@ export const getDashboardData = async (userId: number) => {
     };
 
     return data;
-  } catch (error) {
+  } catch (error: any) {
     throw Error(error);
   }
 };
@@ -450,8 +454,7 @@ export const getAllByAgentId = async (query: any, id: number) => {
     ]);
 
     return { totalItems, data, page, size };
-  } catch (error) {
-    console.log(error);
+  } catch (error: any) {
     throw Error(error);
   }
 };

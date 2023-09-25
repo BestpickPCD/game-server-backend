@@ -3,9 +3,11 @@ import {
   Vendors
 } from '../../config/prisma/generated/base-default/index.js';
 // import axios from 'axios';
-import { Response } from 'express';
-import { RequestWithUser } from '../../models/customInterfaces';
+import { NextFunction, Response } from 'express';
+import { RequestWithUser } from '../../models/customInterfaces.ts';
 // import agent from 'src/swagger/agent';
+import { getGamesByPlayerId as getGamesByPlayerIdService } from '../../services/vendorService.ts';
+import { message } from '../../utilities/constants/index.ts';
 const prisma = new PrismaClient();
 
 export const getVendors = async (
@@ -193,5 +195,25 @@ export const getGameUrl = async (
   } catch (error) {
     console.log(error);
     return res.status(500).json(error);
+  }
+};
+
+export const getGamesByPlayerId = async (
+  req: RequestWithUser,
+  res: Response,
+  next: NextFunction
+): Promise<any> => {
+  try {
+    const playerId = req?.user?.id;
+    const games = await getGamesByPlayerIdService(Number(playerId));
+    return res.status(200).json({
+      data: {
+        data: games,
+        totalItems: games.length
+      },
+      message: message.SUCCESS
+    });
+  } catch (error) {
+    return next(error);
   }
 };

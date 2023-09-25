@@ -8,34 +8,35 @@ import {
 } from '../controllers/currencyController.ts';
 import { authentication } from '../middleware/authentication.ts';
 import { permission } from '../middleware/permission.ts';
+import { asyncHandler } from '../utilities/helpers/asyncHandler.ts';
 
 const router = express.Router();
 
-router.get('/currencies', getCurrencies);
+router.get('/currencies', asyncHandler(getCurrencies));
+
 router.get(
   '/currency/:currencyId',
   authentication,
   permission('currencies', 'getById'),
-  getCurrencyById
+  asyncHandler(getCurrencyById)
 );
 router.post(
   '/currency',
   authentication,
   permission('currencies', 'create'),
-
-  addCurrency
+  asyncHandler(addCurrency)
 );
 router.put(
   '/currency/:currencyId',
   authentication,
   permission('currencies', 'update'),
-  updateCurrency
+  asyncHandler(updateCurrency)
 );
 router.delete(
   '/currency/:currencyId',
   authentication,
   permission('currencies', 'delete'),
-  deleteCurrency
+  asyncHandler(deleteCurrency)
 );
 
 export default router;

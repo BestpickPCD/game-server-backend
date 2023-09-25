@@ -1,3 +1,4 @@
+import crypto from 'node:crypto';
 import jwt from 'jsonwebtoken';
 import { Users } from '../config/prisma/generated/base-default/index.js';
 import { message as constantMessages } from './constants/index.ts';
@@ -5,7 +6,7 @@ import { message as constantMessages } from './constants/index.ts';
 const refreshDays = '7'; // 3 days
 const accessHours = '2'; // 2 hrs
 
-export const getTokens = (
+const getTokens = (
   user: Users
 ): {
   accessToken: string;
@@ -41,7 +42,7 @@ export const getTokens = (
   return { accessToken, refreshToken };
 };
 
-export const checkStatusAndMessage = ({
+const checkStatusAndMessage = ({
   message
 }: {
   message: string;
@@ -91,4 +92,63 @@ export const checkStatusAndMessage = ({
     status: 400,
     message: constantMessages.BAD_REQUEST
   };
+};
+
+const checkType = (value: any): string =>
+  Object.prototype.toString.call(value).slice(8, -1);
+
+const pickKeysInObject = <T extends object, K extends keyof T>({
+  object,
+  keys
+}: {
+  object: T;
+  keys: K[];
+}) =>
+  keys.reduce(
+    (result, key) => {
+      if (Object.prototype.hasOwnProperty.call(object, key)) {
+        result[key] = object[key];
+      }
+      return result;
+    },
+    {} as Pick<T, K>
+  );
+
+const generateKey = () => crypto.randomBytes(64).toString('hex');
+
+const convertArrayToObject = (array: Array<any>) => {
+  return array.reduce((obj, item) => ({ ...obj, [`${item}`]: 1 }), {});
+};
+
+interface NestedObject {
+  [key: string]: any;
+}
+const updateNestedObjectParse = (object: NestedObject): NestedObject => {
+  if (object === null || typeof object !== 'object') {
+    return object;
+  }
+  const updatedObject: NestedObject = {};
+  Object.entries(object).forEach(([key, value]) => {
+    if (value !== null) {
+      if (typeof value === 'object' && !Array.isArray(value)) {
+        const nestedUpdates = updateNestedObjectParse(value);
+        for (const nestedKey in nestedUpdates) {
+          updatedObject[`${key}.${nestedKey}`] = nestedUpdates[nestedKey];
+        }
+      } else {
+        updatedObject[key] = value;
+      }
+    }
+  });
+  return updatedObject;
+};
+
+export {
+  updateNestedObjectParse,
+  convertArrayToObject,
+  generateKey,
+  pickKeysInObject,
+  checkType,
+  checkStatusAndMessage,
+  getTokens
 };

@@ -36,7 +36,11 @@ export const getAllById = async (queryParams: any, username: string | null) => {
     const transactions = await prismaTransaction.transactions.findMany({
       where: filter
       // skip: page * size,
+<<<<<<< HEAD
       // take: size
+=======
+      take: Number(size)
+>>>>>>> e12ac572acca5b58e45dd2df1836140e99256517
     });
 
     const count = await prismaTransaction.transactions.count({
@@ -44,9 +48,8 @@ export const getAllById = async (queryParams: any, username: string | null) => {
     });
 
     return { transactions, count, page, size };
-  } catch (error) {
-    console.log(error);
-    throw error;
+  } catch (error: any) {
+    throw Error(error);
   }
 };
 
@@ -79,8 +82,7 @@ export const getByIdWithType = async (
     })) as any;
 
     return transactions;
-  } catch (error) {
-    console.log(error);
+  } catch (error: any) {
     throw Error(error);
   }
 };
@@ -143,8 +145,7 @@ export const getDetailsById = async (id: string, userId: number) => {
       }
     });
     return transaction;
-  } catch (error) {
-    console.log(error);
+  } catch (error: any) {
     throw Error(error);
   }
 };

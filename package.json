@@ -10,7 +10,6 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "nodemon ./server.ts",
-    "lint": "eslint --fix --ext .ts, .",
     "postinstall": "husky install",
     "prisma": "prisma generate --schema ./src/config/prisma/schema-base-default.prisma && prisma generate --schema ./src/config/prisma/schema-transactions.prisma "
   },
@@ -54,13 +53,5 @@
   "prisma": {
     "seed": "ts-node ./src/config/prisma/seed.ts",
     "schema": "./src/config/prisma/schema-base-default.prisma"
-  },
-  "lint-staged": {
-    "**/*.{js,jsx,json}": [
-      "prettier --write ."
-    ],
-    "*.ts": [
-      "npm run lint"
-    ]
   }
 }

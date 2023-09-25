@@ -456,8 +456,6 @@ export const getAllByAgentId = async (query: any, id: number) => {
   }
 };
 
-
-
 const _getAllSumsByUsername = async (username: string) => {
   try {
     const winGame = await _getSumTransactionByUsername(

@@ -307,7 +307,7 @@ export const update = async ({
         currencyId,
         roleId
       });
-    
+
     const [updatedAgent] = await prisma.$transaction([
       prisma.agents.update({
         where: { id: agentId },

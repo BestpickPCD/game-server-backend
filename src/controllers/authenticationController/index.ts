@@ -74,7 +74,7 @@ export const login = async (req: Request, res: Response): Promise<any> => {
         id: true,
         name: true,
         email: true,
-        apiKey: true, 
+        apiKey: true,
         roleId: true,
         currencyId: true,
         isActive: true,
@@ -166,10 +166,10 @@ export const register = async (req: Request, res: Response): Promise<any> => {
       };
 
       if (type == 'player') {
-        console.log('player')
+        console.log('player');
         return _playerInsert(userSchema, agentId, res);
       } else if (type == 'agent') {
-        console.log('agent')
+        console.log('agent');
         return _agentInsert(userSchema, parentAgentId, res);
       }
     } catch (error) {
@@ -178,7 +178,9 @@ export const register = async (req: Request, res: Response): Promise<any> => {
         .json({ message: message.INTERNAL_SERVER_ERROR, error });
     }
   } catch (error) {
-    return res.status(500).json({ message: message.INTERNAL_SERVER_ERROR, error });
+    return res
+      .status(500)
+      .json({ message: message.INTERNAL_SERVER_ERROR, error });
   }
 };
 
@@ -218,7 +220,6 @@ const _agentInsert = async (
   res: Response
 ) => {
   try {
-
     const newUser: any = await _userInsert(userSchema);
     const details: any = await getParentAgentIdsByParentAgentId(parentAgentId);
     const userInsert = (await prisma.agents.create({

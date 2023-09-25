@@ -6184,3 +6184,123 @@
   level: 'error',
   timestamp: '2023-08-30T07:06:43.353Z'
 }
+{
+  userId: 3,
+  url: '/agents/411',
+  body: {},
+  query: {},
+  status: 404,
+  message: 'Agent not found',
+  level: 'error',
+  timestamp: '2023-09-25T04:07:14.788Z'
+}
+{
+  userId: 3,
+  url: '/agents/411',
+  body: {},
+  query: {},
+  status: 404,
+  message: 'Agent not found',
+  level: 'error',
+  timestamp: '2023-09-25T04:07:27.315Z'
+}
+{
+  userId: 3,
+  url: '/agents/411',
+  body: {},
+  query: {},
+  status: 404,
+  message: 'Agent not found',
+  level: 'error',
+  timestamp: '2023-09-25T04:07:27.900Z'
+}
+{
+  userId: 3,
+  url: '/agents/1',
+  body: {},
+  query: {},
+  status: 404,
+  message: 'Agent not found',
+  level: 'error',
+  timestamp: '2023-09-25T04:34:40.975Z'
+}
+{
+  userId: 3,
+  url: '/agents/1',
+  body: {},
+  query: {},
+  status: 404,
+  message: 'Agent not found',
+  level: 'error',
+  timestamp: '2023-09-25T06:23:54.156Z'
+}
+{
+  userId: 3,
+  url: '/agents/1',
+  body: {},
+  query: {},
+  status: 404,
+  message: 'Agent not found',
+  level: 'error',
+  timestamp: '2023-09-25T06:23:56.075Z'
+}
+{
+  userId: 3,
+  url: '/agents/1',
+  body: {},
+  query: {},
+  status: 404,
+  message: 'Agent not found',
+  level: 'error',
+  timestamp: '2023-09-25T06:24:49.671Z'
+}
+{
+  userId: 1,
+  url: '/agents/1',
+  body: {},
+  query: {},
+  status: 404,
+  message: 'Agent not found',
+  level: 'error',
+  timestamp: '2023-09-25T06:25:32.528Z'
+}
+{
+  userId: 1,
+  url: '/agents/1',
+  body: {},
+  query: {},
+  status: 404,
+  message: 'Agent not found',
+  level: 'error',
+  timestamp: '2023-09-25T06:25:33.614Z'
+}
+{
+  userId: 1,
+  url: '/agents/1',
+  body: {},
+  query: {},
+  status: 404,
+  message: 'Agent not found',
+  level: 'error',
+  timestamp: '2023-09-25T06:25:34.209Z'
+}
+{
+  userId: 1,
+  url: '/agents/1',
+  body: {},
+  query: {},
+  status: 404,
+  message: 'Agent not found',
+  level: 'error',
+  timestamp: '2023-09-25T06:25:46.084Z'
+}
+{
+  userId: 1,
+  url: '/agents/2',
+  body: {},
+  query: {},
+  status: 404,
+  message: 'Agent not found',
+  level: 'error',
+  timestamp: '2023-09-25T06:25:50.832Z'
+}

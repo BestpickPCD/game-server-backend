@@ -1,3 +1,4 @@
+import { getAffiliatedAgentsByUserId } from '../controllers/userController/utilities.js';
 import {
   Prisma,
   PrismaClient,
@@ -325,7 +326,7 @@ export const getDashboardData = async (userId: number) => {
       }
     })) as any;
 
-    const affiliatedAgents = await _getAffiliatedAgentsByUserId(userId);
+    const affiliatedAgents = await getAffiliatedAgentsByUserId(userId);
 
     const { winGame, betGame, chargeGame, sentOut, received } =
       await _getAllSumsByUsername(item.username);
@@ -455,20 +456,7 @@ export const getAllByAgentId = async (query: any, id: number) => {
   }
 };
 
-const _getAffiliatedAgentsByUserId = async (userId: number) => {
-  try {
-    const affiliatedAgents = (await prisma.$queryRaw`
-      SELECT Users.id, Users.name, Users.username, Users.email
-      FROM Agents
-      JOIN Users ON Users.id = Agents.id
-      WHERE JSON_CONTAINS(Agents.parentAgentIds, JSON_ARRAY(${userId}))
-    `) as any;
 
-    return affiliatedAgents;
-  } catch (error) {
-    throw Error(error);
-  }
-};
 
 const _getAllSumsByUsername = async (username: string) => {
   try {

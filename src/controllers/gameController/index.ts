@@ -56,7 +56,7 @@ export const getGameVendors = async (
   try {
     const queryParams = req.query;
     const vendorStr = queryParams.vendors as string;
-    const vendors: string[] = vendorStr.split(',');
+    const vendors: string[] = vendorStr.split(',') ?? [];
     const games = await prisma.agentVendor.findMany({
       where: {
         agentId: req.user?.id,

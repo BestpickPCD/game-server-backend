@@ -115,7 +115,7 @@ export const updateAgent = async (
 ): Promise<any> => {
   try {
     const { id } = req.params;
-    const { parentAgentId, currencyId, name, roleId } = req.body;
+    const { parentAgentId, currencyId, name, roleId, rate } = req.body;
 
     const agentId = Number(id);
 
@@ -124,6 +124,7 @@ export const updateAgent = async (
       parentAgentId,
       currencyId,
       roleId,
+      rate,
       name
     });
 

@@ -2,6 +2,7 @@ import { PrismaClient } from '../../config/prisma/generated/base-default/index.j
 import { Request, Response } from 'express';
 import { message } from '../../utilities/constants/index.ts';
 import {
+  getAffiliatedAgentsByUserId,
   getParentAgentIdsByParentAgentId
   // getBalanceSummariesByIds
 } from './utilities.ts';
@@ -15,6 +16,17 @@ import {
   getDashboardData
 } from '../../services/usersService.ts';
 const prisma = new PrismaClient();
+
+export const getAllAffiliatedAgents =async (req: RequestWithUser, res: Response): Promise<any> => {
+  try {
+    const { id } = (req as any).user;
+    const affiliatedAgents = await getAffiliatedAgentsByUserId(id);
+    return res.status(200).json(affiliatedAgents)
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ message: message.INTERNAL_SERVER_ERROR });
+  }
+}
 
 export const getAllUsersWithBalances = async (
   // Only used until can merge this raw query in prisma ORM

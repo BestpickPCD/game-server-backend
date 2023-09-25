@@ -23,6 +23,7 @@ interface AgentUpdateParams {
   parentAgentId: number | null;
   currencyId: number | null;
   roleId: number | null;
+  rate?: number | null;
   name?: string;
 }
 
@@ -130,6 +131,7 @@ export const getById = async ({ id, userId }: AgentsParams): Promise<any> => {
         Agents: {
           select: {
             level: true,
+            rate: true,
             parentAgent: {
               select: {
                 name: true,
@@ -294,6 +296,7 @@ export const update = async ({
   parentAgentId,
   currencyId,
   roleId,
+  rate,
   name
 }: AgentUpdateParams) => {
   try {
@@ -304,10 +307,12 @@ export const update = async ({
         currencyId,
         roleId
       });
+    
     const [updatedAgent] = await prisma.$transaction([
       prisma.agents.update({
         where: { id: agentId },
         data: {
+          rate,
           parentAgentId: parentAgentId || agent.parentAgentId,
           parentAgentIds: parentAgent
             ? (updatedAgentParentIds as any)

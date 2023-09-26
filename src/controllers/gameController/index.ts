@@ -214,6 +214,7 @@ export const getGamesByPlayerId = async (
       message: message.SUCCESS
     });
   } catch (error) {
+    console.log(error)
     return next(error);
   }
 };

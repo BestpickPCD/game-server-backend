@@ -284,11 +284,7 @@ export const getPlayerById = async (id: number, userId: number) => {
       currencyId: user.currencyId
     };
     return data;
-<<<<<<< HEAD
-  } catch (error) {
-=======
   } catch (error: any) {
->>>>>>> e12ac572acca5b58e45dd2df1836140e99256517
     throw Error(error);
   }
 };
@@ -304,7 +300,7 @@ export const getUserProfile = async (userId: number) => {
     `) as any;
 
     return data;
-  } catch (error) {
+  } catch (error: any) {
     throw Error(error);
   }
 };
@@ -490,7 +486,7 @@ const _getAllSumsByUsername = async (username: string) => {
     const balance = { winGame, betGame, chargeGame, sentOut, received };
 
     return balance;
-  } catch (error) {
+  } catch (error: any) {
     console.log(error);
     throw Error(error);
   }

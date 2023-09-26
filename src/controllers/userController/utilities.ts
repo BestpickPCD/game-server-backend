@@ -80,7 +80,7 @@ export const getAffiliatedAgentsByUserId = async (userId: number) => {
     `) as any;
 
     return affiliatedAgents;
-  } catch (error) {
+  } catch (error: any) {
     throw Error(error);
   }
 };

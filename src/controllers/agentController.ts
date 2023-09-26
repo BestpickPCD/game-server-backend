@@ -97,20 +97,9 @@ export const getAgentById = async (req: Request, res: Response) => {
   return new OK({ data, message: message.GET_BY_ID }).send(res);
 };
 
-<<<<<<< HEAD
-export const updateAgent = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<any> => {
-  try {
-    const { id } = req.params;
-    const { parentAgentId, currencyId, name, roleId, rate } = req.body;
-=======
 export const updateAgent = async (req: Request, res: Response) => {
   const agentId = Number(req.params.id);
   const { parentAgentId, currencyId, name, roleId } = req.body;
->>>>>>> 5ed35a7eef0fc14cfeab72b1d0fc6dcb2e1d6616
 
   const updatedAgent = await update({
     agentId,
@@ -120,14 +109,6 @@ export const updateAgent = async (req: Request, res: Response) => {
     name
   });
 
-<<<<<<< HEAD
-    const updatedAgent = await update({
-      agentId,
-      parentAgentId,
-      currencyId,
-      roleId,
-      rate,
-=======
   await removeRedisKeys(removedKey(req));
   await removeRedisKeys(removedKey(agentId));
   return new UPDATED({
@@ -135,7 +116,6 @@ export const updateAgent = async (req: Request, res: Response) => {
       id: updatedAgent.id,
       level: updatedAgent.level,
       parentAgentIds: updatedAgent.parentAgentIds,
->>>>>>> 5ed35a7eef0fc14cfeab72b1d0fc6dcb2e1d6616
       name
     },
     message: message.UPDATED

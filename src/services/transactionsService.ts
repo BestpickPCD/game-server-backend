@@ -33,18 +33,15 @@ export const getAllById = async (queryParams: any, username: string | null) => {
     if (gameId) {
       filter.gameId = gameId;
     }
+    
     const transactions = await prismaTransaction.transactions.findMany({
       where: filter
       // skip: page * size,
-<<<<<<< HEAD
-      // take: size
-=======
-      take: Number(size)
->>>>>>> e12ac572acca5b58e45dd2df1836140e99256517
+      // take: Number(size)
     });
 
     const count = await prismaTransaction.transactions.count({
-      // where: filter,
+      where: filter,
     });
 
     return { transactions, count, page, size };
@@ -89,7 +86,9 @@ export const getByIdWithType = async (
 
 export const getDetailsById = async (id: string, userId: number) => {
   try {
+
     const filterOr = {
+      id,
       OR: [
         {
           Agents: {
@@ -122,11 +121,11 @@ export const getDetailsById = async (id: string, userId: number) => {
           }
         }
       ]
-    };
+    } as any;
 
     console.log(filterOr);
 
-    const transaction = await prismaTransaction.transactions.findUnique({
+    const transaction = await prismaTransaction.transactions.findMany({
       select: {
         id: true,
         amount: true,
@@ -140,10 +139,9 @@ export const getDetailsById = async (id: string, userId: number) => {
         createdAt: true,
         currencyId: true
       },
-      where: {
-        id
-      }
+      where: filterOr,
     });
+
     return transaction;
   } catch (error: any) {
     throw Error(error);

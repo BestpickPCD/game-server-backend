@@ -5,13 +5,14 @@ import {
 } from '../controllers/permissionController.ts';
 import { permission } from '../middleware/permission.ts';
 import { authentication } from '../middleware/authentication.ts';
-
+import { asyncHandler } from '../utilities/helpers/asyncHandler.ts';
 const router = express.Router();
-router.get('', authentication, permission('permissions', 'get'), getPermission);
+
+router.use(authentication);
+router.get('', permission('permissions', 'get'), asyncHandler(getPermission));
 router.put(
   '',
-  authentication,
   permission('permissions', 'update'),
-  updatePermission
+  asyncHandler(updatePermission)
 );
 export default router;

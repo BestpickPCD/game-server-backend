@@ -4,7 +4,7 @@ import {
 } from '../../config/prisma/generated/base-default/index.js';
 // import axios from 'axios';
 import { NextFunction, Response } from 'express';
-import { RequestWithUser } from '../../models/customInterfaces';
+import { RequestWithUser } from '../../models/customInterfaces.ts';
 // import agent from 'src/swagger/agent';
 import { getGamesByPlayerId as getGamesByPlayerIdService } from '../../services/vendorService.ts';
 import { message } from '../../utilities/constants/index.ts';
@@ -47,7 +47,6 @@ export const getVendors = async (
 
     return res.status(200).json(rearrangedVendors);
   } catch (error) {
-    console.log(error);
     return res.status(500).json(error);
   }
 };
@@ -59,7 +58,7 @@ export const getGameVendors = async (
   try {
     const queryParams = req.query;
     const vendorStr = queryParams.vendors as string;
-    const vendors: string[] = vendorStr.split(',');
+    const vendors: string[] = vendorStr.split(',') ?? [];
     const games = await prisma.agentVendor.findMany({
       where: {
         agentId: req.user?.id,
@@ -215,6 +214,7 @@ export const getGamesByPlayerId = async (
       message: message.SUCCESS
     });
   } catch (error) {
+    console.log(error)
     return next(error);
   }
 };

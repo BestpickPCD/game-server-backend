@@ -69,3 +69,18 @@ export const getBalanceSummariesByIds = async (
 
   return usersWithBalances;
 };
+
+export const getAffiliatedAgentsByUserId = async (userId: number) => {
+  try {
+    const affiliatedAgents = (await prisma.$queryRaw`
+      SELECT Users.id, Users.name, Users.username, Users.email
+      FROM Agents
+      JOIN Users ON Users.id = Agents.id
+      WHERE JSON_CONTAINS(Agents.parentAgentIds, JSON_ARRAY(${userId}))
+    `) as any;
+
+    return affiliatedAgents;
+  } catch (error: any) {
+    throw Error(error);
+  }
+};

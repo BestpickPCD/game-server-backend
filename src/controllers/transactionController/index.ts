@@ -22,20 +22,8 @@ export const getTransactions = async (
   res: Response
 ): Promise<any> => {
   try {
-    const { id } = (req as any).user;
-    const redisKey = 'transactions';
-    const { redisData, redisKeyWithId } = await getRedisData(
-      id,
-      redisKey,
-      'Invalid users Id'
-    );
-    let data: any;
-    if (redisData) {
-      data = JSON.parse(redisData);
-    } else {
-      data = (await getAllById(req.query)) as any;
-    }
-    !redisData && (await Redis.set(redisKeyWithId, JSON.stringify(data)));
+    const { id, username } = (req as any).user;
+    const data = (await getAllById(req.query, username)) as any;
 
     const { transactions, count, page, size } = data;
 
@@ -227,7 +215,7 @@ export const getTransactionDetail = async (
     const data = (await getDetailsById(id, userId)) as any;
 
     return res.status(200).json({ message: message.SUCCESS, data });
-  } catch (error) {
+  } catch (error: any) {
     if (error.message) {
       return res.status(404).json({ message: error.message });
     }

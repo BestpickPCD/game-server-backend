@@ -1,9 +1,8 @@
 import {
   Users,
   Roles,
-  Agents,
-  Transactions
-} from '../config/prisma/generated/base-default/index.js';
+  Agents
+} from '../config/prisma/generated/base-default/index.ts';
 import { Request } from 'express';
 
 export interface balanceSummary {
@@ -30,7 +29,7 @@ export interface UserAll extends Users {
   agent?: Agents | null;
 }
 
-export interface TransactionAll extends Transactions {
-  role?: Roles | null;
-  agent?: Agents | null;
-}
+// export interface TransactionAll extends Transactions {
+//   role?: Roles | null;
+//   agent?: Agents | null;
+// }

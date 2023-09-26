@@ -1,3 +1,4 @@
+import { getAffiliatedAgentsByUserId } from '../controllers/userController/utilities.js';
 import {
   Prisma,
   PrismaClient,
@@ -84,7 +85,7 @@ export const getAllWithBalance = async (query: any, userId: number) => {
     });
 
     return { userDetails, page, size };
-  } catch (error) {
+  } catch (error: any) {
     throw Error(error);
   }
 };
@@ -200,7 +201,7 @@ export const getAll = async (query: any, id: number) => {
     ]);
 
     return { data, totalItems, page, size };
-  } catch (error) {
+  } catch (error: any) {
     throw Error(error);
   }
 };
@@ -214,7 +215,7 @@ export const getById = async (id: number) => {
     })) as Users;
 
     return user;
-  } catch (error) {
+  } catch (error: any) {
     throw Error(error);
   }
 };
@@ -283,15 +284,14 @@ export const getPlayerById = async (id: number, userId: number) => {
       currencyId: user.currencyId
     };
     return data;
-  } catch (error) {
-    console.log(error);
+  } catch (error: any) {
     throw Error(error);
   }
 };
 
-export const getDashboardData = async (userId: number) => {
+export const getUserProfile = async (userId: number) => {
   try {
-    const dashboard = (await prisma.$queryRaw`
+    const data = (await prisma.$queryRaw`
       SELECT * FROM
         (SELECT id, balance, name, type, username, currencyId FROM Users WHERE id = ${userId}) AS USER LEFT JOIN
         (SELECT id, name AS currencyName, code AS currencyCode FROM Currencies WHERE deletedAt IS NULL) AS Currency ON Currency.id = USER.currencyId LEFT JOIN
@@ -299,32 +299,37 @@ export const getDashboardData = async (userId: number) => {
         (SELECT COUNT(id) AS players, agentId FROM Players WHERE agentId = ${userId} GROUP BY agentId) AS players ON players.agentId = User.id
     `) as any;
 
-    const item = dashboard[0];
-    const winGame = await _getSumTransactionByUsername(
-      'win',
-      'receiverUsername',
-      item.username
-    );
-    const betGame = await _getSumTransactionByUsername(
-      'bet',
-      'senderUsername',
-      item.username
-    );
-    const chargeGame = await _getSumTransactionByUsername(
-      'charge',
-      'receiverUsername',
-      item.username
-    );
-    const sentOut = await _getSumTransactionByUsername(
-      'add',
-      'senderUsername',
-      item.username
-    );
-    const received = await _getSumTransactionByUsername(
-      'add',
-      'receiverUsername',
-      item.username
-    );
+    return data;
+  } catch (error: any) {
+    throw Error(error);
+  }
+};
+
+export const getDashboardData = async (userId: number) => {
+  try {
+    const item = (await prisma.users.findUnique({
+      where: {
+        id: userId
+      },
+      include: {
+        Agents: {
+          select: {
+            parentAgent: {
+              select: {
+                username: true,
+                name: true
+              }
+            },
+            parentAgentIds: true
+          }
+        }
+      }
+    })) as any;
+
+    const affiliatedAgents = await getAffiliatedAgentsByUserId(userId);
+
+    const { winGame, betGame, chargeGame, sentOut, received } =
+      await _getAllSumsByUsername(item.username);
     const data = {
       userId: item.id,
       name: item.name,
@@ -333,6 +338,7 @@ export const getDashboardData = async (userId: number) => {
         name: item.currencyName,
         code: item.currencyCode
       },
+      affiliatedAgents,
       type: item.type,
       subAgent: parseInt(item.subAgent),
       parentAgentId: item.parentAgentId,
@@ -356,10 +362,8 @@ export const getDashboardData = async (userId: number) => {
       }
     };
 
-    console.log(data);
-
     return data;
-  } catch (error) {
+  } catch (error: any) {
     throw Error(error);
   }
 };
@@ -446,7 +450,43 @@ export const getAllByAgentId = async (query: any, id: number) => {
     ]);
 
     return { totalItems, data, page, size };
-  } catch (error) {
+  } catch (error: any) {
+    throw Error(error);
+  }
+};
+
+const _getAllSumsByUsername = async (username: string) => {
+  try {
+    const winGame = await _getSumTransactionByUsername(
+      'win',
+      'receiverUsername',
+      username
+    );
+    const betGame = await _getSumTransactionByUsername(
+      'bet',
+      'senderUsername',
+      username
+    );
+    const chargeGame = await _getSumTransactionByUsername(
+      'charge',
+      'receiverUsername',
+      username
+    );
+    const sentOut = await _getSumTransactionByUsername(
+      'add',
+      'senderUsername',
+      username
+    );
+    const received = await _getSumTransactionByUsername(
+      'add',
+      'receiverUsername',
+      username
+    );
+
+    const balance = { winGame, betGame, chargeGame, sentOut, received };
+
+    return balance;
+  } catch (error: any) {
     console.log(error);
     throw Error(error);
   }

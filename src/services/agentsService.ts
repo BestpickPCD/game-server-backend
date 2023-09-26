@@ -23,6 +23,7 @@ interface AgentUpdateParams {
   parentAgentId: number | null;
   currencyId: number | null;
   roleId: number | null;
+  rate?: number | null;
   name?: string;
 }
 
@@ -109,7 +110,7 @@ export const getAll = async ({
     ]);
 
     return { users, totalItems };
-  } catch (error) {
+  } catch (error: any) {
     throw Error(error.message);
   }
 };
@@ -130,6 +131,7 @@ export const getById = async ({ id, userId }: AgentsParams): Promise<any> => {
         Agents: {
           select: {
             level: true,
+            rate: true,
             parentAgent: {
               select: {
                 name: true,
@@ -154,7 +156,7 @@ export const getById = async ({ id, userId }: AgentsParams): Promise<any> => {
       throw Error(NOT_FOUND);
     }
     return agent;
-  } catch (error) {
+  } catch (error: any) {
     throw Error(error.message);
   }
 };
@@ -181,7 +183,7 @@ const getAgentById = async (agentId: number): Promise<any> => {
       throw Error(NOT_FOUND);
     }
     return agent;
-  } catch (error) {
+  } catch (error: any) {
     throw Error(error.message);
   }
 };
@@ -241,7 +243,7 @@ const validateUpdateData = async ({
     ];
     updateChildAgent({ agentId, agent, parentAgent });
     return { agent, parentAgent, role, currency, updatedAgentParentIds };
-  } catch (error) {
+  } catch (error: any) {
     throw Error(error.message);
   }
 };
@@ -255,37 +257,33 @@ const updateChildAgent = async ({
   agent: Agents;
   parentAgent: Agents | null;
 }) => {
-  try {
-    const agentChildren: Agents[] = await prisma.agents.findMany({
-      where: {
-        parentAgentIds: {
-          array_contains: [agentId]
-        }
-      }
-    });
-
-    if (agentChildren.length > 0) {
-      for (let i = 0; i < agentChildren.length; i++) {
-        const parentAgentIds: any[] = resultArray(
-          agentChildren[i]?.parentAgentIds as number[],
-          agent.parentAgentIds as number[],
-          parentAgent
-            ? ([...(parentAgent?.parentAgentIds as any), parentAgent.id] as any)
-            : agent.parentAgentIds
-        ) as any;
-        await prisma.agents.update({
-          where: {
-            id: agentChildren[i].id
-          },
-          data: {
-            parentAgentIds,
-            level: parentAgentIds.length + 1
-          }
-        });
+  const agentChildren: Agents[] = await prisma.agents.findMany({
+    where: {
+      parentAgentIds: {
+        array_contains: [agentId]
       }
     }
-  } catch (error) {
-    throw Error(error.message);
+  });
+
+  if (agentChildren.length > 0) {
+    for (let i = 0; i < agentChildren.length; i++) {
+      const parentAgentIds: any[] = resultArray(
+        agentChildren[i]?.parentAgentIds as number[],
+        agent.parentAgentIds as number[],
+        parentAgent
+          ? ([...(parentAgent?.parentAgentIds as any), parentAgent.id] as any)
+          : agent.parentAgentIds
+      ) as any;
+      await prisma.agents.update({
+        where: {
+          id: agentChildren[i].id
+        },
+        data: {
+          parentAgentIds,
+          level: parentAgentIds.length + 1
+        }
+      });
+    }
   }
 };
 
@@ -294,6 +292,7 @@ export const update = async ({
   parentAgentId,
   currencyId,
   roleId,
+  rate,
   name
 }: AgentUpdateParams) => {
   try {
@@ -304,10 +303,12 @@ export const update = async ({
         currencyId,
         roleId
       });
+
     const [updatedAgent] = await prisma.$transaction([
       prisma.agents.update({
         where: { id: agentId },
         data: {
+          rate,
           parentAgentId: parentAgentId || agent.parentAgentId,
           parentAgentIds: parentAgent
             ? (updatedAgentParentIds as any)
@@ -328,7 +329,7 @@ export const update = async ({
     ]);
 
     return updatedAgent;
-  } catch (error) {
+  } catch (error: any) {
     throw Error(error.message);
   }
 };
@@ -347,7 +348,7 @@ export const deleteAgent = async (id: number, userId: number) => {
         deletedAt: new Date()
       }
     });
-  } catch (error) {
+  } catch (error: any) {
     throw Error(error.message);
   }
 };

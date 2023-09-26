@@ -4,6 +4,7 @@ const prisma = new PrismaClient();
 export const getAgentByPlayerId = async (
   playerId: number
 ): Promise<Players | null> => {
+  console.log(playerId)
   try {
     const player: Players | null = await prisma.players.findUnique({
       where: {
@@ -19,7 +20,8 @@ export const getAgentByPlayerId = async (
       throw Error('Player not found');
     }
     return player;
-  } catch (error) {
+  } catch (error: any) {
+    console.log(error)
     throw Error(error.message);
   }
 };
@@ -52,7 +54,7 @@ export const getGamesByPlayerId = async (
     });
     const data = games.map((game) => game?.vendor);
     return data;
-  } catch (error) {
+  } catch (error: any) {
     throw Error(error.message);
   }
 };

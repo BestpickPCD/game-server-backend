@@ -64,8 +64,8 @@ async function main() {
         name: faker.person.fullName(),
         username: `user.master.${String(i)}`,
         type: i % 2 === 0 ? 'player' : 'agent',
-        password: await bcrypt.hash('admin.master.1', 10),
-        email: `admin@master.com${i}`,
+        password: await bcrypt.hash(`user.master.${String(i)}`, 10),
+        email: `admin${i}@master.com`,
         roleId: 1,
         currencyId: 1
       }

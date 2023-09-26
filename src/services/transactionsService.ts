@@ -5,24 +5,20 @@ import // arrangeTransactionDetails,
 import { PrismaClient as PrismaClientTransaction } from '../config/prisma/generated/transactions/index.js';
 const prismaTransaction = new PrismaClientTransaction();
 
-export const getAllById = async (queryParams: any) => {
+export const getAllById = async (queryParams: any, username: string | null) => {
   try {
     const {
       page = 1,
       size = 10,
       dateFrom,
       dateTo,
-      userId,
       type,
-      gameId,
-      search
+      gameId
+      // search
     } = queryParams;
 
     const filter: any = {
-      OR: [
-        { senderUsername: { contains: search, mode: 'insensitive' } },
-        { receiverUsername: { contains: search, mode: 'insensitive' } }
-      ]
+      OR: [{ senderUsername: username }, { receiverUsername: username }]
     };
 
     if (dateFrom) {
@@ -31,29 +27,26 @@ export const getAllById = async (queryParams: any) => {
     if (dateTo) {
       filter.createdAt = { ...filter.createdAt, lte: new Date(dateTo) };
     }
-    if (userId) {
-      filter.OR.push({ senderId: userId }, { receiverId: userId });
-    }
     if (type) {
       filter.type = { in: type.split(',') };
     }
     if (gameId) {
       filter.gameId = gameId;
     }
+    
     const transactions = await prismaTransaction.transactions.findMany({
-      // where: filter,
+      where: filter
       // skip: page * size,
-      take: size
+      // take: Number(size)
     });
 
     const count = await prismaTransaction.transactions.count({
-      // where: filter,
+      where: filter,
     });
 
     return { transactions, count, page, size };
-  } catch (error) {
-    console.log(error);
-    throw error;
+  } catch (error: any) {
+    throw Error(error);
   }
 };
 
@@ -86,15 +79,16 @@ export const getByIdWithType = async (
     })) as any;
 
     return transactions;
-  } catch (error) {
-    console.log(error);
+  } catch (error: any) {
     throw Error(error);
   }
 };
 
 export const getDetailsById = async (id: string, userId: number) => {
   try {
+
     const filterOr = {
+      id,
       OR: [
         {
           Agents: {
@@ -127,11 +121,11 @@ export const getDetailsById = async (id: string, userId: number) => {
           }
         }
       ]
-    };
+    } as any;
 
     console.log(filterOr);
 
-    const transaction = await prismaTransaction.transactions.findUnique({
+    const transaction = await prismaTransaction.transactions.findMany({
       select: {
         id: true,
         amount: true,
@@ -145,13 +139,11 @@ export const getDetailsById = async (id: string, userId: number) => {
         createdAt: true,
         currencyId: true
       },
-      where: {
-        id
-      }
+      where: filterOr,
     });
+
     return transaction;
-  } catch (error) {
-    console.log(error);
+  } catch (error: any) {
     throw Error(error);
   }
 };

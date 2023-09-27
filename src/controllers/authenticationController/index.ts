@@ -95,6 +95,21 @@ export const login = async (req: Request, res: Response): Promise<any> => {
       const isValid = await bcrypt.compare(password, user.password);
 
       if (isValid) {
+        const login_date = new Date()
+        const lock_date = user.lockedAt
+        
+        lock_date?.setDate(lock_date.getDate() + 3);
+        if(!lock_date || lock_date < login_date){
+          await prisma.users.update({
+            where: {
+              username: username
+            },
+          data: { 
+            isActive:true,
+           }
+          });
+        }
+        
         const data = await formatUser(user);
         await Redis.setex(
           `user-${user.id}-tokens`,

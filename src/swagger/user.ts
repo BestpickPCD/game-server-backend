@@ -333,6 +333,65 @@ export default {
         }
       }
     },
+     // james for password added
+     patch: {
+      security: [
+        {
+          bearerAuth: []
+        }
+      ],
+      summary: 'Update user by userId',
+      tags: ['Users'],
+      parameters: [
+        {
+          name: 'userId',
+          in: 'path',
+          description: 'ID of the user to retrieve',
+          required: true,
+          type: 'string'
+        }
+      ],
+      requestBody: {
+        required: true,
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                name: {
+                  password: 'string'
+                },
+              }
+            }
+          }
+        }
+      },
+      responses: {
+        '200': {
+          description: 'Success',
+          schema: {
+            type: 'object',
+            properties: {
+              data: {
+                type: 'object'
+              },
+              messages: {
+                type: 'string'
+              }
+            }
+          }
+        },
+        '401': {
+          description: 'Unauthorized'
+        },
+        '404': {
+          description: 'NOT_FOUND'
+        },
+        '500': {
+          description: 'Internal server error'
+        }
+      }
+    },
     delete: {
       security: [
         {

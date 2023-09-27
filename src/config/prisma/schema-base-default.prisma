@@ -23,7 +23,8 @@ model Users {
   createdAt  DateTime  @default(now())
   updatedAt  DateTime? @updatedAt
   deletedAt  DateTime?
-
+  lockedAt  DateTime?
+  
   role                    Roles?         @relation(fields: [roleId], references: [id])
   Agents                  Agents?
   parentAgent             Agents[]       @relation("ParentAgent")

@@ -81,39 +81,41 @@ export const getAgentById = async (req: Request, res: Response) => {
     throw new BAD_REQUEST(message.INVALID_ID);
   }
   const userId = getUserId(req);
-  const redisKey = `${defaultKey}:${userId}:${id}`;
-  let data: any;
-  const redisData = await Redis.get(redisKey);
-  if (!redisData) {
+  // const redisKey = `${defaultKey}:${userId}:${id}`;
+  // let data: any;
+  // const redisData = await Redis.get(redisKey);
+  // if (!redisData) {
     const agent = await getById({
       id: Number(id),
       userId
     });
-    data = agent;
-    await Redis.setex(redisKey, 300, JSON.stringify({ data: agent }));
-  } else {
-    data = { ...JSON.parse(redisData) };
-  }
+    const data = agent;
+  //   await Redis.setex(redisKey, 300, JSON.stringify({ data: agent }));
+  // } else {
+  //   data = { ...JSON.parse(redisData) };
+  // }
   return new OK({ data, message: message.GET_BY_ID }).send(res);
 };
 
 export const updateAgent = async (req: Request, res: Response) => {
   const agentId = Number(req.params.id);
-  const { parentAgentId, currencyId, name, roleId } = req.body;
+  const { parentAgentId, currencyId, name, roleId, rate } = req.body;
 
   const updatedAgent = await update({
     agentId,
     parentAgentId,
     currencyId,
     roleId,
+    rate,
     name
   });
 
-  await removeRedisKeys(removedKey(req));
-  await removeRedisKeys(removedKey(agentId));
+  // await removeRedisKeys(removedKey(req));
+  // await removeRedisKeys(removedKey(agentId));
   return new UPDATED({
     data: {
       id: updatedAgent.id,
+      rate,
       level: updatedAgent.level,
       parentAgentIds: updatedAgent.parentAgentIds,
       name
@@ -129,8 +131,8 @@ export const deleteAgent = async (req: Request, res: Response) => {
     throw new BAD_REQUEST(message.INVALID_ID);
   }
   await deleteAgentService(id, userId);
-  await removeRedisKeys(removedKey(req));
-  await removeRedisKeys(removedKey(id));
+  // await removeRedisKeys(removedKey(req));
+  // await removeRedisKeys(removedKey(id));
   return new DELETED({ message: message.DELETED }).send(res);
 };
 

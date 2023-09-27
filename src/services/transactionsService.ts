@@ -123,8 +123,6 @@ export const getDetailsById = async (id: string, userId: number) => {
       ]
     } as any;
 
-    console.log(filterOr);
-
     const transaction = await prismaTransaction.transactions.findMany({
       select: {
         id: true,

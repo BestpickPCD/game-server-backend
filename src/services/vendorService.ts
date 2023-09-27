@@ -4,7 +4,6 @@ const prisma = new PrismaClient();
 export const getAgentByPlayerId = async (
   playerId: number
 ): Promise<Players | null> => {
-  console.log(playerId)
   try {
     const player: Players | null = await prisma.players.findUnique({
       where: {

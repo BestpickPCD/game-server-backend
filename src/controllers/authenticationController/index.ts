@@ -167,10 +167,8 @@ export const register = async (req: Request, res: Response): Promise<any> => {
       };
 
       if (type == 'player') {
-        console.log('player');
         return _playerInsert(userSchema, agentId, res);
       } else if (type == 'agent') {
-        console.log('agent');
         return _agentInsert(userSchema, parentAgentId, res);
       }
     } catch (error) {

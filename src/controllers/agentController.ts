@@ -49,10 +49,10 @@ export const getAllAgents = async (req: Request, res: Response) => {
     dateTo
   }: AgentParams = req.query;
   const id = getUserId(req);
-  const redisKey = `${defaultKey}:${id}:${id}:${page}:${size}:${search}:${level}:${dateFrom}:${dateTo}`;
-  let data: any;
-  const redisData = await Redis.get(redisKey);
-  if (!redisData) {
+  // const redisKey = `${defaultKey}:${id}:${id}:${page}:${size}:${search}:${level}:${dateFrom}:${dateTo}`;
+  // let data: any;
+  // const redisData = await Redis.get(redisKey);
+  // if (!redisData) {
     const { users, totalItems } = await getAll({
       id: Number(id),
       level: Number(level),
@@ -62,16 +62,16 @@ export const getAllAgents = async (req: Request, res: Response) => {
       dateFrom,
       dateTo
     });
-    data = {
+    const data = {
       data: users,
       page: Number(page),
       size: Number(size),
       totalItems
     };
-    await Redis.setex(redisKey, 300, JSON.stringify(data));
-  } else {
-    data = { ...JSON.parse(redisData) };
-  }
+  //   await Redis.setex(redisKey, 300, JSON.stringify(data));
+  // } else {
+  //   data = { ...JSON.parse(redisData) };
+  // }
   return new OK({ data, message: message.GET_ALL }).send(res);
 };
 

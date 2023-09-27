@@ -1,5 +1,6 @@
 import { PrismaClient } from '../../config/prisma/generated/base-default/index.js';
 import { Request, Response } from 'express';
+import bcrypt from 'bcrypt';
 import { message } from '../../utilities/constants/index.ts';
 import {
   getAffiliatedAgentsByUserId,
@@ -168,6 +169,71 @@ export const updateUser = async (req: Request, res: Response): Promise<any> => {
         });
       }
     }
+    return res
+      .status(500)
+      .json({ message: message.INTERNAL_SERVER_ERROR, error });
+  }
+};
+
+export const updatePassword = async (req: Request, res: Response): Promise<any> => {
+  try {
+    console.log(req.body.userId)
+    const userId = parseInt(req.body.userId);
+    const userPw = req.body.password;
+    console.log(userPw)
+    const user = await prisma.users.findUnique({
+      where: {
+        id: userId,
+      }
+    });
+    if (!user || !userPw) {
+      return res.status(404).json({ message: message.NOT_FOUND });
+    }
+
+    const newPassord = await prisma.users.update({
+      where: { id: userId },
+      data: { password: await bcrypt.hash(userPw, 10), }
+    });
+
+    // if (newUser && newUser.type == 'player') {
+    //   return _updatePlayer(newUser, agentId, res);
+    // } else if (newUser && newUser.type == 'agent') {
+    //   return _updateAgent(newUser, parentAgentId, res);
+    // }
+    return res.status(200).json({ message: message.SUCCESS, data: newPassord });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: message.INTERNAL_SERVER_ERROR, error });
+  }
+};
+
+
+export const blockUser = async (req: Request, res: Response): Promise<any> => {
+  try {
+    console.log(req.body.userId)
+    const userId = parseInt(req.body.userId);
+    // const userPw = req.body.password;
+    // console.log(userPw)
+    const user = await prisma.users.findUnique({
+      where: {
+        id: userId,
+      }
+    });
+    if (!user) {
+      return res.status(404).json({ message: message.NOT_FOUND });
+    }
+
+    const block = await prisma.users.update({
+      where: { id: userId },
+      data: { 
+        isActive:false,
+        lockedAt: new Date(),
+      }
+    });
+
+    return res.status(200).json({ message: message.SUCCESS, data: block });
+  } catch (error) {
     return res
       .status(500)
       .json({ message: message.INTERNAL_SERVER_ERROR, error });

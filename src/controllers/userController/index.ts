@@ -177,23 +177,26 @@ export const updateUser = async (req: Request, res: Response): Promise<any> => {
 
 export const updatePassword = async (req: Request, res: Response): Promise<any> => {
   try {
-
-    const { userId, password } = req.body;
+    const { userId, password , passwordConfirm , oldPassword } = req.body;
     const user = await prisma.users.findUnique({
       where: {
         id: userId,
       }
     });
-
     if (!user || !password) {
       return res.status(404).json({ message: message.NOT_FOUND });
+    } else if(user && password && oldPassword && passwordConfirm){
+      console.log(oldPassword)
+      const isValid = await bcrypt.compare(oldPassword, user.password);
+      if(isValid && password == passwordConfirm){
+        const newPassword = await prisma.users.update({
+          where: { id: userId },
+          data: { password: await bcrypt.hash(password, 10), }
+        });
+        return res.status(200).json({ message: message.SUCCESS, data: newPassword });
+      } 
     }
-    const newPassword = await prisma.users.update({
-      where: { id: userId },
-      data: { password: await bcrypt.hash(password, 10), }
-    });
-    
-    return res.status(200).json({ message: message.SUCCESS, data: newPassword });
+    return res.status(400).json({ message: message.NOT_FOUND });
   } catch (error) {
     return res
       .status(500)

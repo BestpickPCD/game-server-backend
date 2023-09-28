@@ -23,14 +23,14 @@ model Users {
   createdAt  DateTime  @default(now())
   updatedAt  DateTime? @updatedAt
   deletedAt  DateTime?
-  lockedAt  DateTime?
-  
-  role                    Roles?         @relation(fields: [roleId], references: [id])
-  Agents                  Agents?
-  parentAgent             Agents[]       @relation("ParentAgent")
-  Players                 Players?
-  currency                Currencies?    @relation(fields: [currencyId], references: [id])
-  ip_user                 ip_user[]
+  lockedAt   DateTime?
+
+  role        Roles?      @relation(fields: [roleId], references: [id])
+  Agents      Agents?
+  parentAgent Agents[]    @relation("ParentAgent")
+  Players     Players?
+  currency    Currencies? @relation(fields: [currencyId], references: [id])
+  ip_user     ip_user[]
 }
 
 model Players {
@@ -61,20 +61,21 @@ model Agents {
 }
 
 model Roles {
-  id           Int    @id @default(autoincrement())
-  name         String @unique
+  id          Int       @id @default(autoincrement())
+  name        String    @unique
   permissions Json?
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
   deletedAt   DateTime?
-  Users Users[]
+  Users       Users[]
 }
-model Permissions{
-  id          Int    @id @default(autoincrement())
-  name        String @unique
+
+model Permissions {
+  id          Int       @id @default(autoincrement())
+  name        String    @unique
   permissions Json?
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
   deletedAt   DateTime?
 }
 
@@ -86,7 +87,7 @@ model Currencies {
   updatedAt DateTime? @updatedAt
   deletedAt DateTime?
 
-  Users        Users[]
+  Users Users[]
 }
 
 model ip_user {

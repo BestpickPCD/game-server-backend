@@ -7,7 +7,7 @@ import {
   getAllUsersWithBalances,
   getDashboard,
   getAllAffiliatedAgents,
-  blockUser
+  blockUser,
   updatePassword,
 } from '../controllers/userController/index.ts';
 import { authentication } from '../middleware/authentication.ts';
@@ -25,7 +25,7 @@ router.get('/user/:userId', authentication, getUserById);
 router.get('/user-affiliated-agents', authentication, getAllAffiliatedAgents);
 router.put('/user/:userId', authentication, updateUser);
 router.delete('/user/:userId', authentication, deleteUser);
-router.put('/blockUser', authentication,blockUser);
+router.put('/blockUser', authentication, blockUser);
 router.patch('/user', authentication, updatePassword);
 router.get('/dashboard', authentication, getDashboard);
 

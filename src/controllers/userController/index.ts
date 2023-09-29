@@ -1,6 +1,7 @@
 import {
   Prisma,
-  PrismaClient
+  PrismaClient,
+  Users
 } from '../../config/prisma/generated/base-default/index.js';
 import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
@@ -187,17 +188,25 @@ export const updatePassword = async (req: Request, res: Response): Promise<any> 
       }
     });
     if (!user || !password) {
+
       return res.status(404).json({ message: message.NOT_FOUND });
-    } else if(user && password && oldPassword && passwordConfirm){
-      console.log(oldPassword)
+
+    } else if(user && password && oldPassword && passwordConfirm) {
+
       const isValid = await bcrypt.compare(oldPassword, user.password);
-      if(isValid && password == passwordConfirm){
+
+      if(isValid && password == passwordConfirm) {
+
         const newPassword = await prisma.users.update({
           where: { id: userId },
           data: { password: await bcrypt.hash(password, 10), }
         });
+
         return res.status(200).json({ message: message.SUCCESS, data: newPassword });
-      } 
+
+      } else {
+        return res.status(400).json({ message: "Your old or new passwords are not matching" });
+      }
     }
     return res.status(400).json({ message: message.NOT_FOUND });
   } catch (error) {
@@ -227,7 +236,7 @@ export const blockUser = async (req: Request, res: Response): Promise<any> => {
         isActive: false,
         lockedAt: new Date(),
       }
-    });
+    }) as Users;
 
     return res.status(200).json({ message: message.SUCCESS, data: block });
   } catch (error) {

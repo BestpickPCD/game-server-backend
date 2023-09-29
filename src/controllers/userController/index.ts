@@ -1,4 +1,7 @@
-import { PrismaClient } from '../../config/prisma/generated/base-default/index.js';
+import {
+  Prisma,
+  PrismaClient
+} from '../../config/prisma/generated/base-default/index.js';
 import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import { message } from '../../utilities/constants/index.ts';
@@ -391,6 +394,48 @@ export const getAllUsersByAgentId = async (
       },
       message: message.SUCCESS
     });
+  } catch (error) {
+    return res.status(500).json({ message: message.INTERNAL_SERVER_ERROR });
+  }
+};
+
+export const checkUser = async (req: Request, res: Response) => {
+  try {
+    const foundUser = await prisma.users.findUnique({
+      select: {
+        id: true,
+        type: true,
+        name: true,
+        Agents: {
+          select: {
+            id: true
+          }
+        },
+        Players: {
+          select: {
+            id: true,
+            agentId: true,
+            agent: {
+              select: {
+                user: {
+                  select: {
+                    name: true,
+                    id: true
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      where: {
+        id: Number(req.body.id)
+      }
+    });
+    if (!foundUser) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    return res.status(200).json({ data: foundUser });
   } catch (error) {
     return res.status(500).json({ message: message.INTERNAL_SERVER_ERROR });
   }

@@ -9,6 +9,7 @@ import {
   getAllAffiliatedAgents,
   blockUser,
   updatePassword,
+  checkUser
 } from '../controllers/userController/index.ts';
 import { authentication } from '../middleware/authentication.ts';
 import { permission } from '../middleware/permission.ts';
@@ -28,5 +29,5 @@ router.delete('/user/:userId', authentication, deleteUser);
 router.put('/blockUser', authentication, blockUser);
 router.patch('/user', authentication, updatePassword);
 router.get('/dashboard', authentication, getDashboard);
-
+router.post('/user/check-user', authentication, checkUser);
 export default router;

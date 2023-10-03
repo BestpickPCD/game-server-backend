@@ -252,19 +252,19 @@ export const getUserById = async (
 ): Promise<any> => {
   try {
     const { userId } = req.params;
-    const { redisData, redisKeyWithId } = await getRedisData(
-      userId,
-      'userById',
-      'Invalid users Id'
-    );
-    let data: any;
-    if (redisData) {
-      data = JSON.parse(redisData);
-    } else {
-      data = (await getById(parseInt(userId))) as any;
-    }
-    !redisData && (await Redis.set(redisKeyWithId, JSON.stringify(data)));
-
+    // const { redisData, redisKeyWithId } = await getRedisData(
+    //   userId,
+    //   'userById',
+    //   'Invalid users Id'
+    // );
+    // let data: any;
+    // if (redisData) {
+    //   data = JSON.parse(redisData);
+    // } else {
+    const data = (await getById(parseInt(userId))) as any;
+    // }
+    // !redisData && (await Redis.set(redisKeyWithId, JSON.stringify(data)));
+    
     if (!data) {
       return res.status(404).json({ message: message.NOT_FOUND });
     }

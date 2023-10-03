@@ -16,6 +16,9 @@ model Users {
   password   String
   type       String?
   apiKey     String?
+  accountNumber     String?
+  callbackUrl     String?
+  apiCall     String?
   roleId     Int?
   balance    Decimal?  @default(0) @db.Decimal(10, 2)
   currencyId Int?

@@ -6,6 +6,7 @@ import {
 } from '../config/prisma/generated/base-default/index.js';
 const prisma = new PrismaClient();
 import { PrismaClient as PrismaClientTransaction } from '../config/prisma/generated/transactions/index.js';
+import { tr } from '@faker-js/faker';
 const prismaTransaction = new PrismaClientTransaction();
 
 export const getAllWithBalance = async (query: any, userId: number) => {
@@ -211,8 +212,45 @@ export const getById = async (id: number) => {
     const user = (await prisma.users.findUnique({
       where: {
         id
+      },
+      select: {
+        id: true,
+        name: true,
+        username: true,
+        type: true,
+        email: true,
+        apiKey: true,
+        balance: true,
+        createdAt: true,
+        updatedAt: true,
+        currency: {
+          select: {
+            id: true,
+            name:true,
+            code:true,
+          }
+        },
+        parentAgent: true,
+        role: {
+          select: {
+            name: true,
+            id: true
+          }
+        },
+        Agents: {
+          select: {
+            parentAgent: {
+              select: {
+                id: true,
+                name: true,
+                username: true
+              }
+            },
+            parentAgentIds: true
+          }
+        }
       }
-    })) as Users;
+    })) as any;
 
     return user;
   } catch (error: any) {
@@ -309,7 +347,9 @@ export const getDashboardData = async (userId: number) => {
   try {
     const item = (await prisma.users.findUnique({
       where: {
-        id: userId
+        id: userId,
+        deletedAt: null,
+        isActive: true
       },
       include: {
         Agents: {
@@ -329,7 +369,7 @@ export const getDashboardData = async (userId: number) => {
     const affiliatedAgents = await getAffiliatedAgentsByUserId(userId);
 
     const { winGame, betGame, chargeGame, sentOut, received } =
-      await _getAllSumsByUsername(item.username);
+      await _getAllSumsByUsername([item.username]);
     const data = {
       userId: item.id,
       name: item.name,
@@ -455,7 +495,7 @@ export const getAllByAgentId = async (query: any, id: number) => {
   }
 };
 
-const _getAllSumsByUsername = async (username: string) => {
+const _getAllSumsByUsername = async (username: string[]) => {
   try {
     const winGame = await _getSumTransactionByUsername(
       'win',
@@ -514,7 +554,7 @@ const _getSumTransaction = async (type: string, groupBy: any) => {
 const _getSumTransactionByUsername = async (
   type: string,
   groupBy: any,
-  username: string
+  usernames: string[]
 ) => {
   const sumBalance = (await prismaTransaction.transactions.groupBy({
     by: [groupBy],
@@ -523,7 +563,9 @@ const _getSumTransactionByUsername = async (
     },
     where: {
       type,
-      [`${groupBy}`]: username
+      [`${groupBy}`]: {
+        in: usernames
+      }
     }
   })) as any;
 

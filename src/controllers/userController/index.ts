@@ -1,8 +1,10 @@
 import {
   Prisma,
-  PrismaClient
+  PrismaClient,
+  Users
 } from '../../config/prisma/generated/base-default/index.js';
 import { Request, Response } from 'express';
+import bcrypt from 'bcrypt';
 import { message } from '../../utilities/constants/index.ts';
 import {
   getAffiliatedAgentsByUserId,
@@ -110,47 +112,54 @@ export const getAllUsers = async (
 export const updateUser = async (req: Request, res: Response): Promise<any> => {
   try {
     const { userId } = req.params;
-    const redisKey = 'userById';
-    const { redisData, redisKeyWithId } = await getRedisData(
-      userId,
-      redisKey,
-      'Invalid users Id'
-    );
-    let data: any;
-    if (redisData) {
-      data = JSON.parse(redisData);
-    } else {
-      data = (await getById(parseInt(userId))) as any;
-    }
-    !redisData && (await Redis.set(redisKeyWithId, JSON.stringify(data)));
+    // const redisKey = 'userById';
+    // const { redisData, redisKeyWithId } = await getRedisData(
+    //   userId,
+    //   redisKey,
+    //   'Invalid users Id'
+    // );
+    // let data: any;
+    // if (redisData) {
+    //   data = JSON.parse(redisData);
+    // } else {
+    const  data = (await getById(parseInt(userId))) as any;
+    // }
+    // !redisData && (await Redis.set(redisKeyWithId, JSON.stringify(data)));
 
     if (!data) {
       return res.status(404).json({ message: message.NOT_FOUND });
     }
 
-    const { name, email, roleId, currencyId, agentId, parentAgentId } =
+    const { name, email, roleId, currencyId, agentId, parentAgentId, accountNumber, callbackUrl, apiCall } =
       req.body;
     const updatedUser = {
       ...(name && { name }),
       ...(email && { email }),
       ...(roleId && { roleId }),
-      ...(currencyId && { currencyId })
+      ...(currencyId && { currencyId }),
+      ...(accountNumber && { accountNumber }),
+      ...(callbackUrl && { callbackUrl }),
+      ...(apiCall && { apiCall })
     };
-
+    
     const newUser = await prisma.users.update({
       where: { id: parseInt(userId) },
-      data: { ...data, ...updatedUser }
+      data: updatedUser
     });
 
-    await Redis.del(redisKey);
-    await Redis.del(redisKeyWithId);
-    if (newUser && newUser.type == 'player') {
-      return _updatePlayer(newUser, agentId, res);
-    } else if (newUser && newUser.type == 'agent') {
-      return _updateAgent(newUser, parentAgentId, res);
+    // await Redis.del(redisKey);
+    // await Redis.del(redisKeyWithId);
+    if(parentAgentId || agentId) {
+      if (newUser && newUser.type == 'player') {
+        return _updatePlayer(newUser, agentId, res);
+      } else if (newUser && newUser.type == 'agent') {
+        return _updateAgent(newUser, parentAgentId, res);
+      }
+      return res.status(404).json({ message: message.USER_TYPE_NOT_FOUND });
     }
 
-    return res.status(404).json({ message: message.USER_TYPE_NOT_FOUND });
+    return res.status(200).json({ message: message.SUCCESS });
+
   } catch (error: any) {
     if (error.code === 'P2002') {
       return res.status(400).json({
@@ -177,25 +186,92 @@ export const updateUser = async (req: Request, res: Response): Promise<any> => {
   }
 };
 
+export const updatePassword = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const { userId, password , passwordConfirm , oldPassword } = req.body;
+    const user = await prisma.users.findUnique({
+      where: {
+        id: userId,
+      }
+    });
+    if (!user || !password) {
+
+      return res.status(404).json({ message: message.NOT_FOUND });
+
+    } else if(user && password && oldPassword && passwordConfirm) {
+
+      const isValid = await bcrypt.compare(oldPassword, user.password);
+
+      if(isValid && password == passwordConfirm) {
+
+        const newPassword = await prisma.users.update({
+          where: { id: userId },
+          data: { password: await bcrypt.hash(password, 10), }
+        });
+
+        return res.status(200).json({ message: message.SUCCESS, data: newPassword });
+
+      } else {
+        return res.status(400).json({ message: "Your old or new passwords are not matching" });
+      }
+    }
+    return res.status(400).json({ message: message.NOT_FOUND });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: message.INTERNAL_SERVER_ERROR, error });
+  }
+};
+
+
+export const blockUser = async (req: Request, res: Response): Promise<any> => {
+  try {
+    
+    const { userId } = req.body;
+    const user = await prisma.users.findUnique({
+      where: {
+        id: userId,
+      }
+    });
+    if (!user) {
+      return res.status(404).json({ message: message.NOT_FOUND });
+    }
+
+    const block = await prisma.users.update({
+      where: { id: userId },
+      data: { 
+        isActive: false,
+        lockedAt: new Date(),
+      }
+    }) as Users;
+
+    return res.status(200).json({ message: message.SUCCESS, data: block });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: message.INTERNAL_SERVER_ERROR, error });
+  }
+};
+
 export const getUserById = async (
   req: Request,
   res: Response
 ): Promise<any> => {
   try {
     const { userId } = req.params;
-    const { redisData, redisKeyWithId } = await getRedisData(
-      userId,
-      'userById',
-      'Invalid users Id'
-    );
-    let data: any;
-    if (redisData) {
-      data = JSON.parse(redisData);
-    } else {
-      data = (await getById(parseInt(userId))) as any;
-    }
-    !redisData && (await Redis.set(redisKeyWithId, JSON.stringify(data)));
-
+    // const { redisData, redisKeyWithId } = await getRedisData(
+    //   userId,
+    //   'userById',
+    //   'Invalid users Id'
+    // );
+    // let data: any;
+    // if (redisData) {
+    //   data = JSON.parse(redisData);
+    // } else {
+    const data = (await getById(parseInt(userId))) as any;
+    // }
+    // !redisData && (await Redis.set(redisKeyWithId, JSON.stringify(data)));
+    
     if (!data) {
       return res.status(404).json({ message: message.NOT_FOUND });
     }
@@ -270,7 +346,7 @@ export const getDashboard = async (
 };
 
 const _updateAgent = async (
-  user: any,
+  user: Users,
   parentAgentId: number,
   res: Response
 ) => {

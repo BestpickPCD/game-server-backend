@@ -1,5 +1,7 @@
 import { PrismaClient } from '../../config/prisma/generated/base-default/index.js';
 const prisma = new PrismaClient();
+import { PrismaClient as PrismaClientTransaction } from '../../config/prisma/generated/transactions/index.js';
+const prismaTransaction = new PrismaClientTransaction();
 
 export const getParentAgentIdsByParentAgentId = async (
   parentAgentId: number
@@ -79,7 +81,9 @@ export const getAffiliatedAgentsByUserId = async (userId: number) => {
       WHERE JSON_CONTAINS(Agents.parentAgentIds, JSON_ARRAY(${userId}))
     `) as any;
 
-    return affiliatedAgents;
+    const affiliatedUsernames = affiliatedAgents.map(({ username }:{username:string}) => username);
+
+    return { affiliatedAgents, affiliatedUsernames };
   } catch (error: any) {
     throw Error(error);
   }

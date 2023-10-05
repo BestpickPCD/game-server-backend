@@ -16,6 +16,9 @@ model Users {
   password   String
   type       String?
   apiKey     String?
+  accountNumber     String?
+  callbackUrl     String?
+  apiCall     String?
   roleId     Int?
   balance    Decimal?  @default(0) @db.Decimal(10, 2)
   currencyId Int?
@@ -23,13 +26,14 @@ model Users {
   createdAt  DateTime  @default(now())
   updatedAt  DateTime? @updatedAt
   deletedAt  DateTime?
+  lockedAt   DateTime?
 
-  role                    Roles?         @relation(fields: [roleId], references: [id])
-  Agents                  Agents?
-  parentAgent             Agents[]       @relation("ParentAgent")
-  Players                 Players?
-  currency                Currencies?    @relation(fields: [currencyId], references: [id])
-  ip_user                 ip_user[]
+  role        Roles?      @relation(fields: [roleId], references: [id])
+  Agents      Agents?
+  parentAgent Agents[]    @relation("ParentAgent")
+  Players     Players?
+  currency    Currencies? @relation(fields: [currencyId], references: [id])
+  ip_user     ip_user[]
 }
 
 model Players {
@@ -60,20 +64,21 @@ model Agents {
 }
 
 model Roles {
-  id           Int    @id @default(autoincrement())
-  name         String @unique
+  id          Int       @id @default(autoincrement())
+  name        String    @unique
   permissions Json?
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
   deletedAt   DateTime?
-  Users Users[]
+  Users       Users[]
 }
-model Permissions{
-  id          Int    @id @default(autoincrement())
-  name        String @unique
+
+model Permissions {
+  id          Int       @id @default(autoincrement())
+  name        String    @unique
   permissions Json?
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
   deletedAt   DateTime?
 }
 
@@ -85,7 +90,7 @@ model Currencies {
   updatedAt DateTime? @updatedAt
   deletedAt DateTime?
 
-  Users        Users[]
+  Users Users[]
 }
 
 model ip_user {

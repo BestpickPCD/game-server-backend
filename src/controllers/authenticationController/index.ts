@@ -78,6 +78,7 @@ export const login = async (req: Request, res: Response): Promise<any> => {
         roleId: true,
         currencyId: true,
         isActive: true,
+        lockedAt: true,
         username: true,
         type: true,
         role: true,
@@ -95,6 +96,23 @@ export const login = async (req: Request, res: Response): Promise<any> => {
       const isValid = await bcrypt.compare(password, user.password);
 
       if (isValid) {
+        const loginDate = new Date()
+        const lockDate = user.lockedAt
+        
+        lockDate?.setDate(lockDate.getDate() + 3);
+        if(!lockDate || lockDate < loginDate){
+          await prisma.users.update({
+            where: {
+              username: username
+            },
+          data: { 
+            isActive:true,
+           }
+          });
+        } else {
+          return res.status(500).json({message: "your account is not valid"})
+        }
+        
         const data = await formatUser(user);
         await Redis.setex(
           `user-${user.id}-tokens`,

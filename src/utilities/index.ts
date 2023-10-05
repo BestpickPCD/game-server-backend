@@ -49,7 +49,6 @@ const checkStatusAndMessage = ({
 }): { status: number; message: string; subMessage?: string } => {
   if (message.toLowerCase().includes('prisma')) {
     const splittedMessage = message.toLowerCase().split(' ');
-    console.log(message.toLowerCase());
 
     const errorField =
       splittedMessage[splittedMessage.length - 1].split('_')[1];

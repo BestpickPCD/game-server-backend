@@ -24,7 +24,7 @@ router.get(
 );
 router.get('/user/:userId', authentication, getUserById);
 router.get('/user-affiliated-agents', authentication, getAllAffiliatedAgents);
-router.put('/user/:userId', authentication, updateUser);
+router.patch('/user/:userId', authentication, updateUser);
 router.delete('/user/:userId', authentication, deleteUser);
 router.put('/blockUser', authentication, blockUser);
 router.patch('/user', authentication, updatePassword);

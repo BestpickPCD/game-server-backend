@@ -366,8 +366,21 @@ export const getDashboardData = async (userId: number) => {
       }
     })) as any;
 
-    const affiliatedAgents = await getAffiliatedAgentsByUserId(userId);
+    const {affiliatedAgents, affiliatedUsernames} = await getAffiliatedAgentsByUserId(userId);
+    const affiliatedSums = await _getAllSumsByUsername(affiliatedUsernames);
 
+    const sumBalance = affiliatedAgents.map((affiliatedAgent: any) => {
+      const winGame = affiliatedSums.winGame[affiliatedAgent.username]
+      const betGame = affiliatedSums.betGame[affiliatedAgent.username]
+      const chargeGame = affiliatedSums.chargeGame[affiliatedAgent.username]
+      const sentOut = affiliatedSums.sentOut[affiliatedAgent.username]
+      const received = affiliatedSums.received[affiliatedAgent.username]
+      const allSums = { winGame, betGame, chargeGame, sentOut, received }
+
+      affiliatedAgent.allSums = allSums
+
+    })
+    
     const { winGame, betGame, chargeGame, sentOut, received } =
       await _getAllSumsByUsername([item.username]);
     const data = {
@@ -380,6 +393,9 @@ export const getDashboardData = async (userId: number) => {
       },
       affiliatedAgents,
       type: item.type,
+      accountNumber: item.accountNumber,
+      callbackUrl: item.callbackUrl,
+      apiCall: item.apiCall,
       subAgent: parseInt(item.subAgent),
       parentAgentId: item.parentAgentId,
       players: parseInt(item.players),
@@ -527,7 +543,6 @@ const _getAllSumsByUsername = async (username: string[]) => {
 
     return balance;
   } catch (error: any) {
-    console.log(error);
     throw Error(error);
   }
 };

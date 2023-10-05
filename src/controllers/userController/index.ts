@@ -112,47 +112,54 @@ export const getAllUsers = async (
 export const updateUser = async (req: Request, res: Response): Promise<any> => {
   try {
     const { userId } = req.params;
-    const redisKey = 'userById';
-    const { redisData, redisKeyWithId } = await getRedisData(
-      userId,
-      redisKey,
-      'Invalid users Id'
-    );
-    let data: any;
-    if (redisData) {
-      data = JSON.parse(redisData);
-    } else {
-      data = (await getById(parseInt(userId))) as any;
-    }
-    !redisData && (await Redis.set(redisKeyWithId, JSON.stringify(data)));
+    // const redisKey = 'userById';
+    // const { redisData, redisKeyWithId } = await getRedisData(
+    //   userId,
+    //   redisKey,
+    //   'Invalid users Id'
+    // );
+    // let data: any;
+    // if (redisData) {
+    //   data = JSON.parse(redisData);
+    // } else {
+    const  data = (await getById(parseInt(userId))) as any;
+    // }
+    // !redisData && (await Redis.set(redisKeyWithId, JSON.stringify(data)));
 
     if (!data) {
       return res.status(404).json({ message: message.NOT_FOUND });
     }
 
-    const { name, email, roleId, currencyId, agentId, parentAgentId } =
+    const { name, email, roleId, currencyId, agentId, parentAgentId, accountNumber, callbackUrl, apiCall } =
       req.body;
     const updatedUser = {
       ...(name && { name }),
       ...(email && { email }),
       ...(roleId && { roleId }),
-      ...(currencyId && { currencyId })
+      ...(currencyId && { currencyId }),
+      ...(accountNumber && { accountNumber }),
+      ...(callbackUrl && { callbackUrl }),
+      ...(apiCall && { apiCall })
     };
-
+    
     const newUser = await prisma.users.update({
       where: { id: parseInt(userId) },
-      data: { ...data, ...updatedUser }
+      data: updatedUser
     });
 
-    await Redis.del(redisKey);
-    await Redis.del(redisKeyWithId);
-    if (newUser && newUser.type == 'player') {
-      return _updatePlayer(newUser, agentId, res);
-    } else if (newUser && newUser.type == 'agent') {
-      return _updateAgent(newUser, parentAgentId, res);
+    // await Redis.del(redisKey);
+    // await Redis.del(redisKeyWithId);
+    if(parentAgentId || agentId) {
+      if (newUser && newUser.type == 'player') {
+        return _updatePlayer(newUser, agentId, res);
+      } else if (newUser && newUser.type == 'agent') {
+        return _updateAgent(newUser, parentAgentId, res);
+      }
+      return res.status(404).json({ message: message.USER_TYPE_NOT_FOUND });
     }
 
-    return res.status(404).json({ message: message.USER_TYPE_NOT_FOUND });
+    return res.status(200).json({ message: message.SUCCESS });
+
   } catch (error: any) {
     if (error.code === 'P2002') {
       return res.status(400).json({
@@ -339,7 +346,7 @@ export const getDashboard = async (
 };
 
 const _updateAgent = async (
-  user: any,
+  user: Users,
   parentAgentId: number,
   res: Response
 ) => {

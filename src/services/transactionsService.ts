@@ -1,7 +1,3 @@
-import // arrangeTransactionDetails,
-// paramsToArray
-'../controllers/transactionController/utilities.ts';
-
 import { PrismaClient as PrismaClientTransaction } from '../config/prisma/generated/transactions/index.js';
 const prismaTransaction = new PrismaClientTransaction();
 

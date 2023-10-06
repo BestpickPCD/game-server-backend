@@ -61,6 +61,7 @@ export const getAll = async ({
         balance: true,
         Agents: {
           select: {
+            rate: true,
             level: true,
             parentAgent: {
               select: {

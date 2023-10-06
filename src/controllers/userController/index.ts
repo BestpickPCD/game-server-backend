@@ -104,7 +104,6 @@ export const getAllUsers = async (
       message: message.SUCCESS
     });
   } catch (error) {
-    console.log(error);
     return res.status(500).json({ message: message.INTERNAL_SERVER_ERROR });
   }
 };

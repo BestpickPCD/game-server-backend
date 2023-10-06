@@ -6,7 +6,6 @@ import {
 } from '../config/prisma/generated/base-default/index.js';
 const prisma = new PrismaClient();
 import { PrismaClient as PrismaClientTransaction } from '../config/prisma/generated/transactions/index.js';
-import { tr } from '@faker-js/faker';
 const prismaTransaction = new PrismaClientTransaction();
 
 export const getAllWithBalance = async (query: any, userId: number) => {
@@ -369,7 +368,7 @@ export const getDashboardData = async (userId: number) => {
     const {affiliatedAgents, affiliatedUsernames} = await getAffiliatedAgentsByUserId(userId);
     const affiliatedSums = await _getAllSumsByUsername(affiliatedUsernames);
 
-    const sumBalance = affiliatedAgents.map((affiliatedAgent: any) => {
+    affiliatedAgents.map((affiliatedAgent: any) => {
       const winGame = affiliatedSums.winGame[affiliatedAgent.username]
       const betGame = affiliatedSums.betGame[affiliatedAgent.username]
       const chargeGame = affiliatedSums.chargeGame[affiliatedAgent.username]

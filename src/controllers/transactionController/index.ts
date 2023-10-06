@@ -22,7 +22,7 @@ export const getTransactions = async (
   res: Response
 ): Promise<any> => {
   try {
-    const { id, username } = (req as any).user;
+    const { username } = (req as any).user;
     const data = (await getAllById(req.query, username)) as any;
 
     const { transactions, count, page, size } = data;

@@ -1,4 +1,4 @@
-import { Players, PrismaClient } from '@prisma/client';
+import { Players, PrismaClient } from '../config/prisma/generated/base-default/index.js';
 const prisma = new PrismaClient();
 
 export const getAgentByPlayerId = async (

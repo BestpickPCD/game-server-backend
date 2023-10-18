@@ -1,5 +1,4 @@
 import {
-  Agents,
   Prisma,
   PrismaClient,
   Users
@@ -59,28 +58,16 @@ export const getAll = async ({
         createdAt: true,
         updatedAt: true,
         balance: true,
-        parentAgent: {
-          select: {
-            rate: true,
-            level: true,
-            user: {
-              select: {
-                name: true,
-                id: true
-              }
-            }
-          }
-        }
+        rate: true,
+        level: true,
       },
       where: {
         deletedAt: null,
         type: 'agent',
-        parentAgent: {
-          parentAgentIds: {
-            array_contains: [id] as number[]
-          },
-          ...(level && { level })
+        parentAgentIds: {
+          array_contains: [id] as number[]
         },
+        ...(level && { level }),
         OR: [
           {
             name: {
@@ -103,7 +90,7 @@ export const getAll = async ({
       },
       skip: page * size,
       take: size
-    };
+    }; 
 
     const [users, totalItems] = await prisma.$transaction([
       prisma.users.findMany(filter),
@@ -129,29 +116,17 @@ export const getById = async ({ id, userId }: AgentsParams): Promise<any> => {
         createdAt: true,
         updatedAt: true,
         balance: true,
-        parentAgent: {
-          select: {
-            level: true,
-            rate: true,
-            user: {
-              select: {
-                name: true,
-                id: true
-              }
-            }
-          }
-        }
+        level: true,
+        rate: true,
       },
       where: {
         id,
         deletedAt: null,
-        type: 'agent',
-        parentAgent: {
-          parentAgentIds: {
-            array_contains: [userId] as number[]
-          }
+        type: 'agent', 
+        parentAgentIds: {
+          array_contains: [userId] as number[]
         }
-      }
+      } 
     });
     if (!agent) {
       throw Error(NOT_FOUND);
@@ -164,18 +139,15 @@ export const getById = async ({ id, userId }: AgentsParams): Promise<any> => {
 
 const getAgentById = async (agentId: number): Promise<any> => {
   try {
-    const agent = await prisma.agents.findUnique({
+    const agent = await prisma.users.findUnique({
       select: {
         parentAgentIds: true,
         level: true,
-        user: {
-          select: {
-            currencyId: true,
-            roleId: true
-          }
-        }
+        currencyId: true,
+        roleId: true
       },
       where: {
+        type: 'agent',
         id: agentId
       }
     });
@@ -219,7 +191,7 @@ const validateUpdateData = async ({
     }
     const [parentAgent, role, currency] = await Promise.all([
       parentAgentIdNumber && agent.parentAgentId
-        ? prisma.agents.findUnique({ where: { id: parentAgentIdNumber } })
+        ? prisma.users.findUnique({ where: { id: parentAgentIdNumber } })
         : null,
       roleIdNumber && roleIdNumber !== agent.user?.roleId
         ? prisma.roles.findUnique({ where: { id: roleIdNumber } })
@@ -254,11 +226,12 @@ const updateChildAgent = async ({
   parentAgent
 }: {
   agentId: number;
-  agent: Agents;
-  parentAgent: Agents | null;
+  agent: Users;
+  parentAgent: Users | null;
 }) => {
-  const agentChildren: Agents[] = await prisma.agents.findMany({
+  const agentChildren: Users[] = await prisma.users.findMany({
     where: {
+      type: "agent",
       parentAgentIds: {
         array_contains: [agentId]
       }
@@ -274,8 +247,9 @@ const updateChildAgent = async ({
           ? ([...(parentAgent?.parentAgentIds as any), parentAgent.id] as any)
           : agent.parentAgentIds
       ) as any;
-      await prisma.agents.update({
+      await prisma.users.update({
         where: {
+          type: "agent",
           id: agentChildren[i].id
         },
         data: {
@@ -314,8 +288,11 @@ export const update = async ({
           currencyId: currency?.id
         }
       }),
-      prisma.agents.update({
-        where: { id: agentId },
+      prisma.users.update({
+        where: { 
+          type: "agent", 
+          id: agentId 
+        },
         data: {
           rate,
           parentAgentIds: parentAgent

@@ -59,7 +59,7 @@ async function main() {
     ]
   });
   for (let i = 1; i <= 400; i++) {
-    await prisma.users.create({
+    const user = await prisma.users.create({
       data: {
         name: faker.person.fullName(),
         username: `user.master.${String(i)}`,
@@ -70,41 +70,36 @@ async function main() {
         currencyId: 1
       }
     });
-    if (i % 2 !== 0) {
-      await prisma.agents.create({
-        data: {
-          id: i,
-          level: i === 1 ? 1 : 2,
-          parentAgentIds: i === 1 ? [] : [1]
-        }
-      });
-
+    if(user.type === "player") {
       await prisma.users.update({
         where: {
-          id: i
-        },
-        data: {
-          parentAgentId: 1
-        }
-      });
-
-      await prisma.agentVendor.create({
-        data: {
-          agentId: i,
-          vendorId: 1
-        }
-      });
-    } else {
-      await prisma.users.update({
-        where: {
-          id: i
+          id: user.id
         },
         data: {
           parentAgentId: i - 1
         }
       });
+    } else {
+    
+    await prisma.users.update({
+      where: {
+        id: user.id
+      },
+      data: {
+        id: user.id,
+        parentAgentId: 1,
+        level: i === 1 ? 1 : 2,
+        parentAgentIds: i === 1 ? [] : [1]
+      }
+    }); 
 
-    }
+    await prisma.agentVendor.create({
+      data: {
+        agentId: user.id,
+        vendorId: 1
+      }
+    });
+    } 
   }
 }
 

@@ -1,8 +1,7 @@
 import { getAffiliatedAgentsByUserId } from '../controllers/userController/utilities.js';
 import {
   Prisma,
-  PrismaClient,
-  Users
+  PrismaClient 
 } from '../config/prisma/generated/base-default/index.js';
 const prisma = new PrismaClient();
 import { PrismaClient as PrismaClientTransaction } from '../config/prisma/generated/transactions/index.js';
@@ -27,35 +26,31 @@ export const getAllWithBalance = async (query: any, userId: number) => {
       agentId?: number;
     } = query;
 
-    const rawQuery = `SELECT * FROM
-    (SELECT id, name, email, username, type, balance, currencyId, isActive, updatedAt FROM Users users WHERE deletedAt IS NULL) AS users JOIN
-    (SELECT players.parentAgentId, players.id, agents.parentAgentIds FROM Users players JOIN Agents agents ON agents.id = players.agentId 
-      WHERE ( JSON_CONTAINS(agents.parentAgentIds, JSON_ARRAY(${userId})) 
-      OR players.parentAgentId = ${userId})) 
-      AS players ON players.id = users.id 
-    WHERE 1=1
-    ${agentId ? `AND players.parentAgentId = ${agentId}` : ``}
+    const rawQuery = `SELECT id, name, email, username, type, balance, currencyId, isActive, updatedAt, parentAgentIds, parentAgentId AS agentId FROM Users users 
+    WHERE deletedAt IS NULL AND (JSON_CONTAINS(parentAgentIds, JSON_ARRAY(${userId}))) 
+    OR parentAgentId = ${userId} AND type = 'player' 
+    ${agentId ? `AND parentAgentId = ${agentId}` : ``}
     ${
       search
         ? `AND (
-        users.name LIKE '%${search}%' OR
-        users.username LIKE '%${search}%' OR
-        users.email LIKE '%${search}%'
+        name LIKE '%${search}%' OR
+        username LIKE '%${search}%' OR
+        email LIKE '%${search}%'
       )`
         : ``
     }
     ${
       dateFrom && dateTo
         ? `AND (
-      users.updatedAt >= ${dateFrom} OR ${dateFrom} IS NULL
-      AND users.updatedAt <= ${dateTo} OR ${dateTo} IS NULL
+      updatedAt >= ${dateFrom} OR ${dateFrom} IS NULL
+      AND updatedAt <= ${dateTo} OR ${dateTo} IS NULL
     )`
         : ``
     }
-    ORDER BY users.updatedAt DESC
+    ORDER BY updatedAt DESC
     LIMIT ${size} OFFSET ${page * size}
-    `;
-
+    `; 
+    console.log(rawQuery)
     const users = (await prisma.$queryRawUnsafe(`${rawQuery}`)) as any;
 
     const winGame = await _getSumTransaction('win', 'receiverUsername');
@@ -229,7 +224,7 @@ export const getById = async (id: number) => {
             code:true,
           }
         },
-        parentAgent: true,
+        parentAgentId: true,
         role: {
           select: {
             name: true,
@@ -250,18 +245,16 @@ export const getPlayerById = async (id: number, userId: number) => {
     const user = (await prisma.users.findUnique({
       where: {
         id: Number(userId),
-        parentAgent: {
-          OR: [
-            {
-              id: Number(id)
-            },
-            { 
-              parentAgentIds: {
-                array_contains: [Number(id)]
-              } 
-            }
-          ]
-        }
+        OR: [
+          {
+            id: Number(id)
+          },
+          { 
+            parentAgentIds: {
+              array_contains: [Number(id)]
+            } 
+          }
+        ]
       },
       select: {
         id: true,
@@ -281,7 +274,7 @@ export const getPlayerById = async (id: number, userId: number) => {
             name: true
           }
         },
-        parentAgent: true
+        parentAgentId: true
       }
     })) as any;
 
@@ -309,8 +302,8 @@ export const getUserProfile = async (userId: number) => {
       SELECT * FROM
         (SELECT id, balance, name, type, username, currencyId FROM Users WHERE id = ${userId}) AS USER LEFT JOIN
         (SELECT id, name AS currencyName, code AS currencyCode FROM Currencies WHERE deletedAt IS NULL) AS Currency ON Currency.id = USER.currencyId LEFT JOIN
-        (SELECT COUNT(id) AS subAgent, parentAgentId FROM Agents WHERE parentAgentId = ${userId} GROUP BY parentAgentId) AS subAgent ON subAgent.parentAgentId = User.id LEFT JOIN
-        (SELECT COUNT(id) AS players, parentAgentId FROM Users WHERE agentId = ${userId} AND type = 'player' GROUP BY parentAgentId) AS players ON players.agentId = User.id
+        (SELECT COUNT(id) AS subAgent, parentAgentId FROM Users WHERE parentAgentId = ${userId} AND type = 'agent' GROUP BY parentAgentId) AS subAgent ON subAgent.parentAgentId = User.id LEFT JOIN
+        (SELECT COUNT(id) AS players, parentAgentId FROM Users WHERE parentAgentId = ${userId} AND type = 'player' GROUP BY parentAgentId) AS player ON player.parentAgentId = User.id
     `) as any;
 
     return data;
@@ -326,20 +319,7 @@ export const getDashboardData = async (userId: number) => {
         id: userId,
         deletedAt: null,
         isActive: true
-      },
-      include: {
-        parentAgent: { 
-          select: {
-            user: {
-              select: {
-                username: true,
-                name: true
-              }
-            },
-            parentAgentIds: true 
-          } 
-        }
-      }
+      } 
     })) as any;
 
     const {affiliatedAgents, affiliatedUsernames} = await getAffiliatedAgentsByUserId(userId);
@@ -420,25 +400,15 @@ export const getAllByAgentId = async (query: any, id: number) => {
       },
       where: {
         deletedAt: null,
-        AND: {
-          OR: [
-            {
-              parentAgent: {
-                OR: [
-                  {
-                    id: Number(id)
-                  },
-                  {
-                    parentAgentIds: {
-                      array_contains: [Number(id)]
-                    }
-                  }
-                ]
-              }
-            }
-          ]
-        },
         OR: [
+          {
+            id: Number(id)
+          },
+          {
+            parentAgentIds: {
+              array_contains: [Number(id)]
+            }
+          },
           {
             name: {
               contains: search
@@ -449,7 +419,7 @@ export const getAllByAgentId = async (query: any, id: number) => {
               contains: search
             }
           }
-        ]
+        ] 
       },
       orderBy: {
         updatedAt: 'desc'

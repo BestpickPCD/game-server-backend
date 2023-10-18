@@ -130,6 +130,7 @@ export const login = async (req: Request, res: Response): Promise<any> => {
     // Neither user nor agent exists with the given username
     return res.status(400).json({ message: message.NOT_FOUND });
   } catch (error) {
+    console.log(error)
     res.status(500).json({ message: message.INTERNAL_SERVER_ERROR });
   }
 };
@@ -235,9 +236,11 @@ const _agentInsert = async (
   try {
     const newUser: any = await _userInsert(userSchema);
     const details: any = await getParentAgentIdsByParentAgentId(newUser.parentAgentId);
-    const userInsert = (await prisma.agents.create({
-      data: {
+    const userInsert = (await prisma.users.update({
+      where: {
         id: newUser.id,
+      },
+      data: {
         rate: userSchema?.rate ?? 0,
         parentAgentIds: details.parentAgentIds,
         level: details.level

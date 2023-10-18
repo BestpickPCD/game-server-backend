@@ -114,12 +114,8 @@ export const addTransaction = async (
             username: String(receiverUsername)
           },
           select: {
-            id: true,
-            parentAgent: {
-              select: {
-                parentAgentIds: true
-              }
-            }
+            id: true, 
+            parentAgentIds: true
           }
         });
 

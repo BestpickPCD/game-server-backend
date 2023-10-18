@@ -357,7 +357,7 @@ const _updateAgent = async (
         .json({ message: 'Parent agent cannot be yourself' });
     }
     const details: any = await getParentAgentIdsByParentAgentId(parentAgentId);
-    const agent = await prisma.agents.update({
+    const agent = await prisma.users.update({
       where: { id: user.id },
       data: {
         parentAgentIds: details.parentAgentIds,
@@ -411,11 +411,7 @@ export const checkUser = async (req: Request, res: Response) => {
         id: true,
         type: true,
         name: true,
-        parentAgent: {
-          select: {
-            id: true
-          }
-        },
+        parentAgentId: true
       },
       where: {
         id: Number(req.body.id)

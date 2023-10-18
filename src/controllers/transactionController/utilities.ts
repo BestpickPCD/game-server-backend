@@ -9,9 +9,9 @@ export const checkTransferAbility = async (
 ): Promise<any> => {
   let result = false;
   const reveiver = (await prisma.$queryRawUnsafe(` SELECT Users.username FROM 
-    ( SELECT Users.username, Agents.parentAgentId AS agentId FROM Users JOIN Agents ON Agents.id = Users.id WHERE Users.type = "agent" AND Users.username = "${receiverUsername}"
+    ( SELECT username, parentAgentId AS agentId FROM Users WHERE type = "agent" AND username = "${receiverUsername}"
       UNION
-      SELECT Users.username, Players.agentId FROM Users JOIN Players ON Players.id = Users.id WHERE Users.type = "player" AND Users.username = "${receiverUsername}"
+      SELECT username, parentAgentId AS agentId FROM Users WHERE type = "player" AND username = "${receiverUsername}"
     ) AS Agent
     JOIN Users ON Users.id = Agent.agentId
   `)) as any;

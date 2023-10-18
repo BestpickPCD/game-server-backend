@@ -8,10 +8,7 @@ export const getAgentByPlayerId = async (
     const player: Users | null = await prisma.users.findUnique({
       where: {
         deletedAt: null,
-        id: playerId,
-        parentAgent: {
-          deletedAt: null
-        }
+        id: playerId, 
       }
     });
 

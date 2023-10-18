@@ -26,31 +26,39 @@ export const getAllWithBalance = async (query: any, userId: number) => {
       agentId?: number;
     } = query;
 
-    const rawQuery = `SELECT id, name, email, username, type, balance, currencyId, isActive, updatedAt, parentAgentIds, parentAgentId AS agentId FROM Users users 
-    WHERE deletedAt IS NULL AND (JSON_CONTAINS(parentAgentIds, JSON_ARRAY(${userId}))) 
-    OR parentAgentId = ${userId} AND type = 'player' 
-    ${agentId ? `AND parentAgentId = ${agentId}` : ``}
+    const rawQuery = `SELECT users.id, users.name, users.email, users.username, users.type, users.balance, users.currencyId, users.isActive, users.updatedAt, users.parentAgentIds, parentAgentId AS agentId
+    FROM Users users
+    WHERE
+      users.deletedAt IS NULL
+      AND users.type = 'player'
+      AND (users.parentAgentId IN (
+        SELECT id
+        FROM Users
+        WHERE TYPE = 'agent'
+          AND JSON_CONTAINS(parentAgentIds, JSON_ARRAY(${userId}))
+      )OR users.parentAgentId = ${userId})
+    ${agentId ? `AND agent.id = ${agentId}` : ``}
     ${
       search
         ? `AND (
-        name LIKE '%${search}%' OR
-        username LIKE '%${search}%' OR
-        email LIKE '%${search}%'
+        users.name LIKE '%${search}%' OR
+        users.username LIKE '%${search}%' OR
+        users.email LIKE '%${search}%'
       )`
         : ``
     }
     ${
       dateFrom && dateTo
         ? `AND (
-      updatedAt >= ${dateFrom} OR ${dateFrom} IS NULL
-      AND updatedAt <= ${dateTo} OR ${dateTo} IS NULL
+      users.updatedAt >= ${dateFrom} OR ${dateFrom} IS NULL
+      AND users.updatedAt <= ${dateTo} OR ${dateTo} IS NULL
     )`
         : ``
     }
-    ORDER BY updatedAt DESC
+    ORDER BY users.updatedAt DESC
     LIMIT ${size} OFFSET ${page * size}
     `; 
-    console.log(rawQuery)
+    
     const users = (await prisma.$queryRawUnsafe(`${rawQuery}`)) as any;
 
     const winGame = await _getSumTransaction('win', 'receiverUsername');

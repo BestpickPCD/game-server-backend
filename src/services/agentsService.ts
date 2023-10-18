@@ -59,11 +59,11 @@ export const getAll = async ({
         createdAt: true,
         updatedAt: true,
         balance: true,
-        Agents: {
+        parentAgent: {
           select: {
             rate: true,
             level: true,
-            parentAgent: {
+            user: {
               select: {
                 name: true,
                 id: true
@@ -75,7 +75,7 @@ export const getAll = async ({
       where: {
         deletedAt: null,
         type: 'agent',
-        Agents: {
+        parentAgent: {
           parentAgentIds: {
             array_contains: [id] as number[]
           },
@@ -129,11 +129,11 @@ export const getById = async ({ id, userId }: AgentsParams): Promise<any> => {
         createdAt: true,
         updatedAt: true,
         balance: true,
-        Agents: {
+        parentAgent: {
           select: {
             level: true,
             rate: true,
-            parentAgent: {
+            user: {
               select: {
                 name: true,
                 id: true
@@ -146,7 +146,7 @@ export const getById = async ({ id, userId }: AgentsParams): Promise<any> => {
         id,
         deletedAt: null,
         type: 'agent',
-        Agents: {
+        parentAgent: {
           parentAgentIds: {
             array_contains: [userId] as number[]
           }
@@ -168,7 +168,6 @@ const getAgentById = async (agentId: number): Promise<any> => {
       select: {
         parentAgentIds: true,
         level: true,
-        parentAgentId: true,
         user: {
           select: {
             currencyId: true,
@@ -306,25 +305,25 @@ export const update = async ({
       });
 
     const [updatedAgent] = await prisma.$transaction([
+      prisma.users.update({
+        where: { id: agentId },
+        data: {
+          parentAgentId: parentAgentId || agent.parentAgentId,
+          name,
+          roleId: role?.id,
+          currencyId: currency?.id
+        }
+      }),
       prisma.agents.update({
         where: { id: agentId },
         data: {
           rate,
-          parentAgentId: parentAgentId || agent.parentAgentId,
           parentAgentIds: parentAgent
             ? (updatedAgentParentIds as any)
             : agent.parentAgentIds,
           level: parentAgent
             ? (updatedAgentParentIds as any)?.length + 1
             : agent.level
-        }
-      }),
-      prisma.users.update({
-        where: { id: agentId },
-        data: {
-          name,
-          roleId: role?.id,
-          currencyId: currency?.id
         }
       })
     ]);

@@ -12,10 +12,12 @@ export default {
               type: 'object',
               properties: {
                 username: {
-                  type: 'string'
+                  type: 'string',
+                  default: 'user.master.1'
                 },
                 password: {
-                  type: 'string'
+                  type: 'string',
+                  default: 'user.master.1'
                 }
               },
               required: ['username', 'password']

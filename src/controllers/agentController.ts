@@ -116,8 +116,7 @@ export const updateAgent = async (req: Request, res: Response) => {
     data: {
       id: updatedAgent.id,
       rate,
-      level: updatedAgent.level,
-      parentAgentIds: updatedAgent.parentAgentIds,
+      details: updatedAgent,
       name
     },
     message: message.UPDATED

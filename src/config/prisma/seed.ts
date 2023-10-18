@@ -75,8 +75,16 @@ async function main() {
         data: {
           id: i,
           level: i === 1 ? 1 : 2,
-          parentAgentId: i === 1 ? null : 1,
           parentAgentIds: i === 1 ? [] : [1]
+        }
+      });
+
+      await prisma.users.update({
+        where: {
+          id: i
+        },
+        data: {
+          parentAgentId: 1
         }
       });
 
@@ -87,9 +95,15 @@ async function main() {
         }
       });
     } else {
-      await prisma.players.create({
-        data: { id: i, agentId: i - 1 }
+      await prisma.users.update({
+        where: {
+          id: i
+        },
+        data: {
+          parentAgentId: i - 1
+        }
       });
+
     }
   }
 }

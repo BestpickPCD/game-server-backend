@@ -29,12 +29,12 @@ export const getAllWithBalance = async (query: any, userId: number) => {
 
     const rawQuery = `SELECT * FROM
     (SELECT id, name, email, username, type, balance, currencyId, isActive, updatedAt FROM Users users WHERE deletedAt IS NULL) AS users JOIN
-    (SELECT players.agentId, players.id, agents.parentAgentIds FROM Players players JOIN Agents agents ON agents.id = players.agentId 
+    (SELECT players.parentAgentId, players.id, agents.parentAgentIds FROM Users players JOIN Agents agents ON agents.id = players.agentId 
       WHERE ( JSON_CONTAINS(agents.parentAgentIds, JSON_ARRAY(${userId})) 
-      OR players.agentId = ${userId})) 
+      OR players.parentAgentId = ${userId})) 
       AS players ON players.id = users.id 
     WHERE 1=1
-    ${agentId ? `AND players.agentId = ${agentId}` : ``}
+    ${agentId ? `AND players.parentAgentId = ${agentId}` : ``}
     ${
       search
         ? `AND (
@@ -109,7 +109,7 @@ export const getAll = async (query: any, id: number) => {
       agentId?: number;
     } = query;
 
-    const filter: Prisma.PlayersFindManyArgs = {
+    const filter: any = {
       select: {
         id: true,
         agentId: true,
@@ -194,10 +194,10 @@ export const getAll = async (query: any, id: number) => {
     };
 
     const [totalItems, data] = await prisma.$transaction([
-      prisma.players.count({
+      prisma.users.count({
         where: filter.where
       }),
-      prisma.players.findMany(filter)
+      prisma.users.findMany(filter)
     ]);
 
     return { data, totalItems, page, size };
@@ -236,18 +236,6 @@ export const getById = async (id: number) => {
             id: true
           }
         },
-        Agents: {
-          select: {
-            parentAgent: {
-              select: {
-                id: true,
-                name: true,
-                username: true
-              }
-            },
-            parentAgentIds: true
-          }
-        }
       }
     })) as any;
 
@@ -262,17 +250,15 @@ export const getPlayerById = async (id: number, userId: number) => {
     const user = (await prisma.users.findUnique({
       where: {
         id: Number(userId),
-        Players: {
+        parentAgent: {
           OR: [
             {
-              agentId: Number(id)
+              id: Number(id)
             },
-            {
-              agent: {
-                parentAgentIds: {
-                  array_contains: [Number(id)]
-                }
-              }
+            { 
+              parentAgentIds: {
+                array_contains: [Number(id)]
+              } 
             }
           ]
         }
@@ -295,16 +281,7 @@ export const getPlayerById = async (id: number, userId: number) => {
             name: true
           }
         },
-        Players: {
-          select: {
-            agent: {
-              select: {
-                id: true,
-                user: true
-              }
-            }
-          }
-        }
+        parentAgent: true
       }
     })) as any;
 
@@ -333,7 +310,7 @@ export const getUserProfile = async (userId: number) => {
         (SELECT id, balance, name, type, username, currencyId FROM Users WHERE id = ${userId}) AS USER LEFT JOIN
         (SELECT id, name AS currencyName, code AS currencyCode FROM Currencies WHERE deletedAt IS NULL) AS Currency ON Currency.id = USER.currencyId LEFT JOIN
         (SELECT COUNT(id) AS subAgent, parentAgentId FROM Agents WHERE parentAgentId = ${userId} GROUP BY parentAgentId) AS subAgent ON subAgent.parentAgentId = User.id LEFT JOIN
-        (SELECT COUNT(id) AS players, agentId FROM Players WHERE agentId = ${userId} GROUP BY agentId) AS players ON players.agentId = User.id
+        (SELECT COUNT(id) AS players, parentAgentId FROM Users WHERE agentId = ${userId} AND type = 'player' GROUP BY parentAgentId) AS players ON players.agentId = User.id
     `) as any;
 
     return data;
@@ -351,16 +328,16 @@ export const getDashboardData = async (userId: number) => {
         isActive: true
       },
       include: {
-        Agents: {
+        parentAgent: { 
           select: {
-            parentAgent: {
+            user: {
               select: {
                 username: true,
                 name: true
               }
             },
-            parentAgentIds: true
-          }
+            parentAgentIds: true 
+          } 
         }
       }
     })) as any;
@@ -446,7 +423,7 @@ export const getAllByAgentId = async (query: any, id: number) => {
         AND: {
           OR: [
             {
-              Agents: {
+              parentAgent: {
                 OR: [
                   {
                     id: Number(id)
@@ -454,22 +431,6 @@ export const getAllByAgentId = async (query: any, id: number) => {
                   {
                     parentAgentIds: {
                       array_contains: [Number(id)]
-                    }
-                  }
-                ]
-              }
-            },
-            {
-              Players: {
-                OR: [
-                  {
-                    agentId: Number(id)
-                  },
-                  {
-                    agent: {
-                      parentAgentIds: {
-                        array_contains: [Number(id)]
-                      }
                     }
                   }
                 ]

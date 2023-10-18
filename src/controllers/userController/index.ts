@@ -136,6 +136,7 @@ export const updateUser = async (req: Request, res: Response): Promise<any> => {
       ...(email && { email }),
       ...(roleId && { roleId }),
       ...(currencyId && { currencyId }),
+      ...(parentAgentId && { parentAgentId }),
       ...(accountNumber && { accountNumber }),
       ...(callbackUrl && { callbackUrl }),
       ...(apiCall && { apiCall })
@@ -149,10 +150,10 @@ export const updateUser = async (req: Request, res: Response): Promise<any> => {
     // await Redis.del(redisKey);
     // await Redis.del(redisKeyWithId);
     if(parentAgentId || agentId) {
-      if (newUser && newUser.type == 'player') {
-        return _updatePlayer(newUser, agentId, res);
-      } else if (newUser && newUser.type == 'agent') {
+      if (newUser && newUser.type == 'agent') {
         return _updateAgent(newUser, parentAgentId, res);
+      } else if (newUser && newUser.type == 'player') {
+        return res.status(404).json({ message: message.SUCCESS });
       }
       return res.status(404).json({ message: message.USER_TYPE_NOT_FOUND });
     }
@@ -199,7 +200,7 @@ export const updatePassword = async (req: Request, res: Response): Promise<any> 
 
     } else if(user && password && oldPassword && passwordConfirm) {
 
-      const isValid = await bcrypt.compare(oldPassword, user.password);
+      const isValid = await bcrypt.compare(oldPassword, (user as any).password);
 
       if(isValid && password == passwordConfirm) {
 
@@ -359,25 +360,11 @@ const _updateAgent = async (
     const agent = await prisma.agents.update({
       where: { id: user.id },
       data: {
-        parentAgentId,
         parentAgentIds: details.parentAgentIds,
         level: details.level
       }
     });
     return res.status(200).json({ message: message.SUCCESS, data: agent });
-  } catch (error) {
-    console.log(error);
-    return res.status(500).json({ message: 'Internal server error' });
-  }
-};
-
-const _updatePlayer = async (user: any, agentId: number, res: Response) => {
-  try {
-    const player = await prisma.players.update({
-      where: { id: user.id },
-      data: { agentId }
-    });
-    return res.status(200).json({ data: player, message: message.UPDATED });
   } catch (error) {
     console.log(error);
     return res.status(500).json({ message: 'Internal server error' });
@@ -424,27 +411,11 @@ export const checkUser = async (req: Request, res: Response) => {
         id: true,
         type: true,
         name: true,
-        Agents: {
+        parentAgent: {
           select: {
             id: true
           }
         },
-        Players: {
-          select: {
-            id: true,
-            agentId: true,
-            agent: {
-              select: {
-                user: {
-                  select: {
-                    name: true,
-                    id: true
-                  }
-                }
-              }
-            }
-          }
-        }
       },
       where: {
         id: Number(req.body.id)

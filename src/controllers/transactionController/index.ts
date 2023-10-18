@@ -115,17 +115,7 @@ export const addTransaction = async (
           },
           select: {
             id: true,
-            Players: {
-              select: {
-                agent: {
-                  select: {
-                    id: true,
-                    user: true
-                  }
-                }
-              }
-            },
-            Agents: {
+            parentAgent: {
               select: {
                 parentAgentIds: true
               }
@@ -235,23 +225,17 @@ export const landingPage = async (_: Request, res: Response): Promise<any> => {
 
 export const getBetLimitations = async (req:Request, res: Response) => {
   try {
-    let filter: any
     const { id: userId } = (req as any).user;
     const { page, size, search, type } = req.query
 
-    filter.agentId = userId
-    if(type) {
-      filter.type = type 
-    } else if(page) {
-      filter.page = page 
-    } else if(size) {
-      filter.size = size 
-    } else if(search) {
-      filter.search = search 
+    const filter = {
+      agentId: userId,
+      type: type,
+      page: page,
+      size: size,
+      search: search,
     }
 
-    console.log(filter)
-    
     const betLimits = await prisma.transactionLimits.findMany({
       where: filter
     }) as TransactionLimits[]

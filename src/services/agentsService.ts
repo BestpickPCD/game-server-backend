@@ -60,13 +60,15 @@ export const getAll = async ({
         balance: true,
         rate: true,
         level: true,
+        parent: true,
+        parentAgentId: true
       },
       where: {
         deletedAt: null,
         type: 'agent',
-        parentAgentIds: {
-          array_contains: [id] as number[]
-        },
+        // parentAgentIds: {
+        //   array_contains: [id] as number[]
+        // },
         ...(level && { level }),
         OR: [
           {
@@ -90,7 +92,7 @@ export const getAll = async ({
       },
       skip: page * size,
       take: size
-    }; 
+    };
 
     const [users, totalItems] = await prisma.$transaction([
       prisma.users.findMany(filter),
@@ -117,16 +119,16 @@ export const getById = async ({ id, userId }: AgentsParams): Promise<any> => {
         updatedAt: true,
         balance: true,
         level: true,
-        rate: true,
+        rate: true
       },
       where: {
         id,
         deletedAt: null,
-        type: 'agent', 
+        type: 'agent',
         parentAgentIds: {
           array_contains: [userId] as number[]
         }
-      } 
+      }
     });
     if (!agent) {
       throw Error(NOT_FOUND);
@@ -231,7 +233,7 @@ const updateChildAgent = async ({
 }) => {
   const agentChildren: Users[] = await prisma.users.findMany({
     where: {
-      type: "agent",
+      type: 'agent',
       parentAgentIds: {
         array_contains: [agentId]
       }
@@ -249,7 +251,7 @@ const updateChildAgent = async ({
       ) as any;
       await prisma.users.update({
         where: {
-          type: "agent",
+          type: 'agent',
           id: agentChildren[i].id
         },
         data: {
@@ -289,9 +291,9 @@ export const update = async ({
         }
       }),
       prisma.users.update({
-        where: { 
-          type: "agent", 
-          id: agentId 
+        where: {
+          type: 'agent',
+          id: agentId
         },
         data: {
           rate,

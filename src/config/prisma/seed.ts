@@ -70,7 +70,7 @@ async function main() {
         currencyId: 1
       }
     });
-    if(user.type === "player") {
+    if (user.type === 'player') {
       await prisma.users.update({
         where: {
           id: user.id
@@ -80,26 +80,25 @@ async function main() {
         }
       });
     } else {
-    
-    await prisma.users.update({
-      where: {
-        id: user.id
-      },
-      data: {
-        id: user.id,
-        parentAgentId: 1,
-        level: i === 1 ? 1 : 2,
-        parentAgentIds: i === 1 ? [] : [1]
-      }
-    }); 
+      await prisma.users.update({
+        where: {
+          id: user.id
+        },
+        data: {
+          id: user.id,
+          parentAgentId: 1,
+          level: i === 1 ? 1 : 2,
+          parentAgentIds: i === 1 ? [] : [1]
+        }
+      });
 
-    await prisma.agentVendor.create({
-      data: {
-        agentId: user.id,
-        vendorId: 1
-      }
-    });
-    } 
+      await prisma.agentVendor.create({
+        data: {
+          agentId: user.id,
+          vendorId: 1
+        }
+      });
+    }
   }
 }
 

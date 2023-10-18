@@ -30,15 +30,6 @@ const message = {
 const getUserId = (req: Request) =>
   Number((req as any).user.id || (req as any).user[0].id);
 
-const defaultKey = 'agents';
-
-const removedKey = (req: Request | number) => {
-  if (typeof req === 'number') {
-    return `${defaultKey}:${req}`;
-  }
-  return `${defaultKey}:${getUserId(req)}`;
-};
-
 export const getAllAgents = async (req: Request, res: Response) => {
   const {
     page = 0,
@@ -49,29 +40,22 @@ export const getAllAgents = async (req: Request, res: Response) => {
     dateTo
   }: AgentParams = req.query;
   const id = getUserId(req);
-  // const redisKey = `${defaultKey}:${id}:${id}:${page}:${size}:${search}:${level}:${dateFrom}:${dateTo}`;
-  // let data: any;
-  // const redisData = await Redis.get(redisKey);
-  // if (!redisData) {
-    const { users, totalItems } = await getAll({
-      id: Number(id),
-      level: Number(level),
-      page: Number(page),
-      size: Number(size),
-      search,
-      dateFrom,
-      dateTo
-    });
-    const data = {
-      data: users,
-      page: Number(page),
-      size: Number(size),
-      totalItems
-    };
-  //   await Redis.setex(redisKey, 300, JSON.stringify(data));
-  // } else {
-  //   data = { ...JSON.parse(redisData) };
-  // }
+
+  const { users, totalItems } = await getAll({
+    id: Number(id),
+    level: Number(level),
+    page: Number(page),
+    size: Number(size),
+    search,
+    dateFrom,
+    dateTo
+  });
+  const data = {
+    data: users,
+    page: Number(page),
+    size: Number(size),
+    totalItems
+  };
   return new OK({ data, message: message.GET_ALL }).send(res);
 };
 
@@ -81,19 +65,11 @@ export const getAgentById = async (req: Request, res: Response) => {
     throw new BAD_REQUEST(message.INVALID_ID);
   }
   const userId = getUserId(req);
-  // const redisKey = `${defaultKey}:${userId}:${id}`;
-  // let data: any;
-  // const redisData = await Redis.get(redisKey);
-  // if (!redisData) {
-    const agent = await getById({
-      id: Number(id),
-      userId
-    });
-    const data = agent;
-  //   await Redis.setex(redisKey, 300, JSON.stringify({ data: agent }));
-  // } else {
-  //   data = { ...JSON.parse(redisData) };
-  // }
+  const agent = await getById({
+    id: Number(id),
+    userId
+  });
+  const data = agent;
   return new OK({ data, message: message.GET_BY_ID }).send(res);
 };
 
@@ -110,8 +86,6 @@ export const updateAgent = async (req: Request, res: Response) => {
     name
   });
 
-  // await removeRedisKeys(removedKey(req));
-  // await removeRedisKeys(removedKey(agentId));
   return new UPDATED({
     data: {
       id: updatedAgent.id,
@@ -130,8 +104,6 @@ export const deleteAgent = async (req: Request, res: Response) => {
     throw new BAD_REQUEST(message.INVALID_ID);
   }
   await deleteAgentService(id, userId);
-  // await removeRedisKeys(removedKey(req));
-  // await removeRedisKeys(removedKey(id));
+
   return new DELETED({ message: message.DELETED }).send(res);
 };
- 

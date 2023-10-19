@@ -130,7 +130,7 @@ export const getDetailsById = async (id: string, userId: number) => {
         status: true,
         updatedAt: true,
         createdAt: true,
-        currencyId: true
+        currencyCode: true
       },
       where: filterOr
     });

@@ -49,119 +49,25 @@ export const addTransaction = async (
   res: Response
 ): Promise<any> => {
   try {
-    const {
-      receiverUsername,
-      type,
-      note,
-      token,
-      status,
-      amount,
-      currencyId,
-      gameId
-    } = req.body;
-    const senderUsername =
-      req.body.senderUsername ?? (req as any).user.username;
+    const { id: userSessionId, parentAgentId: userSessionAgentId } = req.user as Users;
+    const { userId, amount, type } = req.body
 
-    if (senderUsername && receiverUsername) {
-      if (!(await checkTransferAbility(senderUsername, receiverUsername))) {
-        return res
-          .status(500)
-          .json({ message: `The transfer cannot be made.` });
-      }
-    }
+    await prismaTransaction.transactions.create(data)
 
-    const data: any = {
-      type,
-      note,
-      token,
-      status,
-      amount: parseFloat(amount),
-      gameId
-    };
-    const sender = await prisma.users.findUnique({
-      where: {
-        id: (req as any).user.id
-      }
-    });
-    if ((sender as Users).type == 'player' && type == 'add') {
-      throw Error(
-        JSON.stringify({
-          message: message.INVALID,
-          subMessage: 'Users cannot add or transfer money'
-        })
-      );
-    }
-    if (currencyId) {
-      const currency = await prisma.currencies.findUnique({
-        where: {
-          id: currencyId
-        }
-      });
-      if (!currency) {
-        throw Error(
-          JSON.stringify({
-            message: message.NOT_FOUND,
-            subMessage: 'Currency not found'
-          })
-        );
-      }
-    }
-    //*: check receiverId is our child player or child agent (done)
-    if (checkTransactionType(type)) {
-      if (receiverUsername) {
-        const user = await prisma.users.findUnique({
-          where: {
-            username: String(receiverUsername)
-          },
-          select: {
-            id: true,
-            parentAgentIds: true
-          }
-        });
-
-        if (!user) {
-          throw Error(
-            JSON.stringify({
-              message: message.NOT_FOUND,
-              subMessage: 'User not found'
-            })
-          );
-        }
-      }
-
-      try {
-        await prismaTransaction.transactions.create({
-          data: {
-            ...data,
-            currencyId,
-            updateUserUsername: String(req?.user?.username),
-            ...(senderUsername && { senderUsername }),
-            ...(receiverUsername && { receiverUsername })
-          }
-        });
-        const redisKey = 'transactions';
-        await Redis.del(redisKey);
-        await Redis.del(`${redisKey}-${req?.user?.id}`);
-        if (senderUsername) {
-          await updateBalance(senderUsername);
-        }
-        if (receiverUsername) {
-          await updateBalance(receiverUsername);
-        }
-
-        return res
-          .status(201)
-          .json({ message: 'Transaction created successfully' });
-      } catch (error) {
-        console.log(error);
-      }
-    }
-    throw Error(
-      JSON.stringify({
-        message: message.NOT_FOUND,
-        subMessage: 'Invalid transaction type'
-      })
-    );
+    // if (senderUsername && receiverUsername) {
+    //   if (!(await checkTransferAbility(senderUsername, receiverUsername))) {
+    //     return res
+    //       .status(500)
+    //       .json({ message: `The transfer cannot be made.` });
+    //   }
+    // }
+    // await updateBalance(senderUsername);
+    // checkTransactionType(type)
+ 
+    return res
+      .status(201)
+      .json({ message: 'Transaction created successfully' });
+ 
   } catch (error) {
     console.log(error);
     return res

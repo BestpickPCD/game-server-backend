@@ -10,11 +10,12 @@ datasource db {
 
 model Transactions {
   id    String @id @default(auto()) @map("_id") @db.ObjectId
-  senderUsername     String?
-  receiverUsername   String?
+  userId String?
+  agentId String?
+  type         String
+  method       String?
   gameId       String?
   updateUserUsername String?
-  type         String
   amount       Float     @default(0.0)
   note         String?
   token        String?

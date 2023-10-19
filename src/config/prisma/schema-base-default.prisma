@@ -15,7 +15,7 @@ model Users {
   username       String    @unique
   password       String?
   type           String?
-  parentAgentId  Int?
+  parentAgentId  String  
   level          Int?
   parentAgentIds Json?
   balance        Decimal?  @default(0) @db.Decimal(10, 2)
@@ -32,6 +32,9 @@ model Users {
   updatedAt      DateTime? @updatedAt
   deletedAt      DateTime?
   lockedAt       DateTime?
+
+  parent    Users?     @relation("Children", fields: [parentAgentId], references: [id])
+  children  Users[]    @relation("Children")
 
   role     Roles?      @relation(fields: [roleId], references: [id])
   currency Currencies? @relation(fields: [currencyId], references: [id])

@@ -9,7 +9,7 @@ datasource db {
 }
 
 model Users {
-  id             Int       @id @default(autoincrement())
+  id             String       @id @default(uuid())
   name           String
   email          String?
   username       String    @unique
@@ -75,7 +75,7 @@ model Currencies {
 
 model ip_user {
   id        Int       @id @default(autoincrement())
-  userId    Int
+  userId    String
   createdAt DateTime  @default(now())
   updatedAt DateTime? @updatedAt
   deletedAt DateTime?
@@ -85,7 +85,7 @@ model ip_user {
 
 model AgentVendor {
   id        Int       @id @default(autoincrement())
-  agentId   Int
+  agentId   String
   vendorId  Int
   startDate DateTime?
   endDate   DateTime?
@@ -114,7 +114,7 @@ model Vendors {
 
 model TransactionLimits {
   id          Int       @id @default(autoincrement())
-  agentId     Int
+  agentId     String
   limitType   String
   limitTypeId String
   limit       Decimal?  @default(0) @db.Decimal(10, 2)

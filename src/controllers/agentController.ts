@@ -87,12 +87,7 @@ export const updateAgent = async (req: Request, res: Response) => {
   });
 
   return new UPDATED({
-    data: {
-      id: updatedAgent.id,
-      rate,
-      details: updatedAgent,
-      name
-    },
+    data: updatedAgent,
     message: message.UPDATED
   }).send(res);
 };

@@ -60,15 +60,20 @@ export const getAll = async ({
         balance: true,
         rate: true,
         level: true,
-        parent: true,
+        parent: {
+          select: {
+            name: true,
+            id: true
+          }
+        },
         parentAgentId: true
       },
       where: {
         deletedAt: null,
         type: 'agent',
-        // parentAgentIds: {
-        //   array_contains: [id] as number[]
-        // },
+        parentAgentIds: {
+          array_contains: [id] as number[]
+        },
         ...(level && { level }),
         OR: [
           {
@@ -119,7 +124,14 @@ export const getById = async ({ id, userId }: AgentsParams): Promise<any> => {
         updatedAt: true,
         balance: true,
         level: true,
-        rate: true
+        rate: true,
+        parentAgentId: true,
+        parent: {
+          select: {
+            name: true,
+            id: true
+          }
+        }
       },
       where: {
         id,
@@ -296,7 +308,7 @@ export const update = async ({
           id: agentId
         },
         data: {
-          rate,
+          rate: Number(rate),
           parentAgentIds: parentAgent
             ? (updatedAgentParentIds as any)
             : agent.parentAgentIds,

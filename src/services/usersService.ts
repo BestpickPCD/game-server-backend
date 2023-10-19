@@ -209,7 +209,7 @@ export const getAll = async (query: any, id: number) => {
   }
 };
 
-export const getById = async (id: number) => {
+export const getById = async (id: string) => {
   try {
     const user = (await prisma.users.findUnique({
       where: {
@@ -248,18 +248,18 @@ export const getById = async (id: number) => {
   }
 };
 
-export const getPlayerById = async (id: number, userId: number) => {
+export const getPlayerById = async (id: string, userId: string) => {
   try {
     const user = (await prisma.users.findUnique({
       where: {
-        id: Number(userId),
+        id: String(userId),
         OR: [
           {
-            id: Number(id)
+            id: String(id)
           },
           { 
             parentAgentIds: {
-              array_contains: [Number(id)]
+              array_contains: [String(id)]
             } 
           }
         ]
@@ -320,7 +320,7 @@ export const getUserProfile = async (userId: number) => {
   }
 };
 
-export const getDashboardData = async (userId: number) => {
+export const getDashboardData = async (userId: string) => {
   try {
     const item = (await prisma.users.findUnique({
       where: {
@@ -388,7 +388,7 @@ export const getDashboardData = async (userId: number) => {
   }
 };
 
-export const getAllByAgentId = async (query: any, id: number) => {
+export const getAllByAgentId = async (query: any, id: string) => {
   try {
     const {
       page = 0,
@@ -410,11 +410,11 @@ export const getAllByAgentId = async (query: any, id: number) => {
         deletedAt: null,
         OR: [
           {
-            id: Number(id)
+            id: String(id)
           },
           {
             parentAgentIds: {
-              array_contains: [Number(id)]
+              array_contains: [String(id)]
             }
           },
           {

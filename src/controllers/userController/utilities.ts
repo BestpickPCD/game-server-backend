@@ -4,7 +4,7 @@ import { PrismaClient as PrismaClientTransaction } from '../../config/prisma/gen
 const prismaTransaction = new PrismaClientTransaction();
 
 export const getParentAgentIdsByParentAgentId = async (
-  parentAgentId: number
+  parentAgentId: string
 ): Promise<any> => {
   const agent = (await prisma.users.findUnique({
     where: {
@@ -72,7 +72,7 @@ export const getBalanceSummariesByIds = async (
   return usersWithBalances;
 };
 
-export const getAffiliatedAgentsByUserId = async (userId: number) => {
+export const getAffiliatedAgentsByUserId = async (userId: string) => {
   try {
     const affiliatedAgents = (await prisma.$queryRaw`
       SELECT id, name, username, email

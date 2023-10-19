@@ -7,31 +7,31 @@ const prisma = new PrismaClient();
 
 const NOT_FOUND = 'Agent not found';
 interface AgentsParams {
-  id?: number;
+  id?: string;
   level?: number | null;
   page?: number;
   size?: number;
   search?: string;
   dateFrom?: string;
   dateTo?: string;
-  userId?: number;
+  userId?: string;
 }
 
 interface AgentUpdateParams {
-  agentId: number;
-  parentAgentId: number | null;
+  agentId: string;
+  parentAgentId: string | null;
   currencyId: number | null;
   roleId: number | null;
   rate?: number | null;
   name?: string;
 }
 
-const filterArrays = (a: any[], b: number[]) =>
+const filterArrays = (a: any[], b: string[]) =>
   a.filter((aItem) => !b.some((bItem) => aItem === bItem));
 
-const mergeArrays = (a: any[], b: number[]) => [...a, ...b];
+const mergeArrays = (a: any[], b: string[]) => [...a, ...b];
 
-const resultArray = (a: any[], b: number[], c: any[]) =>
+const resultArray = (a: any[], b: string[], c: any[]) =>
   mergeArrays(filterArrays(a, b), c);
 
 export const getAll = async ({
@@ -72,7 +72,7 @@ export const getAll = async ({
         deletedAt: null,
         type: 'agent',
         parentAgentIds: {
-          array_contains: [id] as number[]
+          array_contains: [id] as string[]
         },
         ...(level && { level }),
         OR: [
@@ -138,7 +138,7 @@ export const getById = async ({ id, userId }: AgentsParams): Promise<any> => {
         deletedAt: null,
         type: 'agent',
         parentAgentIds: {
-          array_contains: [userId] as number[]
+          array_contains: [userId] as string[]
         }
       }
     });
@@ -151,7 +151,7 @@ export const getById = async ({ id, userId }: AgentsParams): Promise<any> => {
   }
 };
 
-const getAgentById = async (agentId: number): Promise<any> => {
+const getAgentById = async (agentId: string): Promise<any> => {
   try {
     const agent = await prisma.users.findUnique({
       select: {
@@ -183,7 +183,7 @@ const validateUpdateData = async ({
   try {
     const agent = await getAgentById(agentId);
     const parentAgentIdNumber = parentAgentId
-      ? Number(parentAgentId)
+      ? parentAgentId
       : agent.parentAgentId;
     const currencyIdNumber = currencyId
       ? Number(currencyId)
@@ -239,7 +239,7 @@ const updateChildAgent = async ({
   agent,
   parentAgent
 }: {
-  agentId: number;
+  agentId: string;
   agent: Users;
   parentAgent: Users | null;
 }) => {
@@ -254,9 +254,9 @@ const updateChildAgent = async ({
 
   if (agentChildren.length > 0) {
     for (let i = 0; i < agentChildren.length; i++) {
-      const parentAgentIds: any[] = resultArray(
-        agentChildren[i]?.parentAgentIds as number[],
-        agent.parentAgentIds as number[],
+      const parentAgentIds: string[] = resultArray(
+        agentChildren[i]?.parentAgentIds as string[],
+        agent.parentAgentIds as string[],
         parentAgent
           ? ([...(parentAgent?.parentAgentIds as any), parentAgent.id] as any)
           : agent.parentAgentIds
@@ -325,7 +325,7 @@ export const update = async ({
   }
 };
 
-export const deleteAgent = async (id: number, userId: number) => {
+export const deleteAgent = async (id: string, userId: string) => {
   try {
     const users = await getById({ id, userId });
     if (!users) {

@@ -1,7 +1,7 @@
 import { getAffiliatedAgentsByUserId } from '../controllers/userController/utilities.js';
 import {
   Prisma,
-  PrismaClient 
+  PrismaClient
 } from '../config/prisma/generated/base-default/index.js';
 const prisma = new PrismaClient();
 import { PrismaClient as PrismaClientTransaction } from '../config/prisma/generated/transactions/index.js';
@@ -57,8 +57,8 @@ export const getAllWithBalance = async (query: any, userId: number) => {
     }
     ORDER BY users.updatedAt DESC
     LIMIT ${size} OFFSET ${page * size}
-    `; 
-    
+    `;
+
     const users = (await prisma.$queryRawUnsafe(`${rawQuery}`)) as any;
 
     const winGame = await _getSumTransaction('win', 'receiverUsername');
@@ -228,8 +228,8 @@ export const getById = async (id: string) => {
         currency: {
           select: {
             id: true,
-            name:true,
-            code:true,
+            name: true,
+            code: true
           }
         },
         parentAgentId: true,
@@ -238,7 +238,7 @@ export const getById = async (id: string) => {
             name: true,
             id: true
           }
-        },
+        }
       }
     })) as any;
 
@@ -257,10 +257,10 @@ export const getPlayerById = async (id: string, userId: string) => {
           {
             id: String(id)
           },
-          { 
+          {
             parentAgentIds: {
               array_contains: [String(id)]
-            } 
+            }
           }
         ]
       },
@@ -327,24 +327,24 @@ export const getDashboardData = async (userId: string) => {
         id: userId,
         deletedAt: null,
         isActive: true
-      } 
+      }
     })) as any;
 
-    const {affiliatedAgents, affiliatedUsernames} = await getAffiliatedAgentsByUserId(userId);
+    const { affiliatedAgents, affiliatedUsernames } =
+      await getAffiliatedAgentsByUserId(userId);
     const affiliatedSums = await _getAllSumsByUsername(affiliatedUsernames);
 
     affiliatedAgents.map((affiliatedAgent: any) => {
-      const winGame = affiliatedSums.winGame[affiliatedAgent.username]
-      const betGame = affiliatedSums.betGame[affiliatedAgent.username]
-      const chargeGame = affiliatedSums.chargeGame[affiliatedAgent.username]
-      const sentOut = affiliatedSums.sentOut[affiliatedAgent.username]
-      const received = affiliatedSums.received[affiliatedAgent.username]
-      const allSums = { winGame, betGame, chargeGame, sentOut, received }
+      const winGame = affiliatedSums.winGame[affiliatedAgent.username];
+      const betGame = affiliatedSums.betGame[affiliatedAgent.username];
+      const chargeGame = affiliatedSums.chargeGame[affiliatedAgent.username];
+      const sentOut = affiliatedSums.sentOut[affiliatedAgent.username];
+      const received = affiliatedSums.received[affiliatedAgent.username];
+      const allSums = { winGame, betGame, chargeGame, sentOut, received };
 
-      affiliatedAgent.allSums = allSums
+      affiliatedAgent.allSums = allSums;
+    });
 
-    })
-    
     const { winGame, betGame, chargeGame, sentOut, received } =
       await _getAllSumsByUsername([item.username]);
     const data = {
@@ -427,7 +427,7 @@ export const getAllByAgentId = async (query: any, id: string) => {
               contains: search
             }
           }
-        ] 
+        ]
       },
       orderBy: {
         updatedAt: 'desc'

@@ -79,7 +79,7 @@ export const getBalances = async (userUsername: string): Promise<any> => {
   try {
     const sender = await prismaTransaction.transactions.aggregate({
       where: {
-        senderUsername: userUsername,
+        userId: userUsername,
         type: { in: ['add', 'lose', 'charge', 'bet'] } // Adjust types as needed
       },
       _sum: { amount: true }
@@ -87,7 +87,7 @@ export const getBalances = async (userUsername: string): Promise<any> => {
 
     const receiver = await prismaTransaction.transactions.aggregate({
       where: {
-        receiverUsername: userUsername,
+        agentId: userUsername,
         type: { in: ['add', 'win'] } // Adjust types as needed
       },
       _sum: { amount: true }
@@ -95,7 +95,7 @@ export const getBalances = async (userUsername: string): Promise<any> => {
 
     const gameResult = await prismaTransaction.transactions.aggregate({
       where: {
-        receiverUsername: userUsername,
+        userId: userUsername,
         type: { in: ['lose', 'charge'] } // Adjust types as needed
       },
       _sum: { amount: true }

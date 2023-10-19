@@ -36,9 +36,6 @@ model Users {
   parent    Users?     @relation("Children", fields: [parentAgentId], references: [id])
   children  Users[]    @relation("Children")
 
-  parent    Users?     @relation("Children", fields: [parentAgentId], references: [id])
-  children  Users[]    @relation("Children")
-
   role     Roles?      @relation(fields: [roleId], references: [id])
   currency Currencies? @relation(fields: [currencyId], references: [id])
 

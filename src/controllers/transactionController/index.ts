@@ -114,7 +114,7 @@ export const addTransaction = async (
             username: String(receiverUsername)
           },
           select: {
-            id: true, 
+            id: true,
             parentAgentIds: true
           }
         });
@@ -218,141 +218,134 @@ export const landingPage = async (_: Request, res: Response): Promise<any> => {
   }
 };
 
-
-export const getBetLimitations = async (req:Request, res: Response) => {
+export const getBetLimitations = async (req: Request, res: Response) => {
   try {
     const { id: userId } = (req as any).user;
-    const { page, size, search, type } = req.query
+    const { page, size, search, type } = req.query;
 
     const filter = {
       agentId: userId,
       type: type,
       page: page,
       size: size,
-      search: search,
-    }
+      search: search
+    };
 
-    const betLimits = await prisma.transactionLimits.findMany({
+    const betLimits = (await prisma.transactionLimits.findMany({
       where: filter
-    }) as TransactionLimits[]
+    })) as TransactionLimits[];
 
     return res.status(200).json({ data: betLimits });
-    
   } catch (error: any) {
     if (error.message) {
       return res.status(404).json({ message: error.message });
     }
     return res.status(500).json({ message: message.INTERNAL_SERVER_ERROR });
   }
-}
+};
 
-export const getBetLimitById = async (req:Request, res: Response) => {
+export const getBetLimitById = async (req: Request, res: Response) => {
   try {
-
     const { id: userId } = (req as any).user;
     const { id } = req.params;
 
-    const betLimit = await prisma.transactionLimits.findUnique({
+    const betLimit = (await prisma.transactionLimits.findUnique({
       where: {
         id: parseInt(id),
         agentId: userId
       }
-    }) as TransactionLimits
+    })) as TransactionLimits;
 
     return res.status(200).json({ data: betLimit });
-    
   } catch (error: any) {
     if (error.message) {
       return res.status(404).json({ message: error.message });
     }
     return res.status(500).json({ message: message.INTERNAL_SERVER_ERROR });
   }
-  
-}
+};
 
-export const addBetLimit = async (req:Request, res:Response) => {
+export const addBetLimit = async (req: Request, res: Response) => {
   try {
     const { id: userId } = (req as any).user;
 
     const { limitType, limitTypeId, limit } = req.body;
     const data = {
-      agentId: userId, 
-      limitType, 
-      limitTypeId, 
+      agentId: userId,
+      limitType,
+      limitTypeId,
       limit
     } as {
-      agentId: number,
-      limitType: string, 
-      limitTypeId: string, 
-      limit: number
+      agentId: string;
+      limitType: string;
+      limitTypeId: string;
+      limit: number;
+    };
+
+    const response = (await prisma.transactionLimits.create({
+      data
+    })) as TransactionLimits;
+    if (Object.keys(response).length != 0) {
+      return res.status(200).json({ response });
     }
 
-    const response = await prisma.transactionLimits.create({data}) as TransactionLimits
-    if(Object.keys(response).length != 0) {
-      return res.status(200).json({response})
-    }
-
-    throw new Error("An error occurred. No transaction limit added");
-    
+    throw new Error('An error occurred. No transaction limit added');
   } catch (error: any) {
     if (error.message) {
       return res.status(404).json({ message: error.message });
     }
     return res.status(500).json({ message: message.INTERNAL_SERVER_ERROR });
   }
-}
+};
 
-export const updateBetLimit = async (req:Request, res:Response) => {
+export const updateBetLimit = async (req: Request, res: Response) => {
   try {
+    const { id: userId } = (req as any).user;
+    const { id } = req.params;
+    req.body.agentId = userId;
+    const data = req.body;
 
-    const { id: userId } = (req as any).user
-    const { id } = req.params
-    req.body.agentId = userId
-    const data = req.body
-
-    const update = await prisma.transactionLimits.update({
+    const update = (await prisma.transactionLimits.update({
       where: {
         id: parseInt(id),
         agentId: userId
       },
       data
-    }) as TransactionLimits
+    })) as TransactionLimits;
 
-    if(Object.keys(update).length != 0) 
-      return res.status(200).json({data:userId})
+    if (Object.keys(update).length != 0)
+      return res.status(200).json({ data: userId });
 
-    throw new Error("An error occurred. No transaction limit updated");
-
+    throw new Error('An error occurred. No transaction limit updated');
   } catch (error: any) {
     if (error.message) {
       return res.status(404).json({ message: error.message });
     }
     return res.status(500).json({ message: message.INTERNAL_SERVER_ERROR });
   }
-}
+};
 
-export const deleteBetLimit = async (req:Request, res:Response) => {
+export const deleteBetLimit = async (req: Request, res: Response) => {
   try {
-    const { id: userId } = (req as any).user
-    const { id } = req.params
+    const { id: userId } = (req as any).user;
+    const { id } = req.params;
 
     try {
       await prisma.transactionLimits.delete({
         where: {
-          agentId: parseInt(userId),
+          agentId: userId,
           id: parseInt(id)
         }
-      })
+      });
 
-      return res.status(200).json({message:"Deleted"})
+      return res.status(200).json({ message: 'Deleted' });
     } catch (error) {
-      throw new Error("An error occurred. No transaction limit deleted");
+      throw new Error('An error occurred. No transaction limit deleted');
     }
-
   } catch (error: any) {
     if (error.message) {
       return res.status(404).json({ message: error.message });
     }
     return res.status(500).json({ message: message.INTERNAL_SERVER_ERROR });
   }
-}
+};

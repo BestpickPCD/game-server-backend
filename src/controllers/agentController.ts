@@ -27,8 +27,8 @@ const message = {
   INVALID_ID: 'Invalid Agent Id'
 };
 
-const getUserId = (req: Request) =>
-  Number((req as any).user.id || (req as any).user[0].id);
+const getUserId = (req: Request): string =>
+  (req as any).user.id || (req as any).user[0].id;
 
 export const getAllAgents = async (req: Request, res: Response) => {
   const {
@@ -42,7 +42,7 @@ export const getAllAgents = async (req: Request, res: Response) => {
   const id = getUserId(req);
 
   const { users, totalItems } = await getAll({
-    id: Number(id),
+    id,
     level: Number(level),
     page: Number(page),
     size: Number(size),
@@ -61,12 +61,12 @@ export const getAllAgents = async (req: Request, res: Response) => {
 
 export const getAgentById = async (req: Request, res: Response) => {
   const { id } = req.params;
-  if (!id || !Number(id)) {
+  if (!id) {
     throw new BAD_REQUEST(message.INVALID_ID);
   }
   const userId = getUserId(req);
   const agent = await getById({
-    id: Number(id),
+    id,
     userId
   });
   const data = agent;
@@ -74,7 +74,7 @@ export const getAgentById = async (req: Request, res: Response) => {
 };
 
 export const updateAgent = async (req: Request, res: Response) => {
-  const agentId = Number(req.params.id);
+  const agentId = req.params.id;
   const { parentAgentId, currencyId, name, roleId, rate } = req.body;
 
   const updatedAgent = await update({
@@ -93,8 +93,8 @@ export const updateAgent = async (req: Request, res: Response) => {
 };
 
 export const deleteAgent = async (req: Request, res: Response) => {
-  const id = Number(req.params.id);
-  const userId = Number((req as any).user.id);
+  const id = req.params.id;
+  const userId = (req as any).user.id as string;
   if (!id) {
     throw new BAD_REQUEST(message.INVALID_ID);
   }

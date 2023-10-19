@@ -1,14 +1,17 @@
-import { PrismaClient, Users } from '../config/prisma/generated/base-default/index.js';
+import {
+  PrismaClient,
+  Users
+} from '../config/prisma/generated/base-default/index.js';
 const prisma = new PrismaClient();
 
 export const getAgentByPlayerId = async (
-  playerId: number
+  playerId: string
 ): Promise<Users | null> => {
   try {
     const player: Users | null = await prisma.users.findUnique({
       where: {
         deletedAt: null,
-        id: playerId, 
+        id: playerId
       }
     });
 
@@ -17,13 +20,13 @@ export const getAgentByPlayerId = async (
     }
     return player;
   } catch (error: any) {
-    console.log(error)
+    console.log(error);
     throw Error(error.message);
   }
 };
 
 export const getGamesByPlayerId = async (
-  playerId: number
+  playerId: string
 ): Promise<
   ({
     fetchGames: any;

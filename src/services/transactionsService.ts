@@ -29,7 +29,7 @@ export const getAllById = async (queryParams: any, username: string | null) => {
     if (gameId) {
       filter.gameId = gameId;
     }
-    
+
     const transactions = await prismaTransaction.transactions.findMany({
       where: filter
       // skip: page * size,
@@ -37,7 +37,7 @@ export const getAllById = async (queryParams: any, username: string | null) => {
     });
 
     const count = await prismaTransaction.transactions.count({
-      where: filter,
+      where: filter
     });
 
     return { transactions, count, page, size };
@@ -46,6 +46,16 @@ export const getAllById = async (queryParams: any, username: string | null) => {
   }
 };
 
+export const create = async (data:any) => {
+  try {
+    const transcation = await prismaTransaction.transactions.create({data})
+    return transcation
+
+  } catch (error: any) {
+    throw Error(error);
+  }
+}
+
 export const getByIdWithType = async (
   username: string,
   arrayTypes: string[]
@@ -53,7 +63,7 @@ export const getByIdWithType = async (
   try {
     const transactions = (await prismaTransaction.transactions.findMany({
       where: {
-        OR: [{ senderUsername: username }, { receiverUsername: username }],
+        OR: [{ agentId: username }, { userId: username }],
         type: {
           in: arrayTypes
         }
@@ -63,12 +73,11 @@ export const getByIdWithType = async (
       },
       select: {
         id: true,
-        senderUsername: true,
-        receiverUsername: true,
+        agentId: true,
+        userId: true,
         amount: true,
         gameId: true,
         type: true,
-        note: true,
         status: true,
         createdAt: true
       }
@@ -82,7 +91,6 @@ export const getByIdWithType = async (
 
 export const getDetailsById = async (id: string, userId: number) => {
   try {
-
     const filterOr = {
       id,
       OR: [
@@ -124,16 +132,15 @@ export const getDetailsById = async (id: string, userId: number) => {
         id: true,
         amount: true,
         token: true,
-        receiverUsername: true,
-        senderUsername: true,
-        note: true,
+        agentId: true,
+        userId: true,
         type: true,
         status: true,
         updatedAt: true,
         createdAt: true,
-        currencyId: true
+        currencyCode: true
       },
-      where: filterOr,
+      where: filterOr
     });
 
     return transaction;

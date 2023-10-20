@@ -9,59 +9,41 @@ datasource db {
 }
 
 model Users {
-  id            Int       @id @default(autoincrement())
-  name          String
-  email         String    @unique
-  username      String    @unique
-  password      String
-  type          String?
-  apiKey        String?
-  accountNumber String?
-  callbackUrl   String?
-  apiCall       String?
-  roleId        Int?
-  balance       Decimal?  @default(0) @db.Decimal(10, 2)
-  currencyId    Int?
-  isActive      Boolean   @default(true)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime? @updatedAt
-  deletedAt     DateTime?
-  lockedAt      DateTime?
-
-  role        Roles?      @relation(fields: [roleId], references: [id])
-  Agents      Agents?
-  parentAgent Agents[]    @relation("ParentAgent")
-  Players     Players?
-  currency    Currencies? @relation(fields: [currencyId], references: [id])
-  ip_user     ip_user[]
-}
-
-model Players {
-  id        Int       @unique
-  agentId   Int
-  createdAt DateTime  @default(now())
-  updatedAt DateTime? @updatedAt
-  deletedAt DateTime?
-
-  agent Agents? @relation(fields: [agentId], references: [id])
-  user  Users?  @relation(fields: [id], references: [id])
-}
-
-model Agents {
-  id             Int       @unique
+  id             String    @id @default(uuid())
+  name           String
+  email          String?
+  username       String    @unique
+  password       String?
+  type           String?
+  parentAgentId  String?
   level          Int?
-  parentAgentId  Int?
   parentAgentIds Json?
+  balance        Decimal?  @default(0) @db.Decimal(10, 2)
   rate           Decimal?  @default(0) @db.Decimal(10, 2)
+  apiKey         String?
+  accountNumber  String?
+  callbackUrl    String?
+  apiCall        String?
+  roleId         Int?
+  agentBalance   Decimal?  @default(0) @db.Decimal(10, 2)
+  currencyId     Int?
+  isActive       Boolean   @default(true)
   createdAt      DateTime  @default(now())
   updatedAt      DateTime? @updatedAt
   deletedAt      DateTime?
+  lockedAt       DateTime?
 
-  user             Users?              @relation(fields: [id], references: [id])
-  Players          Players[]
-  parentAgent      Users?              @relation("ParentAgent", fields: [parentAgentId], references: [id])
+  parent   Users?  @relation("Children", fields: [parentAgentId], references: [id])
+  children Users[] @relation("Children")
+
+  role     Roles?      @relation(fields: [roleId], references: [id])
+  currency Currencies? @relation(fields: [currencyId], references: [id])
+
+  ip_user          ip_user[]
   vendors          AgentVendor[]
   transactionLimit TransactionLimits[]
+
+  @@unique([email], name: "UniqueEmail")
 }
 
 model Roles {
@@ -96,7 +78,7 @@ model Currencies {
 
 model ip_user {
   id        Int       @id @default(autoincrement())
-  userId    Int
+  userId    String
   createdAt DateTime  @default(now())
   updatedAt DateTime? @updatedAt
   deletedAt DateTime?
@@ -106,7 +88,7 @@ model ip_user {
 
 model AgentVendor {
   id        Int       @id @default(autoincrement())
-  agentId   Int
+  agentId   String
   vendorId  Int
   startDate DateTime?
   endDate   DateTime?
@@ -114,7 +96,7 @@ model AgentVendor {
   updatedAt DateTime? @updatedAt
   deletedAt DateTime?
 
-  agent  Agents?  @relation(fields: [agentId], references: [id])
+  agent  Users?   @relation(fields: [agentId], references: [id])
   vendor Vendors? @relation(fields: [vendorId], references: [id])
 }
 
@@ -134,14 +116,14 @@ model Vendors {
 }
 
 model TransactionLimits {
-  id      Int      @id @default(autoincrement())
-  agentId Int
-  limitType    String
-  limitTypeId    String
-  limit   Decimal? @default(0) @db.Decimal(10, 2)
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime? @updatedAt
-  deletedAt  DateTime?
+  id          Int       @id @default(autoincrement())
+  agentId     String
+  limitType   String
+  limitTypeId String
+  limit       Decimal?  @default(0) @db.Decimal(10, 2)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime? @updatedAt
+  deletedAt   DateTime?
 
-  agent Agents? @relation(fields: [agentId], references: [id])
+  agent Users? @relation(fields: [agentId], references: [id])
 }

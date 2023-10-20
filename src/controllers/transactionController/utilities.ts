@@ -9,9 +9,9 @@ export const checkTransferAbility = async (
 ): Promise<any> => {
   let result = false;
   const reveiver = (await prisma.$queryRawUnsafe(` SELECT Users.username FROM 
-    ( SELECT Users.username, Agents.parentAgentId AS agentId FROM Users JOIN Agents ON Agents.id = Users.id WHERE Users.type = "agent" AND Users.username = "${receiverUsername}"
+    ( SELECT username, parentAgentId AS agentId FROM Users WHERE type = "agent" AND username = "${receiverUsername}"
       UNION
-      SELECT Users.username, Players.agentId FROM Users JOIN Players ON Players.id = Users.id WHERE Users.type = "player" AND Users.username = "${receiverUsername}"
+      SELECT username, parentAgentId AS agentId FROM Users WHERE type = "player" AND username = "${receiverUsername}"
     ) AS Agent
     JOIN Users ON Users.id = Agent.agentId
   `)) as any;
@@ -79,7 +79,7 @@ export const getBalances = async (userUsername: string): Promise<any> => {
   try {
     const sender = await prismaTransaction.transactions.aggregate({
       where: {
-        senderUsername: userUsername,
+        userId: userUsername,
         type: { in: ['add', 'lose', 'charge', 'bet'] } // Adjust types as needed
       },
       _sum: { amount: true }
@@ -87,7 +87,7 @@ export const getBalances = async (userUsername: string): Promise<any> => {
 
     const receiver = await prismaTransaction.transactions.aggregate({
       where: {
-        receiverUsername: userUsername,
+        agentId: userUsername,
         type: { in: ['add', 'win'] } // Adjust types as needed
       },
       _sum: { amount: true }
@@ -95,7 +95,7 @@ export const getBalances = async (userUsername: string): Promise<any> => {
 
     const gameResult = await prismaTransaction.transactions.aggregate({
       where: {
-        receiverUsername: userUsername,
+        userId: userUsername,
         type: { in: ['lose', 'charge'] } // Adjust types as needed
       },
       _sum: { amount: true }

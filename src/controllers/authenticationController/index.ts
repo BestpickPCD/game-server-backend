@@ -93,7 +93,10 @@ export const login = async (req: Request, res: Response): Promise<any> => {
       return res.status(400).json({ message: message.NOT_FOUND });
     } else if (user) {
       // check Password
-      const isValid = await bcrypt.compare(password, user.password);
+      let isValid: boolean = false
+      if (password) {
+        isValid = await bcrypt.compare(password, (user as any).password);
+      }
 
       if (isValid) {
         const loginDate = new Date()
@@ -127,7 +130,7 @@ export const login = async (req: Request, res: Response): Promise<any> => {
     // Neither user nor agent exists with the given username
     return res.status(400).json({ message: message.NOT_FOUND });
   } catch (error) {
-    console.log(error);
+    console.log(error)
     res.status(500).json({ message: message.INTERNAL_SERVER_ERROR });
   }
 };
@@ -143,7 +146,6 @@ export const register = async (req: Request, res: Response): Promise<any> => {
       confirmPassword,
       roleId,
       type,
-      agentId,
       parentAgentId
     } = req.body;
 
@@ -170,26 +172,34 @@ export const register = async (req: Request, res: Response): Promise<any> => {
         subMessage: "Password and Confirm Password did't match"
       });
     }
-    const hashedPassword = await bcrypt.hash(password, 10);
-    try {
-      const userSchema = {
-        name,
-        username,
-        email,
-        rate,
-        parentAgentId,
-        type,
-        roleId,
-        password: hashedPassword,
-        currencyId: 1
-      };
 
+    let userSchema = {
+      name,
+      username,
+      parentAgentId,
+      type,
+      roleId,
+      currencyId: 1
+    } as any;
+
+    if(password) {
+      const hashedPassword = await bcrypt.hash(password, 10);
+      userSchema = { password: hashedPassword, ...userSchema }
+    }
+    if(email) {
+      userSchema = { email, ...userSchema }
+    }
+    try {
       if (type == 'player') {
-        return _playerInsert(userSchema, agentId, res);
+        return _playerInsert(userSchema, res);
       } else if (type == 'agent') {
-        return _agentInsert(userSchema, parentAgentId, res);
+        if(rate) {
+          userSchema = { rate, ...userSchema }
+        }
+        return _agentInsert(userSchema, res);
       }
-    } catch (error) {
+    } catch (error) { 
+      console.log(error)
       return res
         .status(500)
         .json({ message: message.INTERNAL_SERVER_ERROR, error });
@@ -203,25 +213,13 @@ export const register = async (req: Request, res: Response): Promise<any> => {
 
 const _playerInsert = async (
   userSchema: any,
-  agentId: number,
   res: Response
 ) => {
   try {
     const newUser: any = await _userInsert(userSchema);
-    const userInsert = (await prisma.players.create({
-      data: {
-        id: newUser.id,
-        agentId
-      }
-    })) as any;
-
-    const userResponse = {
-      userId: userInsert.id,
-      username: newUser.username
-    };
 
     return res.status(201).json({
-      data: userResponse,
+      data: newUser,
       message: message.CREATED
     });
   } catch (error) {
@@ -233,16 +231,16 @@ const _playerInsert = async (
 
 const _agentInsert = async (
   userSchema: any,
-  parentAgentId: number,
   res: Response
 ) => {
   try {
     const newUser: any = await _userInsert(userSchema);
-    const details: any = await getParentAgentIdsByParentAgentId(parentAgentId);
-    const userInsert = (await prisma.agents.create({
-      data: {
+    const details: any = await getParentAgentIdsByParentAgentId(newUser.parentAgentId);
+    const userInsert = (await prisma.users.update({
+      where: {
         id: newUser.id,
-        parentAgentId,
+      },
+      data: {
         rate: userSchema?.rate ?? 0,
         parentAgentIds: details.parentAgentIds,
         level: details.level
@@ -266,13 +264,13 @@ const _agentInsert = async (
 };
 
 const _userInsert = async (userSchema: any) => {
-  const { parentAgentId, rate, ...data } = userSchema;
+  const data = userSchema;
   const newUser = await prisma.users.create({
     data
   });
 
   const token = await generateApiKey(newUser.id);
-  try {
+  try { 
     await prisma.users.update({
       where: { id: newUser.id },
       data: { apiKey: token }
@@ -280,7 +278,6 @@ const _userInsert = async (userSchema: any) => {
   } catch (error) {
     console.log(error);
   }
-
   return newUser;
 };
 

@@ -9,13 +9,14 @@ import {
   getTransactionDetailsByUserId,
   getTransactions,
   landingPage,
+  changeBalance,
   updateBetLimit
 } from '../controllers/transactionController/index.ts';
 import { authentication } from '../middleware/authentication.ts';
 import { permission } from '../middleware/permission.ts';
 
 const router = express.Router();
-
+router.post('/callback/changeBalance', changeBalance)
 router.get(
   '/transactions',
   authentication,

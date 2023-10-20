@@ -20,7 +20,7 @@ export const verifyToken = async (key: string, secretKey: string) => {
   return (await jwt.verify(key, secretKey)) as Promise<{ userId: string }>;
 };
 
-const findUser = async (id: number) => {
+const findUser = async (id: string) => {
   const user = await prisma.users.findUnique({
     select: {
       id: true,
@@ -74,7 +74,7 @@ export const authentication = async (
         req.body?.refreshToken,
         REFRESH_TOKEN_KEY
       )) as JwtPayload;
-      const user = await findUser(Number(userId));
+      const user = await findUser(String(userId));
       (req as any).user = user;
       return next();
     }

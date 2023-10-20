@@ -57,42 +57,36 @@ async function main() {
         fetchGames: ezugi
       }
     ]
-  });
-  for (let i = 1; i <= 400; i++) {
-    await prisma.users.create({
+  }); 
+    const user = await prisma.users.create({
       data: {
         name: faker.person.fullName(),
-        username: `user.master.${String(i)}`,
-        type: i % 2 === 0 ? 'player' : 'agent',
-        password: await bcrypt.hash(`user.master.${String(i)}`, 10),
-        email: `admin${i}@master.com`,
+        username: `user.master.1`,
+        type: 'agent',
+        password: await bcrypt.hash(`user.master.1`, 10),
+        email: `admin1@master.com`,
         roleId: 1,
         currencyId: 1
       }
     });
-    if (i % 2 !== 0) {
-      await prisma.agents.create({
-        data: {
-          id: i,
-          level: i === 1 ? 1 : 2,
-          parentAgentId: i === 1 ? null : 1,
-          parentAgentIds: i === 1 ? [] : [1]
-        }
-      });
+    await prisma.users.update({
+      where: {
+        id: user.id
+      },
+      data: {
+        id: user.id,
+        level: 1,
+        parentAgentIds: []
+      }
+    });
 
-      await prisma.agentVendor.create({
-        data: {
-          agentId: i,
-          vendorId: 1
-        }
-      });
-    } else {
-      await prisma.players.create({
-        data: { id: i, agentId: i - 1 }
-      });
-    }
-  }
-}
+    await prisma.agentVendor.create({
+      data: {
+        agentId: user.id,
+        vendorId: 1
+      }
+    });
+  } 
 
 main()
   .catch((error) => {

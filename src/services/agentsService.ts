@@ -1,5 +1,4 @@
 import {
-  Agents,
   Prisma,
   PrismaClient,
   Users
@@ -8,31 +7,31 @@ const prisma = new PrismaClient();
 
 const NOT_FOUND = 'Agent not found';
 interface AgentsParams {
-  id?: number;
+  id?: string;
   level?: number | null;
   page?: number;
   size?: number;
   search?: string;
   dateFrom?: string;
   dateTo?: string;
-  userId?: number;
+  userId?: string;
 }
 
 interface AgentUpdateParams {
-  agentId: number;
-  parentAgentId: number | null;
+  agentId: string;
+  parentAgentId: string | null;
   currencyId: number | null;
   roleId: number | null;
   rate?: number | null;
   name?: string;
 }
 
-const filterArrays = (a: any[], b: number[]) =>
+const filterArrays = (a: any[], b: string[]) =>
   a.filter((aItem) => !b.some((bItem) => aItem === bItem));
 
-const mergeArrays = (a: any[], b: number[]) => [...a, ...b];
+const mergeArrays = (a: any[], b: string[]) => [...a, ...b];
 
-const resultArray = (a: any[], b: number[], c: any[]) =>
+const resultArray = (a: any[], b: string[], c: any[]) =>
   mergeArrays(filterArrays(a, b), c);
 
 export const getAll = async ({
@@ -59,28 +58,23 @@ export const getAll = async ({
         createdAt: true,
         updatedAt: true,
         balance: true,
-        Agents: {
+        rate: true,
+        level: true,
+        parent: {
           select: {
-            rate: true,
-            level: true,
-            parentAgent: {
-              select: {
-                name: true,
-                id: true
-              }
-            }
+            name: true,
+            id: true
           }
-        }
+        },
+        parentAgentId: true
       },
       where: {
         deletedAt: null,
         type: 'agent',
-        Agents: {
-          parentAgentIds: {
-            array_contains: [id] as number[]
-          },
-          ...(level && { level })
+        parentAgentIds: {
+          array_contains: [id] as string[]
         },
+        ...(level && { level }),
         OR: [
           {
             name: {
@@ -129,16 +123,13 @@ export const getById = async ({ id, userId }: AgentsParams): Promise<any> => {
         createdAt: true,
         updatedAt: true,
         balance: true,
-        Agents: {
+        level: true,
+        rate: true,
+        parentAgentId: true,
+        parent: {
           select: {
-            level: true,
-            rate: true,
-            parentAgent: {
-              select: {
-                name: true,
-                id: true
-              }
-            }
+            name: true,
+            id: true
           }
         }
       },
@@ -146,10 +137,8 @@ export const getById = async ({ id, userId }: AgentsParams): Promise<any> => {
         id,
         deletedAt: null,
         type: 'agent',
-        Agents: {
-          parentAgentIds: {
-            array_contains: [userId] as number[]
-          }
+        parentAgentIds: {
+          array_contains: [userId] as string[]
         }
       }
     });
@@ -162,21 +151,17 @@ export const getById = async ({ id, userId }: AgentsParams): Promise<any> => {
   }
 };
 
-const getAgentById = async (agentId: number): Promise<any> => {
+const getAgentById = async (agentId: string): Promise<any> => {
   try {
-    const agent = await prisma.agents.findUnique({
+    const agent = await prisma.users.findUnique({
       select: {
         parentAgentIds: true,
         level: true,
-        parentAgentId: true,
-        user: {
-          select: {
-            currencyId: true,
-            roleId: true
-          }
-        }
+        currencyId: true,
+        roleId: true
       },
       where: {
+        type: 'agent',
         id: agentId
       }
     });
@@ -198,7 +183,7 @@ const validateUpdateData = async ({
   try {
     const agent = await getAgentById(agentId);
     const parentAgentIdNumber = parentAgentId
-      ? Number(parentAgentId)
+      ? parentAgentId
       : agent.parentAgentId;
     const currencyIdNumber = currencyId
       ? Number(currencyId)
@@ -220,7 +205,7 @@ const validateUpdateData = async ({
     }
     const [parentAgent, role, currency] = await Promise.all([
       parentAgentIdNumber && agent.parentAgentId
-        ? prisma.agents.findUnique({ where: { id: parentAgentIdNumber } })
+        ? prisma.users.findUnique({ where: { id: parentAgentIdNumber } })
         : null,
       roleIdNumber && roleIdNumber !== agent.user?.roleId
         ? prisma.roles.findUnique({ where: { id: roleIdNumber } })
@@ -254,12 +239,13 @@ const updateChildAgent = async ({
   agent,
   parentAgent
 }: {
-  agentId: number;
-  agent: Agents;
-  parentAgent: Agents | null;
+  agentId: string;
+  agent: Users;
+  parentAgent: Users | null;
 }) => {
-  const agentChildren: Agents[] = await prisma.agents.findMany({
+  const agentChildren: Users[] = await prisma.users.findMany({
     where: {
+      type: 'agent',
       parentAgentIds: {
         array_contains: [agentId]
       }
@@ -268,15 +254,16 @@ const updateChildAgent = async ({
 
   if (agentChildren.length > 0) {
     for (let i = 0; i < agentChildren.length; i++) {
-      const parentAgentIds: any[] = resultArray(
-        agentChildren[i]?.parentAgentIds as number[],
-        agent.parentAgentIds as number[],
+      const parentAgentIds: string[] = resultArray(
+        agentChildren[i]?.parentAgentIds as string[],
+        agent.parentAgentIds as string[],
         parentAgent
           ? ([...(parentAgent?.parentAgentIds as any), parentAgent.id] as any)
           : agent.parentAgentIds
       ) as any;
-      await prisma.agents.update({
+      await prisma.users.update({
         where: {
+          type: 'agent',
           id: agentChildren[i].id
         },
         data: {
@@ -306,25 +293,28 @@ export const update = async ({
       });
 
     const [updatedAgent] = await prisma.$transaction([
-      prisma.agents.update({
+      prisma.users.update({
         where: { id: agentId },
         data: {
-          rate,
           parentAgentId: parentAgentId || agent.parentAgentId,
+          name,
+          roleId: role?.id,
+          currencyId: currency?.id
+        }
+      }),
+      prisma.users.update({
+        where: {
+          type: 'agent',
+          id: agentId
+        },
+        data: {
+          rate: Number(rate),
           parentAgentIds: parentAgent
             ? (updatedAgentParentIds as any)
             : agent.parentAgentIds,
           level: parentAgent
             ? (updatedAgentParentIds as any)?.length + 1
             : agent.level
-        }
-      }),
-      prisma.users.update({
-        where: { id: agentId },
-        data: {
-          name,
-          roleId: role?.id,
-          currencyId: currency?.id
         }
       })
     ]);
@@ -335,7 +325,7 @@ export const update = async ({
   }
 };
 
-export const deleteAgent = async (id: number, userId: number) => {
+export const deleteAgent = async (id: string, userId: string) => {
   try {
     const users = await getById({ id, userId });
     if (!users) {

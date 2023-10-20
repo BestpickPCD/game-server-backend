@@ -17,7 +17,7 @@ import {
   getByIdWithType,
   getDetailsById
 } from '../../services/transactionsService.ts';
-import { CallbackTransaction, PrismaClient as PrismaClientTransaction, Transactions } from '../../config/prisma/generated/transactions/index.js';
+import { CallbackTransactions, PrismaClient as PrismaClientTransaction, Transactions } from '../../config/prisma/generated/transactions/index.js';
 import { BAD_REQUEST } from '../../core/error.response.ts';
 
 const jsonParser = bodyParser.json({ type: 'application/json' });
@@ -58,9 +58,9 @@ export const changeBalance = async (
     try {
       console.log(req.body)
       const { username, amount, transaction } = req.body;
-      const data = { username, amount, transaction } as CallbackTransaction;
+      const data = { username, amount, transaction } as CallbackTransactions;
       try {
-        const response = await prismaTransaction.callbackTransaction.create({ data });
+        const response = await prismaTransaction.callbackTransactions.create({ data });
         console.log(response)
       } catch (error) {
         console.log(error);

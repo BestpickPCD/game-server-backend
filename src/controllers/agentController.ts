@@ -69,6 +69,7 @@ export const getAgentById = async (req: Request, res: Response) => {
     id,
     userId
   });
+
   const data = agent;
   return new OK({ data, message: message.GET_BY_ID }).send(res);
 };
@@ -85,7 +86,6 @@ export const updateAgent = async (req: Request, res: Response) => {
     rate,
     name
   });
-
   return new UPDATED({
     data: updatedAgent,
     message: message.UPDATED

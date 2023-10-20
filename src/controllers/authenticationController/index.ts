@@ -85,7 +85,7 @@ export const login = async (req: Request, res: Response): Promise<any> => {
         password: true
       },
       where: {
-        username: username
+        username
       }
     });
 
@@ -93,29 +93,29 @@ export const login = async (req: Request, res: Response): Promise<any> => {
       return res.status(400).json({ message: message.NOT_FOUND });
     } else if (user) {
       // check Password
-      let isValid: boolean = false
+      let isValid: boolean = false;
       if (password) {
         isValid = await bcrypt.compare(password, (user as any).password);
       }
 
       if (isValid) {
-        const loginDate = new Date()
-        const lockDate = user.lockedAt
-        
+        const loginDate = new Date();
+        const lockDate = user.lockedAt;
+
         lockDate?.setDate(lockDate.getDate() + 3);
-        if(!lockDate || lockDate < loginDate){
+        if (!lockDate || lockDate < loginDate) {
           await prisma.users.update({
             where: {
               username: username
             },
-          data: { 
-            isActive:true,
-           }
+            data: {
+              isActive: true
+            }
           });
         } else {
-          return res.status(500).json({message: "your account is not valid"})
+          return res.status(500).json({ message: 'your account is not valid' });
         }
-        
+
         const data = await formatUser(user);
         await Redis.setex(
           `user-${user.id}-tokens`,
@@ -130,7 +130,6 @@ export const login = async (req: Request, res: Response): Promise<any> => {
     // Neither user nor agent exists with the given username
     return res.status(400).json({ message: message.NOT_FOUND });
   } catch (error) {
-    console.log(error)
     res.status(500).json({ message: message.INTERNAL_SERVER_ERROR });
   }
 };
@@ -182,24 +181,24 @@ export const register = async (req: Request, res: Response): Promise<any> => {
       currencyId: 1
     } as any;
 
-    if(password) {
+    if (password) {
       const hashedPassword = await bcrypt.hash(password, 10);
-      userSchema = { password: hashedPassword, ...userSchema }
+      userSchema = { password: hashedPassword, ...userSchema };
     }
-    if(email) {
-      userSchema = { email, ...userSchema }
+    if (email) {
+      userSchema = { email, ...userSchema };
     }
     try {
       if (type == 'player') {
         return _playerInsert(userSchema, res);
       } else if (type == 'agent') {
-        if(rate) {
-          userSchema = { rate, ...userSchema }
+        if (rate) {
+          userSchema = { rate, ...userSchema };
         }
         return _agentInsert(userSchema, res);
       }
-    } catch (error) { 
-      console.log(error)
+    } catch (error) {
+      console.log(error);
       return res
         .status(500)
         .json({ message: message.INTERNAL_SERVER_ERROR, error });
@@ -211,10 +210,7 @@ export const register = async (req: Request, res: Response): Promise<any> => {
   }
 };
 
-const _playerInsert = async (
-  userSchema: any,
-  res: Response
-) => {
+const _playerInsert = async (userSchema: any, res: Response) => {
   try {
     const newUser: any = await _userInsert(userSchema);
 
@@ -229,16 +225,15 @@ const _playerInsert = async (
   }
 };
 
-const _agentInsert = async (
-  userSchema: any,
-  res: Response
-) => {
+const _agentInsert = async (userSchema: any, res: Response) => {
   try {
     const newUser: any = await _userInsert(userSchema);
-    const details: any = await getParentAgentIdsByParentAgentId(newUser.parentAgentId);
+    const details: any = await getParentAgentIdsByParentAgentId(
+      newUser.parentAgentId
+    );
     const userInsert = (await prisma.users.update({
       where: {
-        id: newUser.id,
+        id: newUser.id
       },
       data: {
         rate: userSchema?.rate ?? 0,
@@ -270,7 +265,7 @@ const _userInsert = async (userSchema: any) => {
   });
 
   const token = await generateApiKey(newUser.id);
-  try { 
+  try {
     await prisma.users.update({
       where: { id: newUser.id },
       data: { apiKey: token }

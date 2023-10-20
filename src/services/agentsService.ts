@@ -3,9 +3,14 @@ import {
   PrismaClient,
   Users
 } from '../config/prisma/generated/base-default/index.js';
+import { BAD_REQUEST, NOT_FOUND } from '../core/error.response.js';
 const prisma = new PrismaClient();
 
-const NOT_FOUND = 'Agent not found';
+const message = {
+  NOT_FOUND: 'Agent not found',
+  CANT_DELETE: "You cant't delete your self",
+  HAVE_SUB_AGENT: 'Agent still has their agents'
+};
 interface AgentsParams {
   id?: string;
   level?: number | null;
@@ -46,115 +51,123 @@ export const getAll = async ({
   users: Users[];
   totalItems: number;
 }> => {
-  try {
-    const filter: Prisma.UsersFindManyArgs = {
-      select: {
-        id: true,
-        username: true,
-        name: true,
-        type: true,
-        currencyId: true,
-        roleId: true,
-        createdAt: true,
-        updatedAt: true,
-        balance: true,
-        rate: true,
-        level: true,
-        parent: {
-          select: {
-            name: true,
-            id: true
-          }
-        },
-        parentAgentId: true
+  const filter: Prisma.UsersFindManyArgs = {
+    select: {
+      id: true,
+      username: true,
+      name: true,
+      type: true,
+      currencyId: true,
+      roleId: true,
+      createdAt: true,
+      updatedAt: true,
+      balance: true,
+      rate: true,
+      level: true,
+      parent: {
+        select: {
+          name: true,
+          id: true
+        }
       },
-      where: {
-        deletedAt: null,
-        type: 'agent',
-        parentAgentIds: {
-          array_contains: [id] as string[]
-        },
-        ...(level && { level }),
+      parentAgentId: true
+    },
+    where: {
+      deletedAt: null,
+      type: 'agent',
+      ...(level && { level }),
+      AND: {
         OR: [
           {
-            name: {
-              contains: search
+            parentAgentIds: {
+              array_contains: [id] as string[]
             }
           },
           {
-            username: {
-              contains: search
-            }
+            id
           }
-        ],
-        updatedAt: {
-          gte: dateFrom || '1970-01-01T00:00:00.000Z',
-          lte: dateTo || '2100-01-01T00:00:00.000Z'
+        ]
+      },
+      OR: [
+        {
+          name: {
+            contains: search
+          }
+        },
+        {
+          username: {
+            contains: search
+          }
         }
-      },
-      orderBy: {
-        updatedAt: 'desc'
-      },
-      skip: page * size,
-      take: size
-    };
+      ],
+      updatedAt: {
+        gte: dateFrom || '1970-01-01T00:00:00.000Z',
+        lte: dateTo || '2100-01-01T00:00:00.000Z'
+      }
+    },
+    orderBy: {
+      updatedAt: 'desc'
+    },
+    skip: page * size,
+    take: size
+  };
 
-    const [users, totalItems] = await prisma.$transaction([
-      prisma.users.findMany(filter),
-      prisma.users.count({ where: filter.where })
-    ]);
+  const [users, totalItems] = await prisma.$transaction([
+    prisma.users.findMany(filter),
+    prisma.users.count({ where: filter.where })
+  ]);
 
-    return { users, totalItems };
-  } catch (error: any) {
-    throw Error(error.message);
-  }
+  return { users, totalItems };
 };
 
 export const getById = async ({ id, userId }: AgentsParams): Promise<any> => {
-  try {
-    const agent = await prisma.users.findUnique({
-      select: {
-        id: true,
-        username: true,
-        name: true,
-        type: true,
-        currencyId: true,
-        roleId: true,
-        createdAt: true,
-        updatedAt: true,
-        balance: true,
-        level: true,
-        rate: true,
-        parentAgentId: true,
-        parent: {
-          select: {
-            name: true,
-            id: true
-          }
-        }
-      },
-      where: {
-        id,
-        deletedAt: null,
-        type: 'agent',
-        parentAgentIds: {
-          array_contains: [userId] as string[]
+  const agent = await prisma.users.findUnique({
+    select: {
+      id: true,
+      username: true,
+      name: true,
+      type: true,
+      currencyId: true,
+      roleId: true,
+      createdAt: true,
+      updatedAt: true,
+      balance: true,
+      level: true,
+      rate: true,
+      parentAgentId: true,
+      parentAgentIds: true,
+      parent: {
+        select: {
+          name: true,
+          id: true
         }
       }
-    });
-    if (!agent) {
-      throw Error(NOT_FOUND);
+    },
+    where: {
+      id,
+      deletedAt: null,
+      type: 'agent',
+      OR: [
+        {
+          parentAgentIds: {
+            array_contains: [userId] as string[]
+          }
+        },
+        { id: userId }
+      ]
     }
-    return agent;
-  } catch (error: any) {
-    throw Error(error.message);
+  });
+  if (!agent) {
+    throw new NOT_FOUND(message.NOT_FOUND);
   }
+  return agent;
 };
 
 const getAgentById = async (agentId: string): Promise<any> => {
   try {
     const agent = await prisma.users.findUnique({
       select: {
+        parentAgentId: true,
         parentAgentIds: true,
         level: true,
         currencyId: true,
@@ -166,7 +179,7 @@ const getAgentById = async (agentId: string): Promise<any> => {
       }
     });
     if (!agent) {
-      throw Error(NOT_FOUND);
+      throw new NOT_FOUND(message.NOT_FOUND);
     }
     return agent;
   } catch (error: any) {
@@ -180,58 +193,66 @@ const validateUpdateData = async ({
   currencyId,
   roleId
 }: AgentUpdateParams): Promise<any> => {
-  try {
-    const agent = await getAgentById(agentId);
-    const parentAgentIdNumber = parentAgentId
-      ? parentAgentId
-      : agent.parentAgentId;
-    const currencyIdNumber = currencyId
-      ? Number(currencyId)
-      : agent.user?.currencyId;
-    const roleIdNumber = roleId ? Number(roleId) : agent.user?.roleId;
-    if (
-      !parentAgentIdNumber ||
-      !currencyIdNumber ||
-      !roleIdNumber ||
-      parentAgentIdNumber === agentId
-    ) {
-      const missingItem =
-        !parentAgentIdNumber || parentAgentIdNumber === agentId
-          ? 'Parent Agent'
-          : !roleIdNumber
-          ? 'Role'
-          : 'Currency';
-      throw Error(`${missingItem} not valid`);
-    }
-    const [parentAgent, role, currency] = await Promise.all([
-      parentAgentIdNumber && agent.parentAgentId
-        ? prisma.users.findUnique({ where: { id: parentAgentIdNumber } })
-        : null,
-      roleIdNumber && roleIdNumber !== agent.user?.roleId
-        ? prisma.roles.findUnique({ where: { id: roleIdNumber } })
-        : null,
-      currencyIdNumber && roleIdNumber !== agent.user?.currencyId
-        ? prisma.currencies.findUnique({ where: { id: currencyIdNumber } })
-        : null
-    ]);
-    if (!parentAgent && parentAgentIdNumber && agent.parentAgentId) {
-      throw Error('Parent Agent not found');
+  if (agentId === parentAgentId) {
+    console.log('true');
+
+    throw new BAD_REQUEST("Cannot be one's own agent");
+  }
+  const agent = await getAgentById(agentId);
+
+  const parentAgentIdNumber = parentAgentId
+    ? parentAgentId
+    : agent.parentAgentId;
+
+  const currencyIdNumber = currencyId
+    ? Number(currencyId)
+    : agent.user?.currencyId;
+  const roleIdNumber = roleId ? Number(roleId) : agent.user?.roleId;
+  if (
+    !parentAgentIdNumber ||
+    !currencyIdNumber ||
+    !roleIdNumber ||
+    parentAgentIdNumber === agentId
+  ) {
+    const missingItem = !agentId
+      ? 'Parent Agent'
+      : !roleIdNumber
+      ? 'Role'
+      : 'Currency';
+    throw new BAD_REQUEST(`${missingItem} not valid`);
+  }
+
+  let result;
+  await Promise.all([
+    parentAgentIdNumber && agent.parentAgentId
+      ? prisma.users.findUnique({ where: { id: parentAgentIdNumber } })
+      : null,
+    roleIdNumber && roleIdNumber !== agent.user?.roleId
+      ? prisma.roles.findUnique({ where: { id: roleIdNumber } })
+      : null,
+    currencyIdNumber && roleIdNumber !== agent.user?.currencyId
+      ? prisma.currencies.findUnique({ where: { id: currencyIdNumber } })
+      : null
+  ]).then(async ([parentAgent, role, currency]) => {
+    if (!parentAgent && agent.parentAgentId) {
+      throw new NOT_FOUND('Parent Agent not found');
     }
     if (!role && roleIdNumber && roleIdNumber !== agent.user?.roleId) {
-      throw Error('Role not found');
+      throw new NOT_FOUND('Role not found');
     }
     if (!currency && roleIdNumber && roleIdNumber !== agent.user?.currencyId) {
-      throw Error('Currency not found');
+      throw new NOT_FOUND('Currency not found');
     }
+
     const updatedAgentParentIds = parentAgent && [
-      ...(parentAgent?.parentAgentIds as any),
-      parentAgent.id
+      ...((parentAgent?.parentAgentIds as any) || []),
+      parentAgent?.id
     ];
-    updateChildAgent({ agentId, agent, parentAgent });
-    return { agent, parentAgent, role, currency, updatedAgentParentIds };
-  } catch (error: any) {
-    throw Error(error.message);
-  }
+
+    await updateChildAgent({ agentId, agent, parentAgent });
+    result = { agent, parentAgent, role, currency, updatedAgentParentIds };
+  });
+  return result;
 };
 
 const updateChildAgent = async ({
@@ -261,6 +282,7 @@ const updateChildAgent = async ({
           ? ([...(parentAgent?.parentAgentIds as any), parentAgent.id] as any)
           : agent.parentAgentIds
       ) as any;
+
       await prisma.users.update({
         where: {
           type: 'agent',
@@ -283,63 +305,71 @@ export const update = async ({
   rate,
   name
 }: AgentUpdateParams) => {
-  try {
-    const { updatedAgentParentIds, agent, parentAgent, role, currency } =
-      await validateUpdateData({
-        agentId,
-        parentAgentId,
-        currencyId,
-        roleId
-      });
+  const { updatedAgentParentIds, agent, parentAgent, role, currency } =
+    await validateUpdateData({
+      agentId,
+      parentAgentId,
+      currencyId,
+      roleId
+    });
 
-    const [updatedAgent] = await prisma.$transaction([
-      prisma.users.update({
-        where: { id: agentId },
-        data: {
-          parentAgentId: parentAgentId || agent.parentAgentId,
-          name,
-          roleId: role?.id,
-          currencyId: currency?.id
-        }
-      }),
-      prisma.users.update({
-        where: {
-          type: 'agent',
-          id: agentId
-        },
-        data: {
-          rate: Number(rate),
-          parentAgentIds: parentAgent
-            ? (updatedAgentParentIds as any)
-            : agent.parentAgentIds,
-          level: parentAgent
-            ? (updatedAgentParentIds as any)?.length + 1
-            : agent.level
-        }
-      })
-    ]);
+  const [updatedAgent] = await prisma.$transaction([
+    prisma.users.update({
+      where: { id: agentId },
+      data: {
+        parentAgentId: parentAgentId || agent.parentAgentId,
+        name,
+        roleId: role?.id,
+        currencyId: currency?.id
+      }
+    }),
+    prisma.users.update({
+      where: {
+        type: 'agent',
+        id: agentId
+      },
+      data: {
+        rate: Number(rate),
+        parentAgentIds: parentAgent
+          ? (updatedAgentParentIds as any)
+          : agent.parentAgentIds,
+        level: parentAgent
+          ? (updatedAgentParentIds as any)?.length + 1
+          : agent.level
+      }
+    })
+  ]);
 
-    return updatedAgent;
-  } catch (error: any) {
-    throw Error(error.message);
-  }
+  return updatedAgent;
 };
 
 export const deleteAgent = async (id: string, userId: string) => {
-  try {
-    const users = await getById({ id, userId });
-    if (!users) {
-      throw Error('Agent not found');
-    }
-    await prisma.users.update({
-      where: {
-        id
-      },
-      data: {
-        deletedAt: new Date()
-      }
-    });
-  } catch (error: any) {
-    throw Error(error.message);
+  if (userId === id) {
+    throw new BAD_REQUEST(message.CANT_DELETE);
   }
+  const users = await getById({ id, userId });
+  if (!users) {
+    throw new NOT_FOUND(message.NOT_FOUND);
+  }
+
+  const childAgent = await prisma.users.findFirst({
+    where: {
+      parentAgentId: id,
+      deletedAt: null
+    }
+  });
+
+  if (childAgent) {
+    throw new BAD_REQUEST(message.HAVE_SUB_AGENT);
+  }
+
+  await prisma.users.update({
+    where: {
+      id
+    },
+    data: {
+      parentAgentIds: [],
+      deletedAt: new Date()
+    }
+  });
 };

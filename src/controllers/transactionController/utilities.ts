@@ -125,8 +125,9 @@ export const paramsToArray = async (params: string): Promise<any> => {
 
 export const updateBalance = async (userUsername: string): Promise<any> => {
   try {
-    const balances = await getBalances(userUsername);
-    const { balance } = balances;
+    // const balances = await getBalances(userUsername);
+    const balances = await sumBalances(userUsername) ;
+    const balance = (balances as any)[0]._sum.amount;
 
     const result = await prisma.users.update({
       data: {
@@ -142,3 +143,20 @@ export const updateBalance = async (userUsername: string): Promise<any> => {
     console.log(error);
   }
 };
+
+export const sumBalances = async (userUsername: string) => {
+  try {
+    const userIdSums = await prismaTransaction.transactions.groupBy({
+      where: {
+        userId: userUsername
+      },
+      by: ['userId'],
+      _sum: {
+        amount: true,
+      },
+    });
+    return userIdSums
+  } catch (error) {
+    console.log(error)
+  }
+}

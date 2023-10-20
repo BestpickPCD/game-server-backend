@@ -26,8 +26,8 @@ export const getTransactions = async (
   res: Response
 ): Promise<any> => {
   try {
-    const { username } = (req as any).user;
-    const data = (await getAllById(req.query, username)) as any;
+    const { id } = (req as any).user;
+    const data = (await getAllById(req.query, id)) as any;
 
     const { transactions, count, page, size } = data;
 
@@ -52,18 +52,60 @@ export const changeBalance = async (
   res: Response
 ) => { 
   try {
-    console.log(req.body)
     const { username, amount, transaction } = req.body;
     const data = { username, amount, transaction } as CallbackTransactions;
     try {
-      const response = await prismaTransaction.callbackTransactions.create({ data });
-      console.log(response)
+      const { username, amount, transaction } = await prismaTransaction.callbackTransactions.create({ data });
+      
+      if(username) { 
+
+        let newUser
+        const user = await prisma.users.findUnique({
+          where: {
+            username
+          }
+        }) as Users;
+
+        if(!user) { 
+          newUser = await prisma.users.create({
+            data: {
+              username,
+              name: username,
+              type: "player",
+              balance: (transaction as any)?.target?.balance ?? 0
+            }
+          })
+        }
+
+        const data = {
+          userId: username ?? (newUser as Users).username,
+          agentId: (user as Users)?.parentAgentId,
+          type: (transaction as any).type,
+          amount,
+          method: "seamless",
+          updateBy: "seamless",
+        }
+
+        const createTransaction = await create(data) as Transactions;
+        if(createTransaction && ((user as any).balance === 0 || (newUser as any).balance === 0)) {
+          try {
+            await updateBalance((createTransaction as any).userId);
+          } catch (error) {
+            throw new BAD_REQUEST(message.FAILED);
+          }
+        }
+
+        return res.status(200).json({message: "SUCCESS_CALLBACK", createTransaction});
+
+      }
+
+      return res.status(200).json({message: "CALLBACK_STAMPLED"}) 
+
     } catch (error) {
-      console.log(error);
+      console.log(error)
       throw new BAD_REQUEST(message.FAILED);
     }
   } catch (error) {
-    console.log(error);
     return res.status(500).json({ message: message.INTERNAL_SERVER_ERROR, error });
   } 
 };
@@ -74,9 +116,9 @@ export const addTransaction = async (
 ): Promise<any> => {
   try {
     const { id: userSessionId } = req.user as Users;
-    const { userId, type, amount, currencyCode } = req.body 
+    const { userId, type: transactionType, amount, currencyCode } = req.body 
 
-    const { parentAgentId } = await prisma.users.findUnique({
+    const { parentAgentId, balance, type: userType } = await prisma.users.findUnique({
       where: {
         id: userId
       }
@@ -85,15 +127,93 @@ export const addTransaction = async (
     const data = {
       userId,
       agentId:  parentAgentId ?? null,
-      type,
+      type: transactionType,
       amount,
-      currencyCode: currencyCode ?? "KRW",
+      currencyCode: currencyCode ?? null,
       method: "transfer",
       updateBy: userSessionId ?? null,
     }
-    
-    const transcation = await create(data) as Transactions; 
-    // await updateBalance(senderUsername);
+    const transcation = await create(data) as Transactions;
+
+    if(userType === "player") {
+      try {
+        if(['bet', 'win', 'cancel'].includes(transactionType)) {
+
+          const updateUsers = await prisma.$transaction([
+            prisma.users.update({
+              where: {
+                id: userId as string
+              },
+              data: {
+                balance: balance + amount
+              }
+            }),
+            prisma.users.update({
+              where: {
+                id: parentAgentId as string
+              },
+              data: {
+                balance: balance + amount
+              }
+            })
+          ]); 
+
+        } else if(['deposit', 'withdraw'].includes(transactionType)) {
+
+          let userAmt
+          let agentAmt
+
+          if(transactionType === "deposit") {
+            userAmt = amount
+            agentAmt = -1 * amount
+          } else if(transactionType === "withdraw") {
+            userAmt = -1 * amount
+            agentAmt = amount
+          }
+
+          const updateUsers = await prisma.$transaction([
+            prisma.users.update({
+              where: {
+                id: userId as string
+              },
+              data: {
+                balance: balance + userAmt
+              }
+            }),
+            prisma.users.update({
+              where: {
+                id: parentAgentId as string
+              },
+              data: {
+                balance: balance + agentAmt
+              }
+            })
+          ]); 
+
+          console.log(updateUsers)
+
+        }
+      } catch (error) {
+        console.log(error)
+      }
+    }
+
+
+
+    if(transcation && !balance ) {
+      const balanceUpdate = await updateBalance(userId);
+      return res.status(201).json({ message: 'Transaction created successfully', balanceUpdate });
+    } else {
+      const balanceUpdate = await prisma.users.update({
+        where: {
+          id: userId
+        },
+        data: {
+          balance: balance + amount
+        }
+      });
+      return res.status(201).json({ message: 'Transaction created successfully', balanceUpdate });
+    }
 
     // if (senderUsername && receiverUsername) {
     //   if (!(await checkTransferAbility(senderUsername, receiverUsername))) {

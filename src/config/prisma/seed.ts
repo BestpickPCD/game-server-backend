@@ -75,7 +75,6 @@ async function main() {
       },
       data: {
         id: user.id,
-        parentAgentId: user.id,
         level: 1,
         parentAgentIds: []
       }

@@ -15,7 +15,8 @@ import {
   getByIdWithType,
   getDetailsById
 } from '../../services/transactionsService.ts';
-import { PrismaClient as PrismaClientTransaction } from '../../config/prisma/generated/transactions/index.js';
+import { CallbackTransaction, PrismaClient as PrismaClientTransaction } from '../../config/prisma/generated/transactions/index.js';
+import { BAD_REQUEST } from '../../core/error.response.ts';
 const prismaTransaction = new PrismaClientTransaction();
 
 export const getTransactions = async (
@@ -44,15 +45,59 @@ export const getTransactions = async (
   }
 };
 
+export const changeBalance = async (
+  req: Request,
+  res: Response) => {
+  try {
+
+    console.log(req)
+    
+    const { username, amount, transaction } = req.body;
+    const data = {username, amount, transaction} as CallbackTransaction
+    try {
+      const response = await prismaTransaction.callbackTransaction.create({data})
+      // console.log(response)
+    } catch (error) {
+      console.log(error)
+      throw new BAD_REQUEST(message.FAILED);
+    }
+    
+  } catch (error) {
+    console.log(error)
+    return res
+      .status(500)
+      .json({ message: message.INTERNAL_SERVER_ERROR, error });
+  }
+}
+
 export const addTransaction = async (
   req: RequestWithUser,
   res: Response
 ): Promise<any> => {
   try {
-    const { id: userSessionId, parentAgentId: userSessionAgentId } = req.user as Users;
-    const { userId, amount, type } = req.body
+    const { id: userSessionId } = req.user as Users;
+    const { userId, type, amount, currencyCode } = req.body 
 
-    await prismaTransaction.transactions.create(data)
+    const { parentAgentId } = await prisma.users.findUnique({
+      where: {
+        id: userId
+      }
+    }) as Users
+
+    const data = {
+      userId,
+      agentId:  parentAgentId ?? null,
+      type,
+      amount,
+      currencyCode: currencyCode ?? "KRW",
+      method: "transfer",
+      updateBy: userSessionId ?? null,
+    }
+
+
+    const transcation = await prismaTransaction.transactions.create({data})
+
+
 
     // if (senderUsername && receiverUsername) {
     //   if (!(await checkTransferAbility(senderUsername, receiverUsername))) {
@@ -66,7 +111,7 @@ export const addTransaction = async (
  
     return res
       .status(201)
-      .json({ message: 'Transaction created successfully' });
+      .json({ message: 'Transaction created successfully',transcation });
  
   } catch (error) {
     console.log(error);

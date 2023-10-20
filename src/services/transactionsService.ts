@@ -68,7 +68,6 @@ export const getByIdWithType = async (
         amount: true,
         gameId: true,
         type: true,
-        note: true,
         status: true,
         createdAt: true
       }
@@ -125,7 +124,6 @@ export const getDetailsById = async (id: string, userId: number) => {
         token: true,
         agentId: true,
         userId: true,
-        note: true,
         type: true,
         status: true,
         updatedAt: true,

@@ -9,13 +9,13 @@ datasource db {
 }
 
 model Users {
-  id             String       @id @default(uuid())
+  id             String    @id @default(uuid())
   name           String
   email          String?
   username       String    @unique
   password       String?
   type           String?
-  parentAgentId  String? 
+  parentAgentId  String?
   level          Int?
   parentAgentIds Json?
   balance        Decimal?  @default(0) @db.Decimal(10, 2)
@@ -32,9 +32,9 @@ model Users {
   updatedAt      DateTime? @updatedAt
   deletedAt      DateTime?
   lockedAt       DateTime?
-  
-  parent    Users?     @relation("Children", fields: [parentAgentId], references: [id])
-  children  Users[]    @relation("Children")
+
+  parent   Users?  @relation("Children", fields: [parentAgentId], references: [id])
+  children Users[] @relation("Children")
 
   role     Roles?      @relation(fields: [roleId], references: [id])
   currency Currencies? @relation(fields: [currencyId], references: [id])
@@ -42,6 +42,7 @@ model Users {
   ip_user          ip_user[]
   vendors          AgentVendor[]
   transactionLimit TransactionLimits[]
+
   @@unique([email], name: "UniqueEmail")
 }
 

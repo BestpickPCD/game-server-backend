@@ -6,17 +6,21 @@ import {
 const prisma = new PrismaClient();
 import { Request, Response } from 'express';
 import { RequestWithUser } from '../../models/customInterfaces.ts';
-import { message } from '../../utilities/constants/index.ts';
+import { message } from '../../utilities/constants/index.ts'; 
+import bodyParser from 'body-parser';
 import { checkTransactionType } from './transactionTypes.ts';
 import { checkTransferAbility, updateBalance } from './utilities.ts';
 import Redis, { getRedisData } from '../../config/redis/index.ts';
 import {
+  create,
   getAllById,
   getByIdWithType,
   getDetailsById
 } from '../../services/transactionsService.ts';
-import { CallbackTransaction, PrismaClient as PrismaClientTransaction } from '../../config/prisma/generated/transactions/index.js';
+import { CallbackTransaction, PrismaClient as PrismaClientTransaction, Transactions } from '../../config/prisma/generated/transactions/index.js';
 import { BAD_REQUEST } from '../../core/error.response.ts';
+
+const jsonParser = bodyParser.json({ type: 'application/json' });
 const prismaTransaction = new PrismaClientTransaction();
 
 export const getTransactions = async (
@@ -47,28 +51,27 @@ export const getTransactions = async (
 
 export const changeBalance = async (
   req: Request,
-  res: Response) => {
-  try {
-
-    console.log(req)
-    
-    const { username, amount, transaction } = req.body;
-    const data = {username, amount, transaction} as CallbackTransaction
+  res: Response
+) => {
+  // Use the JSON parser middleware to parse the request body
+  jsonParser(req, res, async () => {
     try {
-      const response = await prismaTransaction.callbackTransaction.create({data})
-      // console.log(response)
+      console.log(req.body)
+      const { username, amount, transaction } = req.body;
+      const data = { username, amount, transaction } as CallbackTransaction;
+      try {
+        const response = await prismaTransaction.callbackTransaction.create({ data });
+        console.log(response)
+      } catch (error) {
+        console.log(error);
+        throw new BAD_REQUEST(message.FAILED);
+      }
     } catch (error) {
-      console.log(error)
-      throw new BAD_REQUEST(message.FAILED);
+      console.log(error);
+      return res.status(500).json({ message: message.INTERNAL_SERVER_ERROR, error });
     }
-    
-  } catch (error) {
-    console.log(error)
-    return res
-      .status(500)
-      .json({ message: message.INTERNAL_SERVER_ERROR, error });
-  }
-}
+  });
+};
 
 export const addTransaction = async (
   req: RequestWithUser,
@@ -93,11 +96,9 @@ export const addTransaction = async (
       method: "transfer",
       updateBy: userSessionId ?? null,
     }
-
-
-    const transcation = await prismaTransaction.transactions.create({data})
-
-
+    
+    const transcation = await create(data) as Transactions; 
+    // await updateBalance(senderUsername);
 
     // if (senderUsername && receiverUsername) {
     //   if (!(await checkTransferAbility(senderUsername, receiverUsername))) {
@@ -106,7 +107,6 @@ export const addTransaction = async (
     //       .json({ message: `The transfer cannot be made.` });
     //   }
     // }
-    // await updateBalance(senderUsername);
     // checkTransactionType(type)
  
     return res

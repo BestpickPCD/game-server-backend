@@ -46,6 +46,16 @@ export const getAllById = async (queryParams: any, username: string | null) => {
   }
 };
 
+export const create = async (data:any) => {
+  try {
+    const transcation = await prismaTransaction.transactions.create({data})
+    return transcation
+
+  } catch (error: any) {
+    throw Error(error);
+  }
+}
+
 export const getByIdWithType = async (
   username: string,
   arrayTypes: string[]

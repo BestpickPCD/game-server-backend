@@ -8,7 +8,7 @@ export const checkTransferAbility = async (
   receiverUsername: string
 ): Promise<any> => {
   let result = false;
-  const reveiver = (await prisma.$queryRawUnsafe(` SELECT Users.username FROM 
+  const reveiver = (await prisma.$queryRawUnsafe(` SELECT Users.username FROM
     ( SELECT username, parentAgentId AS agentId FROM Users WHERE type = "agent" AND username = "${receiverUsername}"
       UNION
       SELECT username, parentAgentId AS agentId FROM Users WHERE type = "player" AND username = "${receiverUsername}"
@@ -22,58 +22,77 @@ export const checkTransferAbility = async (
   return result;
 };
 
-export const arrangeTransactions = async (transactions: any): Promise<any> => {
-  const details = transactions.map((transaction: any) => {
-    const data: any = {};
-    const {
-      id,
-      type,
-      amount,
-      status,
-      createdAt,
-      updatedUser,
-      sender,
-      receiver,
-      gameId
-    } = transaction;
+export const updateBalance = async (userId: string, amount: number, type: string, agentId: string | null) => {
+  try {
 
-    data.id = id;
-    data.type = type;
-    data.status = status;
-    data.createdAt = createdAt;
-    data.refererId = updatedUser;
-    data.before = 0;
-    data.amount = parseFloat(amount);
-    if (type == 'bet' || type == 'win' || type == 'charge' || type == 'lose') {
-      data.from = {
-        id: sender ? sender.id : receiver.id,
-        name: sender ? sender.username : receiver.username,
-        type: sender ? sender.type : receiver.type
-      };
-      data.to = {
-        id: gameId ? gameId : '',
-        title: 'Speed Baccarat J',
-        type: 'baccarat',
-        round: 0,
-        vendor: 'evolution'
-      };
-    } else {
-      data.from = {
-        id: sender ? sender.id : '',
-        name: sender ? sender.username : '',
-        type: sender ? sender.type : ''
-      };
-      data.to = {
-        id: receiver ? receiver.id : '',
-        name: receiver ? receiver.username : '',
-        type: receiver ? receiver.type : ''
-      };
+    let userUpdate: any
+    let agentUpdate: any
+
+    if(['bet', 'win', 'cancel'].includes(type)) {
+      userUpdate = {
+          where: {
+            id: userId
+          },
+          data: {
+            balance: {
+              increment: amount
+            }
+          }
+        }
+
+      if( agentId ) {
+        agentUpdate = {
+          where: {
+            id: agentId
+          },
+          data: {
+            balance: {
+              increment: amount
+            }
+          }
+        }
+      }
+
+    } else if (['deposit','withdraw'].includes(type)) {
+
+      // if deposit amount has to be > 0 || withdraw amount <0
+
+      userUpdate = {
+        where: {
+          id: userId
+        },
+        data: {
+          balance: {
+            increment: amount
+          }
+        }
+      }
+
+      if( agentId ) {
+        agentUpdate = {
+          where: {
+            id: agentId
+          },
+          data: {
+            balance: {
+              increment: -(amount)
+            }
+          }
+        }
+      }
+
     }
-    return data;
-  }) as any;
 
-  return details;
-};
+    await prisma.users.update(userUpdate)
+    if(agentUpdate) {
+      await prisma.users.update(agentUpdate)
+    }
+
+
+  } catch (error) {
+    console.log(error)
+  }
+}
 
 export const getBalances = async (userUsername: string): Promise<any> => {
   try {
@@ -123,7 +142,7 @@ export const paramsToArray = async (params: string): Promise<any> => {
   return formattedParams;
 };
 
-export const updateBalance = async (userUsername: string): Promise<any> => {
+export const recalculateBalance = async (userUsername: string): Promise<any> => {
   try {
     // const balances = await getBalances(userUsername);
     const balances = await sumBalances(userUsername) ;

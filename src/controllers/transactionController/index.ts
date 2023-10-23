@@ -47,6 +47,7 @@ export const getTransactions = async (
   }
 };
 
+// Seamless method
 export const changeBalance = async (
   req: Request,
   res: Response
@@ -86,16 +87,19 @@ export const changeBalance = async (
           updateBy: "seamless",
         }
 
-        const createTransaction = await create(data) as Transactions;
-        if(createTransaction && ((user as any).balance === 0 || (newUser as any).balance === 0)) {
+        const { type, agentId } = await create(data) as Transactions;
+        const balanceResult = await updateBalance(data.userId, amount, type, agentId, data.method )
+        console.log(balanceResult)
+
+        if( ((user as any).balance === 0 || (newUser as any).balance === 0)) {
           try {
-            await recalculateBalance((createTransaction as any).userId);
+            await recalculateBalance(data.userId);
           } catch (error) {
             throw new BAD_REQUEST(message.FAILED);
           }
         }
 
-        return res.status(200).json({message: "SUCCESS_CALLBACK", createTransaction});
+        return res.status(200).json({message: "SUCCESS_CALLBACK", balanceResult});
 
       }
 
@@ -110,6 +114,7 @@ export const changeBalance = async (
   }
 };
 
+// Transfer method
 export const addTransaction = async (
   req: RequestWithUser,
   res: Response
@@ -118,15 +123,27 @@ export const addTransaction = async (
     const { id: userSessionId } = req.user as Users;
     const { userId, type: transactionType, amount, currencyCode } = req.body
 
-    const { parentAgentId } = await prisma.users.findUnique({
+    const { parentAgentId, parent, username } = await prisma.users.findUnique({
       where: {
         id: userId
+      },
+      select: {
+        parentAgentId: true,
+        username: true,
+        parent: {
+          select: {
+            id: true,
+            username: true
+          }
+        }
       }
-    }) as Users
+    }) as any
 
     const data = {
       userId,
+      username,
       agentId:  parentAgentId ?? null,
+      agentUsername: parent.username,
       type: transactionType,
       amount,
       currencyCode: currencyCode ?? null,
@@ -134,7 +151,7 @@ export const addTransaction = async (
       updateBy: userSessionId ?? null,
     }
     const { type, agentId } = await create(data) as Transactions;
-    const balanceResult = await updateBalance(userId, amount, type, agentId )
+    const balanceResult = await updateBalance(userId, amount, type, agentId, data.method )
 
     // if (senderUsername && receiverUsername) {
     //   if (!(await checkTransferAbility(senderUsername, receiverUsername))) {

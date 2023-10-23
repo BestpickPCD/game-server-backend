@@ -22,7 +22,7 @@ export const checkTransferAbility = async (
   return result;
 };
 
-export const updateBalance = async (userId: string, amount: number, type: string, agentId: string | null) => {
+export const updateBalance = async (userId: string, amount: number, type: string, agentId: string | null, method: string) => {
   try {
 
     let userUpdate: any
@@ -40,7 +40,7 @@ export const updateBalance = async (userId: string, amount: number, type: string
           }
         }
 
-      if( agentId ) {
+      if( agentId && method === "seamless" ) {
         agentUpdate = {
           where: {
             id: agentId
@@ -95,12 +95,15 @@ export const updateBalance = async (userId: string, amount: number, type: string
     }
 
     if (agentUpdate) {
-      await prisma.users.update(agentUpdate)
+      agentUpdate = await prisma.users.update(agentUpdate)
+      agentUpdate.success = true
     } 
     if (userUpdate) {
-      await prisma.users.update(userUpdate)
+      userUpdate = await prisma.users.update(userUpdate)
+      userUpdate.success = true
     }
 
+    return {agentUpdate, userUpdate}
 
   } catch (error) {
     console.log(error)

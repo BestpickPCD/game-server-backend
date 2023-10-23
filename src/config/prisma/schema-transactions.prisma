@@ -11,7 +11,9 @@ datasource db {
 model Transactions {
   id                    String  @id @default(auto()) @map("_id") @db.ObjectId
   userId                String?
+  username              String?
   agentId               String?
+  agentUsername         String?
   type                  String
   method                String?
   gameId                String?

@@ -147,7 +147,7 @@ export const addTransaction = async (
 
     return res
       .status(201)
-      .json({ message: 'Transaction created successfully',balanceResult });
+      .json({ message: 'Transaction created successfully', balanceResult });
 
   } catch (error) {
     console.log(error);

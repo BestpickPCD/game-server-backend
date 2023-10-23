@@ -135,6 +135,7 @@ export const updateUser = async (req: Request, res: Response): Promise<any> => {
       roleId,
       currencyId,
       agentId,
+      rate,
       parentAgentId,
       accountNumber,
       callbackUrl,
@@ -148,17 +149,19 @@ export const updateUser = async (req: Request, res: Response): Promise<any> => {
       ...(parentAgentId && { parentAgentId }),
       ...(accountNumber && { accountNumber }),
       ...(callbackUrl && { callbackUrl }),
+      ...(rate && { rate }),
       ...(apiCall && { apiCall })
     };
 
     const newUser = await prisma.users.update({
       where: { id: userId },
       data: updatedUser
-    });
+    }); 
+
 
     // await Redis.del(redisKey);
     // await Redis.del(redisKeyWithId);
-    if (parentAgentId || agentId) {
+    if (agentId) {
       if (newUser && newUser.type == 'agent') {
         return _updateAgent(newUser, parentAgentId, res);
       } else if (newUser && newUser.type == 'player') {
@@ -355,21 +358,27 @@ export const getDashboard = async (
 
 const _updateAgent = async (
   user: Users,
-  parentAgentId: string,
+  parentAgentId: string | null,
   res: Response
 ) => {
   try {
+
     if (parentAgentId == user.id) {
       return res
         .status(400)
         .json({ message: 'Parent agent cannot be yourself' });
     }
-    const details: any = await getParentAgentIdsByParentAgentId(parentAgentId);
+
+    let details: any
+    
+    if(parentAgentId) {
+      details = await getParentAgentIdsByParentAgentId(parentAgentId);
+    }
     const agent = await prisma.users.update({
       where: { id: user.id },
       data: {
-        parentAgentIds: details.parentAgentIds,
-        level: details.level
+        parentAgentIds: parentAgentId ? details.parentAgentIds : [],
+        level: parentAgentId ? details.level : null
       }
     });
     return res.status(200).json({ message: message.SUCCESS, data: agent });

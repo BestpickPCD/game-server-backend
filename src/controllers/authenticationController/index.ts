@@ -198,7 +198,6 @@ export const register = async (req: Request, res: Response): Promise<any> => {
         return _agentInsert(userSchema, res);
       }
     } catch (error) {
-      console.log(error);
       return res
         .status(500)
         .json({ message: message.INTERNAL_SERVER_ERROR, error });
@@ -227,18 +226,21 @@ const _playerInsert = async (userSchema: any, res: Response) => {
 
 const _agentInsert = async (userSchema: any, res: Response) => {
   try {
+    let details
     const newUser: any = await _userInsert(userSchema);
-    const details: any = await getParentAgentIdsByParentAgentId(
-      newUser.parentAgentId
-    );
+    if(newUser.parentAgentId) {
+      details = await getParentAgentIdsByParentAgentId(
+        newUser.parentAgentId
+      );
+    }
     const userInsert = (await prisma.users.update({
       where: {
         id: newUser.id
       },
       data: {
         rate: userSchema?.rate ?? 0,
-        parentAgentIds: details.parentAgentIds,
-        level: details.level
+        parentAgentIds: newUser.parentAgentId ? details.parentAgentIds : [],
+        level: newUser.parentAgentId ? details.level : null
       }
     })) as any;
 

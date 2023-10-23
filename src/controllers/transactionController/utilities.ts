@@ -55,7 +55,7 @@ export const updateBalance = async (userId: string, amount: number, type: string
 
     } else if (['deposit','withdraw'].includes(type)) {
 
-      // if deposit amount has to be > 0 || withdraw amount <0
+      // if deposit amount has to be < 0 || withdraw amount > 0
 
       userUpdate = {
         where: {
@@ -81,11 +81,24 @@ export const updateBalance = async (userId: string, amount: number, type: string
         }
       }
 
+    } else if (['agent.add_balance'].includes(type)) {
+      agentUpdate = {
+        where: {
+          id: userId
+        },
+        data: {
+          balance: {
+            increment: amount
+          }
+        }
+      }
     }
 
-    await prisma.users.update(userUpdate)
-    if(agentUpdate) {
+    if (agentUpdate) {
       await prisma.users.update(agentUpdate)
+    } 
+    if (userUpdate) {
+      await prisma.users.update(userUpdate)
     }
 
 

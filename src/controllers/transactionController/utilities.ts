@@ -53,9 +53,9 @@ export const updateBalance = async (userId: string, amount: number, type: string
         }
       }
 
-    } else if (['deposit','withdraw'].includes(type)) {
+    } else if (['deposit','withdraw','user.add_balance'].includes(type)) {
 
-      // if deposit amount has to be < 0 || withdraw amount > 0
+      // if deposit amount has to be < 0 || withdraw amount > 0 || user.add_balance is the same as deposit < 0 happens when agents add_balance to users from backoffice
 
       userUpdate = {
         where: {

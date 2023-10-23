@@ -1,7 +1,8 @@
 import { getAffiliatedAgentsByUserId } from '../controllers/userController/utilities.js';
 import {
   Prisma,
-  PrismaClient
+  PrismaClient,
+  Users
 } from '../config/prisma/generated/base-default/index.js';
 const prisma = new PrismaClient();
 import { PrismaClient as PrismaClientTransaction } from '../config/prisma/generated/transactions/index.js';
@@ -26,7 +27,11 @@ export const getAllWithBalance = async (query: any, userId: number) => {
       agentId?: number;
     } = query;
 
-    const rawQuery = `SELECT users.id, users.name, users.email, users.username, users.type, users.balance, users.currencyId, users.isActive, users.updatedAt, users.parentAgentIds, parentAgentId AS agentId
+    const rawQuery = `SELECT 
+    users.id, users.name, users.email, users.username, 
+    users.type, users.balance, users.currencyId, users.isActive, 
+    users.updatedAt, users.parentAgentIds, parentAgentId AS agentId,
+    users.balance
     FROM Users users
     WHERE
       users.deletedAt IS NULL
@@ -35,9 +40,9 @@ export const getAllWithBalance = async (query: any, userId: number) => {
         SELECT id
         FROM Users
         WHERE TYPE = 'agent'
-          AND JSON_CONTAINS(parentAgentIds, JSON_ARRAY(${userId}))
-      )OR users.parentAgentId = ${userId})
-    ${agentId ? `AND agent.id = ${agentId}` : ``}
+          AND JSON_CONTAINS(parentAgentIds, JSON_ARRAY('${userId}'))
+      )OR users.parentAgentId = '${userId}')
+    ${agentId ? `AND agent.id = '${agentId}'` : ``}
     ${
       search
         ? `AND (
@@ -59,30 +64,46 @@ export const getAllWithBalance = async (query: any, userId: number) => {
     LIMIT ${size} OFFSET ${page * size}
     `;
 
-    const users = (await prisma.$queryRawUnsafe(`${rawQuery}`)) as any;
+    const users = (await prisma.$queryRawUnsafe(`${rawQuery}`)) as any; 
 
-    const winGame = await _getSumTransaction('win', 'receiverUsername');
-    const betGame = await _getSumTransaction('bet', 'senderUsername');
-    const chargeGame = await _getSumTransaction('charge', 'receiverUsername');
-    const received = await _getSumTransaction('add', 'receiverUsername');
+    const allUsers = users.map((user: Users) => user.id);  
+ 
+    const transactions = await prismaTransaction.transactions.findMany({
+      where: {
+        userId: {
+          in: allUsers
+        }
+      },
+      select: {
+        userId: true,
+        type: true,
+        amount: true,
+      },
+      orderBy: {
+        userId: 'asc',
+      },
+    });
+    
+    const transformedData: Record<string, Record<string, number>> = {};
+    
+    transactions.forEach((transaction) => {
+      const { userId, type, amount } = transaction;
+    
+      if (!transformedData[userId as string]) {
+        transformedData[userId as string] = {};
+      }
+    
+      if (!transformedData[userId as string][type]) {
+        transformedData[userId as string][type] = 0;
+      }
+    
+      transformedData[userId as string][type] += amount;
+    });
 
     const userDetails = users.map((row: any) => {
       const data = {
         ...row,
-        user: {
-          name: row.name,
-          username: row.username,
-          betGameAmount:
-            ((winGame[`${row.username}`]?._sum.amount as number) ?? 0) -
-              ((betGame[`${row.username}`]?._sum.amount as number) ?? 0) -
-              ((chargeGame[`${row.username}`]?._sum.amount as number) ?? 0) ??
-            0,
-          amountReceived: received[`${row.username}`]?._sum.amount ?? 0,
-          winGameAmount: winGame[`${row.username}`]?._sum.amount ?? 0,
-          chargeGameAmount: row.chargeGameAmount ?? 0,
-          balance: row.balance ?? 0,
-          updatedAt: row.updatedAt
-        }
+        balances: transformedData[`${row.id}`]
       };
       return data;
     });

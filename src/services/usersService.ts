@@ -351,23 +351,24 @@ export const getDashboardData = async (userId: string) => {
       }
     })) as any;
 
-    const { affiliatedAgents, affiliatedUsernames } =
+    const { affiliatedAgents, affiliatedUserId } =
       await getAffiliatedAgentsByUserId(userId);
-    const affiliatedSums = await _getAllSumsByUsername(affiliatedUsernames);
-
+    const affiliatedSums = await _getAllSumsByUserId(affiliatedUserId); 
     affiliatedAgents.map((affiliatedAgent: any) => {
-      const winGame = affiliatedSums.winGame[affiliatedAgent.username];
-      const betGame = affiliatedSums.betGame[affiliatedAgent.username];
-      const chargeGame = affiliatedSums.chargeGame[affiliatedAgent.username];
-      const sentOut = affiliatedSums.sentOut[affiliatedAgent.username];
-      const received = affiliatedSums.received[affiliatedAgent.username];
-      const allSums = { winGame, betGame, chargeGame, sentOut, received };
+      const winGame = affiliatedSums.winGame[affiliatedAgent.id];
+      const betGame = affiliatedSums.betGame[affiliatedAgent.id];
+      const chargeGame = affiliatedSums.chargeGame[affiliatedAgent.id];
+      const userReceived = affiliatedSums.userReceived[affiliatedAgent.id];
+      const agentReceived = affiliatedSums.agentReceived[affiliatedAgent.id];
+      const allSums = { winGame, betGame, chargeGame, userReceived, agentReceived };
 
       affiliatedAgent.allSums = allSums;
-    });
+    }); 
 
-    const { winGame, betGame, chargeGame, sentOut, received } =
-      await _getAllSumsByUsername([item.username]);
+    const { winGame, betGame, chargeGame, userReceived, agentReceived } =
+      await _getAllSumsByUserId([item.id]);
+
+      console.log({ winGame, betGame, chargeGame, userReceived, agentReceived })
     const data = {
       userId: item.id,
       name: item.name,
@@ -388,18 +389,18 @@ export const getDashboardData = async (userId: string) => {
       balance: {
         balance: item.balance ?? 0,
         calculatedBalance:
-          (received[`${item.username}`]?._sum.amount ??
-            0 + winGame[`${item.username}`]?._sum.amount ??
+          (agentReceived[`${item.id}`]?._sum.amount ??
+            0 + winGame[`${item.id}`]?._sum.amount ??
             0) -
-          (sentOut[`${item.username}`]?._sum.amount ??
-            0 + betGame[`${item.username}`]?._sum.amount ??
-            0 + chargeGame[`${item.username}`]?._sum.amount ??
+          (userReceived[`${item.id}`]?._sum.amount ??
+            0 + betGame[`${item.id}`]?._sum.amount ??
+            0 + chargeGame[`${item.id}`]?._sum.amount ??
             0),
-        sendOut: sentOut[`${item.username}`]?._sum.amount ?? 0,
-        receive: received[`${item.username}`]?._sum.amount ?? 0,
-        bet: betGame[`${item.username}`]?._sum.amount ?? 0,
-        win: winGame[`${item.username}`]?._sum.amount ?? 0,
-        charge: chargeGame[`${item.username}`]?._sum.amount ?? 0
+        userReceived: userReceived[`${item.id}`]?._sum.amount ?? 0,
+        agentReceived: agentReceived[`${item.id}`]?._sum.amount ?? 0,
+        bet: betGame[`${item.id}`]?._sum.amount ?? 0,
+        win: winGame[`${item.id}`]?._sum.amount ?? 0,
+        charge: chargeGame[`${item.id}`]?._sum.amount ?? 0
       }
     };
 
@@ -470,35 +471,35 @@ export const getAllByAgentId = async (query: any, id: string) => {
   }
 };
 
-const _getAllSumsByUsername = async (username: string[]) => {
+const _getAllSumsByUserId = async (userIds: string[]) => {
   try {
     const winGame = await _getSumTransactionByUsername(
       'win',
-      'receiverUsername',
-      username
+      'userId',
+      userIds
     );
     const betGame = await _getSumTransactionByUsername(
       'bet',
-      'senderUsername',
-      username
+      'userId',
+      userIds
     );
     const chargeGame = await _getSumTransactionByUsername(
-      'charge',
-      'receiverUsername',
-      username
+      'cancel',
+      'userId',
+      userIds
     );
-    const sentOut = await _getSumTransactionByUsername(
-      'add',
-      'senderUsername',
-      username
+    const userReceived = await _getSumTransactionByUsername(
+      'user.add_balance',
+      'userId',
+      userIds
     );
-    const received = await _getSumTransactionByUsername(
-      'add',
-      'receiverUsername',
-      username
+    const agentReceived = await _getSumTransactionByUsername(
+      'agent.add_balance',
+      'userId',
+      userIds
     );
 
-    const balance = { winGame, betGame, chargeGame, sentOut, received };
+    const balance = { winGame, betGame, chargeGame, userReceived, agentReceived };
 
     return balance;
   } catch (error: any) {
@@ -544,7 +545,7 @@ const _getSumTransactionByUsername = async (
   })) as any;
 
   const formattedResult = sumBalance.reduce((acc: any, item: any) => {
-    acc[item.senderUsername ?? item.receiverUsername] = item;
+    acc[item.userId] = item;
     return acc;
   }, {});
 

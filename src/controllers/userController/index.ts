@@ -9,7 +9,6 @@ import { message } from '../../utilities/constants/index.ts';
 import {
   getAffiliatedAgentsByUserId,
   getParentAgentIdsByParentAgentId
-  // getBalanceSummariesByIds
 } from './utilities.ts';
 import Redis, { getRedisData } from '../../config/redis/index.ts';
 import { RequestWithUser } from '../../models/customInterfaces.ts';

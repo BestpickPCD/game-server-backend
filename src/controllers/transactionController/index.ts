@@ -18,8 +18,20 @@ import {
 } from '../../services/transactionsService.ts';
 import { CallbackTransactions, PrismaClient as PrismaClientTransaction, Transactions } from '../../config/prisma/generated/transactions/index.js';
 import { BAD_REQUEST } from '../../core/error.response.ts';
+import { Decimal } from '../../config/prisma/generated/base-default/runtime/library';
 
 const prismaTransaction = new PrismaClientTransaction();
+
+interface usernameIds {
+  id: string,
+  parentAgentId: string,
+  username: string,
+  balance: Decimal | null;
+  parent: {
+    username: string,
+    id: string
+  } | null
+}
 
 export const getTransactions = async (
   req: Request,
@@ -60,27 +72,53 @@ export const changeBalance = async (
 
       if(username) {
 
-        let newUser
-        const user = await prisma.users.findUnique({
+        let user
+        user = await prisma.users.findUnique({
           where: {
             username
+          },
+          select: {
+            id: true,
+            parentAgentId: true,
+            username: true,
+            balance: true,
+            parent: {
+              select: {
+                id: true,
+                username: true
+              }
+            }
           }
-        }) as Users;
+        }) as usernameIds;
 
         if(!user) {
-          newUser = await prisma.users.create({
+          user = await prisma.users.create({
             data: {
               username,
               name: username,
               type: "player",
               balance: (transaction as any)?.target?.balance ?? 0
+            },
+            select: {
+              id: true,
+              parentAgentId: true,
+              username: true,
+              balance: true,
+              parent: {
+                select: {
+                  id: true,
+                  username: true
+                }
+              }
             }
-          })
+          }) as usernameIds;
         }
 
         const data = {
-          userId: username ?? (newUser as Users).username,
-          agentId: (user as Users)?.parentAgentId,
+          userId: user.id,
+          username: username,
+          agentId: user.parentAgentId ? user.parentAgentId : null,
+          agentUsername: user?.parent?.username ? user?.parent?.username : null,
           type: (transaction as any).type,
           amount,
           method: "seamless",
@@ -88,10 +126,9 @@ export const changeBalance = async (
         }
 
         const { type, agentId } = await create(data) as Transactions;
-        const balanceResult = await updateBalance(data.userId, amount, type, agentId, data.method )
-        console.log(balanceResult)
+        const balanceResult = await updateBalance(data.userId, amount, type, agentId, data.method );
 
-        if( ((user as any).balance === 0 || (newUser as any).balance === 0)) {
+        if((user as any).balance === 0) {
           try {
             await recalculateBalance(data.userId);
           } catch (error) {
@@ -128,8 +165,10 @@ export const addTransaction = async (
         id: userId
       },
       select: {
+        id: true,
         parentAgentId: true,
         username: true,
+        balance: true,
         parent: {
           select: {
             id: true,
@@ -137,13 +176,13 @@ export const addTransaction = async (
           }
         }
       }
-    }) as any
+    }) as usernameIds
 
     const data = {
       userId,
       username,
       agentId:  parentAgentId ?? null,
-      agentUsername: parent.username,
+      agentUsername: parent?.username ?? null,
       type: transactionType,
       amount,
       currencyCode: currencyCode ?? null,

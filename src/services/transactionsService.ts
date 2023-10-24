@@ -95,7 +95,7 @@ export const getByIdWithType = async (
 export const getDetailsById = async (id: string, userId: string) => {
   try {  
     
-    const transaction = await prismaTransaction.transactions.findMany({
+    const transaction = await prismaTransaction.transactions.findUnique({
       select: {
         id: true,
         amount: true,

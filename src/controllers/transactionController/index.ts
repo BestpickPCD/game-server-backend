@@ -59,6 +59,19 @@ export const getTransactions = async (
   }
 };
 
+export const getBalance = async (
+  _: Request,
+  res: Response
+) => {
+  try {
+    return res.status(200).json({
+      message: message.SUCCESS, 
+    });
+  } catch (error) {
+    console.log(error)
+  }
+}
+
 // Seamless method
 export const changeBalance = async (
   req: Request,
@@ -68,7 +81,7 @@ export const changeBalance = async (
     const { username, amount, transaction } = req.body;
     const data = { username, amount, transaction } as CallbackTransactions;
     try {
-      const { username, amount, transaction } = await prismaTransaction.callbackTransactions.create({ data });
+      const { username, amount, transaction, id: callbackId } = await prismaTransaction.callbackTransactions.create({ data }) as CallbackTransactions;
 
       if(username) {
 
@@ -116,6 +129,7 @@ export const changeBalance = async (
 
         const data = {
           userId: user.id,
+          callbackId,
           username: username,
           agentId: user.parentAgentId ? user.parentAgentId : null,
           agentUsername: user?.parent?.username ? user?.parent?.username : null,

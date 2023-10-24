@@ -19,7 +19,7 @@ model Transactions {
   gameId                String?
   updateBy              String?
   amount                Float   @default(0.0)
-  CallbackTransactionId String?
+  callbackId            String?
   token                 String?
   status                String?
   currencyCode          String?

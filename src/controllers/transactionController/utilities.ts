@@ -1,22 +1,25 @@
 import { PrismaClient } from '../../config/prisma/generated/base-default/index.js';
 const prisma = new PrismaClient();
 import { PrismaClient as PrismaClientTransaction } from '../../config/prisma/generated/transactions/index.js';
+import { BAD_REQUEST } from '../../core/error.response.js';
+import { message } from '../../utilities/constants/index.js';
 const prismaTransaction = new PrismaClientTransaction();
 
 export const checkTransferAbility = async (
-  senderUsername: string,
-  receiverUsername: string
+  senderId: string,
+  receiverId: string
 ): Promise<any> => {
   let result = false;
-  const reveiver = (await prisma.$queryRawUnsafe(` SELECT Users.username FROM
-    ( SELECT username, parentAgentId AS agentId FROM Users WHERE type = "agent" AND username = "${receiverUsername}"
-      UNION
-      SELECT username, parentAgentId AS agentId FROM Users WHERE type = "player" AND username = "${receiverUsername}"
-    ) AS Agent
-    JOIN Users ON Users.id = Agent.agentId
-  `)) as any;
+  const { parentAgentId } = await prisma.users.findUnique({
+    where: {
+      id: receiverId
+    },
+    select: {
+      parentAgentId: true
+    }
+  }) as {parentAgentId: string}
 
-  if (reveiver[0]?.username === senderUsername) {
+  if (parentAgentId === senderId) {
     result = true;
   }
   return result;
@@ -101,12 +104,12 @@ export const updateBalance = async (userId: string, amount: number, type: string
     if (userUpdate) {
       userUpdate = await prisma.users.update(userUpdate)
       userUpdate.success = true
-    }
+    } 
 
-    return {agentUpdate, userUpdate}
+    return { balance: userUpdate ? userUpdate.balance : agentUpdate.balance }
 
   } catch (error) {
-    console.log(error)
+    throw new BAD_REQUEST(message.FAILED);
   }
 }
 

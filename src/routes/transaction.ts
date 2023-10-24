@@ -17,7 +17,7 @@ import { authentication } from '../middleware/authentication.ts';
 import { permission } from '../middleware/permission.ts';
 
 const router = express.Router();
-router.post('/callback/balance', getBalance)
+router.get('/callback/balance', getBalance)
 router.post('/callback/changeBalance', changeBalance)
 router.get(
   '/transactions',

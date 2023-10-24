@@ -60,15 +60,24 @@ export const getTransactions = async (
 };
 
 export const getBalance = async (
-  _: Request,
+  req: Request,
   res: Response
 ) => {
   try {
-    return res.status(200).json({
-      message: message.SUCCESS, 
-    });
+    const { username } = req.query;
+    if (!username) {
+      throw new BAD_REQUEST(message.INVALID_CREDENTIALS);
+    } else {
+      const { balance } = await prisma.users.findUnique({
+        where: {
+          username: username as string
+        }
+      }) as Users;
+
+      return res.status(200).json({ balance });
+    }
   } catch (error) {
-    console.log(error)
+    throw new BAD_REQUEST(message.INVALID_CREDENTIALS);
   }
 }
 
@@ -140,7 +149,7 @@ export const changeBalance = async (
         }
 
         const { type, agentId } = await create(data) as Transactions;
-        const balanceResult = await updateBalance(data.userId, amount, type, agentId, data.method );
+        await updateBalance(data.userId, amount, type, agentId, data.method );
 
         if((user as any).balance === 0) {
           try {
@@ -150,14 +159,13 @@ export const changeBalance = async (
           }
         }
 
-        return res.status(200).json({message: "SUCCESS_CALLBACK", balanceResult});
+        return res.status(200).json({message: "SUCCESS_CALLBACK"});
 
       }
 
       return res.status(200).json({message: "CALLBACK_STAMPLED"})
 
     } catch (error) {
-      console.log(error)
       throw new BAD_REQUEST(message.FAILED);
     }
   } catch (error) {
@@ -172,7 +180,11 @@ export const addTransaction = async (
 ): Promise<any> => {
   try {
     const { id: userSessionId } = req.user as Users;
-    const { userId, type: transactionType, amount, currencyCode } = req.body
+    const { userId, type: transactionType, amount, currencyCode, agentId: parentId } = req.body;
+
+    if(transactionType === 'user.add_balance' && !(await checkTransferAbility(parentId, userId))) {
+      return res.status(500).json({ message: `The transfer cannot be made.` });
+    }
 
     const { parentAgentId, parent, username } = await prisma.users.findUnique({
       where: {
@@ -204,23 +216,13 @@ export const addTransaction = async (
       updateBy: userSessionId ?? null,
     }
     const { type, agentId } = await create(data) as Transactions;
-    const balanceResult = await updateBalance(userId, amount, type, agentId, data.method )
-
-    // if (senderUsername && receiverUsername) {
-    //   if (!(await checkTransferAbility(senderUsername, receiverUsername))) {
-    //     return res
-    //       .status(500)
-    //       .json({ message: `The transfer cannot be made.` });
-    //   }
-    // }
-    // checkTransactionType(type)
+    const { balance } = await updateBalance(userId, amount, type, agentId, data.method );
 
     return res
       .status(201)
-      .json({ message: 'Transaction created successfully', balanceResult });
+      .json({ message: 'Transaction created successfully', balance });
 
   } catch (error) {
-    console.log(error);
     return res
       .status(500)
       .json({ message: message.INTERNAL_SERVER_ERROR, error });

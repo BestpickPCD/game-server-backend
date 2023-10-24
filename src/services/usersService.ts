@@ -368,7 +368,7 @@ export const getDashboardData = async (userId: string) => {
     const { winGame, betGame, chargeGame, userReceived, agentReceived } =
       await _getAllSumsByUserId([item.id]);
 
-      console.log({ winGame, betGame, chargeGame, userReceived, agentReceived })
+      // console.log({ winGame, betGame, chargeGame, userReceived, agentReceived })
     const data = {
       userId: item.id,
       name: item.name,

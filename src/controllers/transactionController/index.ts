@@ -180,10 +180,16 @@ export const addTransaction = async (
 ): Promise<any> => {
   try {
     const { id: userSessionId } = req.user as Users;
-    const { userId, type: transactionType, amount, currencyCode } = req.body;
+    const { userId, type: transactionType, amount: transactionAmount, currencyCode } = req.body;
+
+    let amount = transactionAmount
 
     if(transactionType === 'user.add_balance' && !(await checkTransferAbility(userSessionId, userId))) { 
-        return res.status(500).json({ message: `The transfer cannot be made.` }); 
+      return res.status(500).json({ message: `The transfer cannot be made.` }); 
+    }
+
+    if (['deposit', 'user.add_balance'].includes(transactionType) && amount > 0) { 
+      amount = -1 * amount 
     }
 
     const { parentAgentId, parent, username } = await prisma.users.findUnique({
@@ -202,7 +208,7 @@ export const addTransaction = async (
           }
         }
       }
-    }) as usernameIds
+    }) as usernameIds;
 
     const data = {
       userId,

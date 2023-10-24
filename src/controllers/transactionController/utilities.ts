@@ -44,6 +44,7 @@ export const updateBalance = async (userId: string, amount: number, type: string
         }
 
       if( agentId && method === "seamless" ) {
+        console.log("seamless")
         agentUpdate = {
           where: {
             id: agentId
@@ -59,6 +60,16 @@ export const updateBalance = async (userId: string, amount: number, type: string
     } else if (['deposit','withdraw','user.add_balance'].includes(type)) {
 
       // if deposit amount has to be < 0 || withdraw amount > 0 || user.add_balance is the same as deposit < 0 happens when agents add_balance to users from backoffice
+      let agentAmt = 0
+      let userAmt = 0
+
+      if(['deposit','user.add_balance'].includes(type)) {
+        if( amount < 0 ) {
+          userAmt = -1 * amount
+        } else {
+          userAmt = amount
+        }
+      }
 
       userUpdate = {
         where: {
@@ -66,10 +77,19 @@ export const updateBalance = async (userId: string, amount: number, type: string
         },
         data: {
           balance: {
-            increment: amount
+            increment: userAmt
           }
         }
       }
+
+      if(['deposit','user.add_balance'].includes(type)) {
+        if( amount > 0 ) {
+          agentAmt = -1 * amount
+        } else {
+          agentAmt = amount
+        }
+      }
+
 
       if( agentId ) {
         agentUpdate = {
@@ -78,7 +98,7 @@ export const updateBalance = async (userId: string, amount: number, type: string
           },
           data: {
             balance: {
-              increment: -(amount)
+              increment: agentAmt
             }
           }
         }
@@ -100,11 +120,11 @@ export const updateBalance = async (userId: string, amount: number, type: string
     if (agentUpdate) {
       agentUpdate = await prisma.users.update(agentUpdate)
       agentUpdate.success = true
-    } 
+    }
     if (userUpdate) {
       userUpdate = await prisma.users.update(userUpdate)
       userUpdate.success = true
-    } 
+    }
 
     return { balance: userUpdate ? userUpdate.balance : agentUpdate.balance }
 

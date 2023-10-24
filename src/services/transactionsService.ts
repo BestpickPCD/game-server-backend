@@ -38,7 +38,7 @@ export const getAllById = async (queryParams: any, userId: string | null) => {
     }
     if (gameId) {
       filter.gameId = gameId;
-    } 
+    }
 
     const transactions = await prismaTransaction.transactions.findMany({
       where: filter,
@@ -58,7 +58,7 @@ export const getAllById = async (queryParams: any, userId: string | null) => {
 
 export const create = async (data:any) => {
   try {
-    
+
     const transcation = await prismaTransaction.transactions.create({data})
 
     return transcation
@@ -74,20 +74,29 @@ export const getByIdWithType = async (
   arrayTypes: string[]
 ) => {
   try {
+    let filter: any
+
+    filter = {
+      OR: [{ agentId: userId }, { userId: userId }]
+    }
+
+    if(arrayTypes.length > 0) {
+      filter.type = {
+        in: arrayTypes
+      }
+    }
+
     const transactions = (await prismaTransaction.transactions.findMany({
-      where: {
-        OR: [{ agentId: userId }, { userId: userId }],
-        type: {
-          in: arrayTypes
-        }
-      },
+      where: filter,
       orderBy: {
         createdAt: 'asc'
       },
       select: {
         id: true,
         agentId: true,
+        agentUsername: true,
         userId: true,
+        username: true,
         amount: true,
         gameId: true,
         type: true,
@@ -103,7 +112,7 @@ export const getByIdWithType = async (
 };
 
 export const getDetailsById = async (id: string, userId: string) => {
-  try {  
+  try {
     let agentName
     const transaction = await prismaTransaction.transactions.findUnique({
       select: {
@@ -128,7 +137,7 @@ export const getDetailsById = async (id: string, userId: string) => {
     if(transaction?.agentId) {
       const { name } = await prisma.users.findUnique({
         where: {
-          id: transaction?.agentId 
+          id: transaction?.agentId
         }
       }) as Users
       agentName = name ?? null

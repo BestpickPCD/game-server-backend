@@ -1,5 +1,8 @@
 import { PrismaClient as PrismaClientTransaction } from '../config/prisma/generated/transactions/index.js';
 const prismaTransaction = new PrismaClientTransaction();
+import { PrismaClient, Users } from '../config/prisma/generated/base-default/index.js';
+const prisma = new PrismaClient();
+
 
 export const getAllById = async (queryParams: any, userId: string | null) => {
   try {
@@ -94,14 +97,16 @@ export const getByIdWithType = async (
 
 export const getDetailsById = async (id: string, userId: string) => {
   try {  
-    
+    let agentName
     const transaction = await prismaTransaction.transactions.findUnique({
       select: {
         id: true,
         amount: true,
         token: true,
         agentId: true,
+        agentUsername: true,
         userId: true,
+        username: true,
         type: true,
         status: true,
         updatedAt: true,
@@ -113,7 +118,17 @@ export const getDetailsById = async (id: string, userId: string) => {
       }
     });
 
-    return transaction;
+    if(transaction?.agentId) {
+      const { name } = await prisma.users.findUnique({
+        where: {
+          id: transaction?.agentId 
+        }
+      }) as Users
+      agentName = name ?? null
+
+    }
+
+    return { agentName, ...transaction };
   } catch (error: any) {
     throw Error(error);
   }

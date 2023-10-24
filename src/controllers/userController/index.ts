@@ -94,13 +94,10 @@ export const getAllUsers = async (
     !redisData && (await Redis.set(redisKeyWithId, JSON.stringify(data)));
 
     return res.status(200).json({
-      data: {
-        data: data.data,
-        totalItems: data.totalItems,
-        page: Number(data.page),
-        size: Number(data.size)
-      },
-      message: message.SUCCESS
+      data: data.data,
+      totalItems: data.totalItems,
+      page: Number(data.page),
+      size: Number(data.size)
     });
   } catch (error) {
     return res.status(500).json({ message: message.INTERNAL_SERVER_ERROR });
@@ -155,8 +152,7 @@ export const updateUser = async (req: Request, res: Response): Promise<any> => {
     const newUser = await prisma.users.update({
       where: { id: userId },
       data: updatedUser
-    }); 
-
+    });
 
     // await Redis.del(redisKey);
     // await Redis.del(redisKeyWithId);
@@ -334,21 +330,9 @@ export const getDashboard = async (
 ): Promise<any> => {
   try {
     const { id } = (req as any).user;
-    // const { redisData, redisKeyWithId } = await getRedisData(
-    //   id,
-    //   'dashboard',
-    //   'Invalid users Id'
-    // );
-    // let data: any;
-    // if (redisData) {
-    //   data = JSON.parse(redisData);
-    // } else {
     const data = (await getDashboardData(id)) as any;
-    // }
-    // !redisData && (await Redis.set(redisKeyWithId, JSON.stringify(data)));
     return res.status(200).json(data);
   } catch (error) {
-    console.log(error);
     return res
       .status(500)
       .json({ message: message.INTERNAL_SERVER_ERROR, error });
@@ -361,16 +345,15 @@ const _updateAgent = async (
   res: Response
 ) => {
   try {
-
     if (parentAgentId == user.id) {
       return res
         .status(400)
         .json({ message: 'Parent agent cannot be yourself' });
     }
 
-    let details: any
-    
-    if(parentAgentId) {
+    let details: any;
+
+    if (parentAgentId) {
       details = await getParentAgentIdsByParentAgentId(parentAgentId);
     }
     const agent = await prisma.users.update({
@@ -382,7 +365,6 @@ const _updateAgent = async (
     });
     return res.status(200).json({ message: message.SUCCESS, data: agent });
   } catch (error) {
-    console.log(error);
     return res.status(500).json({ message: 'Internal server error' });
   }
 };
@@ -427,7 +409,14 @@ export const checkUser = async (req: Request, res: Response) => {
         id: true,
         type: true,
         name: true,
-        parentAgentId: true
+        parentAgentId: true,
+        parent: {
+          select: {
+            id: true,
+            name: true,
+            username: true
+          }
+        }
       },
       where: {
         id: req.body.id

@@ -16,6 +16,7 @@ export const permission =
         throw new UNAUTHORIZED(message.UNAUTHORIZED);
       }
       const roleId = Number((req as any)?.user?.roleId);
+
       const roleById = await getById(roleId);
 
       if (roleById && router) {

@@ -149,7 +149,7 @@ export const changeBalance = async (
         }
 
         const { type, agentId } = await create(data) as Transactions;
-        await updateBalance(data.userId, amount, type, agentId, data.method );
+        const { balance } = await updateBalance(data.userId, amount, type, agentId, data.method );
 
         if((user as any).balance === 0) {
           try {
@@ -159,7 +159,7 @@ export const changeBalance = async (
           }
         }
 
-        return res.status(200).json({message: "SUCCESS_CALLBACK"});
+        return res.status(200).json({message: "SUCCESS_CALLBACK", balance});
 
       }
 
@@ -180,10 +180,10 @@ export const addTransaction = async (
 ): Promise<any> => {
   try {
     const { id: userSessionId } = req.user as Users;
-    const { userId, type: transactionType, amount, currencyCode, agentId: parentId } = req.body;
+    const { userId, type: transactionType, amount, currencyCode } = req.body;
 
-    if(transactionType === 'user.add_balance' && !(await checkTransferAbility(parentId, userId))) {
-      return res.status(500).json({ message: `The transfer cannot be made.` });
+    if(transactionType === 'user.add_balance' && !(await checkTransferAbility(userSessionId, userId))) { 
+        return res.status(500).json({ message: `The transfer cannot be made.` }); 
     }
 
     const { parentAgentId, parent, username } = await prisma.users.findUnique({

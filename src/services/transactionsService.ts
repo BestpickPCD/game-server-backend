@@ -60,13 +60,13 @@ export const create = async (data:any) => {
 }
 
 export const getByIdWithType = async (
-  username: string,
+  userId: string,
   arrayTypes: string[]
 ) => {
   try {
     const transactions = (await prismaTransaction.transactions.findMany({
       where: {
-        OR: [{ agentId: username }, { userId: username }],
+        OR: [{ agentId: userId }, { userId: userId }],
         type: {
           in: arrayTypes
         }
@@ -92,44 +92,9 @@ export const getByIdWithType = async (
   }
 };
 
-export const getDetailsById = async (id: string, userId: number) => {
-  try {
-    const filterOr = {
-      id,
-      OR: [
-        {
-          Agents: {
-            OR: [
-              {
-                parentAgentIds: {
-                  array_contains: [Number(userId)]
-                }
-              },
-              {
-                id: Number(userId)
-              }
-            ]
-          }
-        },
-        {
-          Players: {
-            OR: [
-              {
-                agentId: Number(userId)
-              },
-              {
-                agent: {
-                  parentAgentIds: {
-                    array_contains: [Number(userId)]
-                  }
-                }
-              }
-            ]
-          }
-        }
-      ]
-    } as any;
-
+export const getDetailsById = async (id: string, userId: string) => {
+  try {  
+    
     const transaction = await prismaTransaction.transactions.findMany({
       select: {
         id: true,
@@ -143,7 +108,9 @@ export const getDetailsById = async (id: string, userId: number) => {
         createdAt: true,
         currencyCode: true
       },
-      where: filterOr
+      where: {
+        id
+      }
     });
 
     return transaction;

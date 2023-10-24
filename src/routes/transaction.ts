@@ -38,7 +38,7 @@ router.post(
   addTransaction
 );
 router.get(
-  '/transaction-details/:username',
+  '/transaction-details/:userId',
   authentication,
   permission('transactions', 'get'),
   getTransactionDetailsByUserId

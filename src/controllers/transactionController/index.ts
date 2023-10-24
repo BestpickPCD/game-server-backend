@@ -234,7 +234,7 @@ export const getTransactionDetailsByUserId = async (
   res: Response
 ): Promise<any> => {
   try {
-    const { username } = req.params;
+    const { userId } = req.params;
     const type = req.query.type as string;
     let arrayTypes: string[];
     if (type) {
@@ -242,7 +242,7 @@ export const getTransactionDetailsByUserId = async (
     } else {
       arrayTypes = [];
     }
-    const data = (await getByIdWithType(username, arrayTypes)) as any;
+    const data = (await getByIdWithType(userId, arrayTypes)) as any;
     return res.status(200).json(data);
   } catch (error) {
     return res.status(500).json({

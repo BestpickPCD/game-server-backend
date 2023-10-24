@@ -17,7 +17,14 @@ export const getAllById = async (queryParams: any, userId: string | null) => {
     } = queryParams;
 
     const filter: any = {
-      userId
+      OR: [
+        {
+          agentId: userId
+        },
+        {
+          userId
+        }
+      ]
     };
 
     if (dateFrom) {

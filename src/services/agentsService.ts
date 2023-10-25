@@ -207,19 +207,19 @@ const validateUpdateData = async ({
   const currencyIdNumber = currencyId
     ? Number(currencyId)
     : agent.user?.currencyId;
+
   const roleIdNumber = roleId ? Number(roleId) : agent.user?.roleId;
-  if (
-    !parentAgentIdNumber ||
-    !currencyIdNumber ||
-    !roleIdNumber ||
-    parentAgentIdNumber === agentId
-  ) {
-    const missingItem = !agentId
-      ? 'Parent Agent'
-      : !roleIdNumber
+
+  if (!parentAgentIdNumber || !currencyIdNumber || !roleIdNumber) {
+    const missingItem = !roleIdNumber
       ? 'Role'
-      : 'Currency';
-    throw new BAD_REQUEST(`${missingItem} not valid`);
+      : !currencyIdNumber && 'Currency';
+    if (parentAgentIdNumber && parentAgentIdNumber === agentId) {
+      throw new BAD_REQUEST(`Parent Agent not valid`);
+    }
+    if (missingItem) {
+      throw new BAD_REQUEST(`${missingItem} not valid`);
+    }
   }
 
   let result;

@@ -82,7 +82,8 @@ export const login = async (req: Request, res: Response): Promise<any> => {
         username: true,
         type: true,
         role: true,
-        password: true
+        password: true,
+        level: true
       },
       where: {
         username
@@ -122,6 +123,7 @@ export const login = async (req: Request, res: Response): Promise<any> => {
           7200,
           JSON.stringify({ ...data })
         );
+
         return res.status(200).json({ message: message.SUCCESS, data });
       }
       // Password is incorrect
@@ -226,12 +228,10 @@ const _playerInsert = async (userSchema: any, res: Response) => {
 
 const _agentInsert = async (userSchema: any, res: Response) => {
   try {
-    let details
+    let details;
     const newUser: any = await _userInsert(userSchema);
-    if(newUser.parentAgentId) {
-      details = await getParentAgentIdsByParentAgentId(
-        newUser.parentAgentId
-      );
+    if (newUser.parentAgentId) {
+      details = await getParentAgentIdsByParentAgentId(newUser.parentAgentId);
     }
     const userInsert = (await prisma.users.update({
       where: {
@@ -300,7 +300,8 @@ const formatUser = async (user: any) => {
     type: user.type,
     currency: (currency as number) && currency.code,
     rate: currencyRate.data,
-    tokens
+    tokens,
+    level: user.level
   };
   return data;
 };

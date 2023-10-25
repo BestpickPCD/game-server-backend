@@ -353,22 +353,25 @@ export const getDashboardData = async (userId: string) => {
 
     const { affiliatedAgents, affiliatedUserId } =
       await getAffiliatedAgentsByUserId(userId);
+      
     const affiliatedSums = await _getAllSumsByUserId(affiliatedUserId); 
+    
     affiliatedAgents.map((affiliatedAgent: any) => {
       const winGame = affiliatedSums.winGame[affiliatedAgent.id];
       const betGame = affiliatedSums.betGame[affiliatedAgent.id];
       const chargeGame = affiliatedSums.chargeGame[affiliatedAgent.id];
       const userReceived = affiliatedSums.userReceived[affiliatedAgent.id];
       const agentReceived = affiliatedSums.agentReceived[affiliatedAgent.id];
-      const allSums = { winGame, betGame, chargeGame, userReceived, agentReceived };
+      const deposit = affiliatedSums.deposit[affiliatedAgent.id];
+      const withdraw = affiliatedSums.withdraw[affiliatedAgent.id];
+      const allSums = { winGame, betGame, chargeGame, userReceived, agentReceived, deposit, withdraw };
 
       affiliatedAgent.allSums = allSums;
     }); 
 
-    const { winGame, betGame, chargeGame, userReceived, agentReceived } =
+    const { winGame, betGame, chargeGame, userReceived, agentReceived, deposit, withdraw } =
       await _getAllSumsByUserId([item.id]);
-
-      // console.log({ winGame, betGame, chargeGame, userReceived, agentReceived })
+ 
     const data = {
       userId: item.id,
       name: item.name,
@@ -402,7 +405,7 @@ export const getDashboardData = async (userId: string) => {
         win: winGame[`${item.id}`]?._sum.amount ?? 0,
         charge: chargeGame[`${item.id}`]?._sum.amount ?? 0
       }
-    };
+    }; 
 
     return data;
   } catch (error: any) {
@@ -473,33 +476,43 @@ export const getAllByAgentId = async (query: any, id: string) => {
 
 const _getAllSumsByUserId = async (userIds: string[]) => {
   try {
-    const winGame = await _getSumTransactionByUsername(
+    const winGame = await _getSumTransactionByUserIds(
       'win',
       'userId',
       userIds
     );
-    const betGame = await _getSumTransactionByUsername(
+    const betGame = await _getSumTransactionByUserIds(
       'bet',
       'userId',
       userIds
     );
-    const chargeGame = await _getSumTransactionByUsername(
+    const chargeGame = await _getSumTransactionByUserIds(
       'cancel',
       'userId',
       userIds
     );
-    const userReceived = await _getSumTransactionByUsername(
+    const userReceived = await _getSumTransactionByUserIds(
       'user.add_balance',
       'userId',
       userIds
     );
-    const agentReceived = await _getSumTransactionByUsername(
+    const deposit = await _getSumTransactionByUserIds(
+      'deposit',
+      'userId',
+      userIds
+    );
+    const withdraw = await _getSumTransactionByUserIds(
+      'withdraw',
+      'userId',
+      userIds
+    );
+    const agentReceived = await _getSumTransactionByUserIds(
       'agent.add_balance',
       'userId',
       userIds
     );
 
-    const balance = { winGame, betGame, chargeGame, userReceived, agentReceived };
+    const balance = { winGame, betGame, chargeGame, userReceived, agentReceived, deposit, withdraw };
 
     return balance;
   } catch (error: any) {
@@ -507,29 +520,10 @@ const _getAllSumsByUserId = async (userIds: string[]) => {
   }
 };
 
-const _getSumTransaction = async (type: string, groupBy: any) => {
-  const sumBalance = (await prismaTransaction.transactions.groupBy({
-    by: [groupBy],
-    _sum: {
-      amount: true
-    },
-    where: {
-      type
-    }
-  })) as any;
-
-  const formattedResult = sumBalance.reduce((acc: any, item: any) => {
-    acc[item.senderUsername ?? item.receiverUsername] = item;
-    return acc;
-  }, {});
-
-  return formattedResult;
-};
-
-const _getSumTransactionByUsername = async (
+const _getSumTransactionByUserIds = async (
   type: string,
   groupBy: any,
-  usernames: string[]
+  userIds: string[]
 ) => {
   const sumBalance = (await prismaTransaction.transactions.groupBy({
     by: [groupBy],
@@ -539,7 +533,7 @@ const _getSumTransactionByUsername = async (
     where: {
       type,
       [`${groupBy}`]: {
-        in: usernames
+        in: userIds
       }
     }
   })) as any;

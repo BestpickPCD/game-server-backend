@@ -61,13 +61,15 @@ export const getAllWithBalance = async (query: any, userId: number) => {
         : ``
     }
     ORDER BY users.updatedAt DESC
-    LIMIT ${size} OFFSET ${page * size}
     `;
 
-    const users = (await prisma.$queryRawUnsafe(`${rawQuery}`)) as any; 
+    const users = (await prisma.$queryRawUnsafe(`${rawQuery}
+    LIMIT ${size} OFFSET ${page * size}
+    `)) as any;
+    const total = (await prisma.$queryRawUnsafe(`${rawQuery}`)) as any;
 
-    const allUsers = users.map((user: Users) => user.id);  
- 
+    const allUsers = users.map((user: Users) => user.id);
+
     const transactions = await prismaTransaction.transactions.findMany({
       where: {
         userId: {
@@ -77,26 +79,26 @@ export const getAllWithBalance = async (query: any, userId: number) => {
       select: {
         userId: true,
         type: true,
-        amount: true,
+        amount: true
       },
       orderBy: {
-        userId: 'asc',
-      },
+        userId: 'asc'
+      }
     });
-    
+
     const transformedData: Record<string, Record<string, number>> = {};
-    
+
     transactions.forEach((transaction) => {
       const { userId, type, amount } = transaction;
-    
+
       if (!transformedData[userId as string]) {
         transformedData[userId as string] = {};
       }
-    
+
       if (!transformedData[userId as string][type]) {
         transformedData[userId as string][type] = 0;
       }
-    
+
       transformedData[userId as string][type] += amount;
     });
 
@@ -108,7 +110,7 @@ export const getAllWithBalance = async (query: any, userId: number) => {
       return data;
     });
 
-    return { userDetails, page, size };
+    return { userDetails, page, size, total: total.length };
   } catch (error: any) {
     throw Error(error);
   }
@@ -353,9 +355,9 @@ export const getDashboardData = async (userId: string) => {
 
     const { affiliatedAgents, affiliatedUserId } =
       await getAffiliatedAgentsByUserId(userId);
-      
-    const affiliatedSums = await _getAllSumsByUserId(affiliatedUserId); 
-    
+
+    const affiliatedSums = await _getAllSumsByUserId(affiliatedUserId);
+
     affiliatedAgents.map((affiliatedAgent: any) => {
       const winGame = affiliatedSums.winGame[affiliatedAgent.id];
       const betGame = affiliatedSums.betGame[affiliatedAgent.id];
@@ -364,14 +366,29 @@ export const getDashboardData = async (userId: string) => {
       const agentReceived = affiliatedSums.agentReceived[affiliatedAgent.id];
       const deposit = affiliatedSums.deposit[affiliatedAgent.id];
       const withdraw = affiliatedSums.withdraw[affiliatedAgent.id];
-      const allSums = { winGame, betGame, chargeGame, userReceived, agentReceived, deposit, withdraw };
+      const allSums = {
+        winGame,
+        betGame,
+        chargeGame,
+        userReceived,
+        agentReceived,
+        deposit,
+        withdraw
+      };
 
       affiliatedAgent.allSums = allSums;
-    }); 
+    });
 
-    const { winGame, betGame, chargeGame, userReceived, agentReceived, deposit, withdraw } =
-      await _getAllSumsByUserId([item.id]);
- 
+    const {
+      winGame,
+      betGame,
+      chargeGame,
+      userReceived,
+      agentReceived,
+      deposit,
+      withdraw
+    } = await _getAllSumsByUserId([item.id]);
+
     const data = {
       userId: item.id,
       name: item.name,
@@ -405,7 +422,7 @@ export const getDashboardData = async (userId: string) => {
         win: winGame[`${item.id}`]?._sum.amount ?? 0,
         charge: chargeGame[`${item.id}`]?._sum.amount ?? 0
       }
-    }; 
+    };
 
     return data;
   } catch (error: any) {
@@ -476,16 +493,8 @@ export const getAllByAgentId = async (query: any, id: string) => {
 
 const _getAllSumsByUserId = async (userIds: string[]) => {
   try {
-    const winGame = await _getSumTransactionByUserIds(
-      'win',
-      'userId',
-      userIds
-    );
-    const betGame = await _getSumTransactionByUserIds(
-      'bet',
-      'userId',
-      userIds
-    );
+    const winGame = await _getSumTransactionByUserIds('win', 'userId', userIds);
+    const betGame = await _getSumTransactionByUserIds('bet', 'userId', userIds);
     const chargeGame = await _getSumTransactionByUserIds(
       'cancel',
       'userId',
@@ -512,7 +521,15 @@ const _getAllSumsByUserId = async (userIds: string[]) => {
       userIds
     );
 
-    const balance = { winGame, betGame, chargeGame, userReceived, agentReceived, deposit, withdraw };
+    const balance = {
+      winGame,
+      betGame,
+      chargeGame,
+      userReceived,
+      agentReceived,
+      deposit,
+      withdraw
+    };
 
     return balance;
   } catch (error: any) {

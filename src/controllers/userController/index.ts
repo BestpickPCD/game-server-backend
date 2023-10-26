@@ -52,7 +52,7 @@ export const getAllUsersWithBalances = async (
     //   data = JSON.parse(redisData);
     // } else {
     // data = (await getAllWithBalance(id)) as any;
-    const { userDetails, page, size } = (await getAllWithBalance(
+    const { userDetails, page, size, total } = (await getAllWithBalance(
       req.query,
       id
     )) as any;
@@ -62,7 +62,7 @@ export const getAllUsersWithBalances = async (
     return res.status(200).json({
       data: {
         data: userDetails,
-        totalItems: 200,
+        totalItems: total,
         page: Number(page),
         size: Number(size)
       },

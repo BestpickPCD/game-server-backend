@@ -1,8 +1,8 @@
 module.exports = {
   apps: [
     {
-      name: "my-app",
-      script: "server.ts", // Replace with the entry point of your Node.js application
+      name: "Gameserver-backend",
+      script: "nodemon ./server.ts",
       instances: 1,
       autorestart: true,
       watch: false,

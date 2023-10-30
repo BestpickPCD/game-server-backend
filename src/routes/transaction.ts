@@ -18,7 +18,7 @@ import { permission } from '../middleware/permission.ts';
 import { asyncHandler } from '../utilities/helpers/asyncHandler.ts';
 
 const router = express.Router();
-router.get('/callback/balance', getBalance);
+router.get('/callback/balance', asyncHandler(getBalance));
 router.post('/callback/changeBalance', changeBalance);
 router.get(
   '/transactions',

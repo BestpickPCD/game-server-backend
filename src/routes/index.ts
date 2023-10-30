@@ -8,7 +8,6 @@ import permissionRouter from './permission.ts';
 import roleRouter from './role.js';
 import transactionRouter from './transaction.js';
 import userRouter from './user.js';
-import { asyncHandler } from '../utilities/helpers/asyncHandler.ts';
 
 const router = express.Router();
 

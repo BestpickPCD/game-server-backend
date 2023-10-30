@@ -6,7 +6,6 @@ import swaggerUi from 'swagger-ui-express';
 import router from './routes/index.ts';
 import userSwagger from './swagger/index.ts';
 import logger from './utilities/log/index.ts';
-import { checkStatusAndMessage } from './utilities/index.ts';
 import { mysqlConnection, mongodbConnection } from './config/prisma/index.ts';
 
 dotenv.config();
@@ -36,6 +35,9 @@ app.use((req, res, next) => {
 
 app.use((error: any, req: Request, res: Response, next: NextFunction) => {
   const statusCode = error.statusCode || '500';
+  // if (!statusCode) {
+  //   logger.error({});
+  // }
   return res.status(statusCode).json({
     status: 'Error',
     code: statusCode,

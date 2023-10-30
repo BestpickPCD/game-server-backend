@@ -11,6 +11,7 @@ import {
   Transactions
 } from '../../config/prisma/generated/transactions/index.js';
 import { BAD_REQUEST, NOT_FOUND } from '../../core/error.response.ts';
+import { CREATED, DELETED, OK, UPDATED } from '../../core/success.response.ts';
 import { RequestWithUser } from '../../models/customInterfaces.ts';
 import {
   create,
@@ -24,8 +25,6 @@ import {
   recalculateBalance,
   updateBalance
 } from './utilities.ts';
-import { CREATED, OK } from '../../core/success.response.ts';
-import { log } from 'console';
 const prisma = new PrismaClient();
 
 const prismaTransaction = new PrismaClientTransaction();
@@ -83,6 +82,11 @@ export const getBalance = async (req: Request, res: Response) => {
 export const changeBalance = async (req: Request, res: Response) => {
   try {
     const { username, amount, transaction } = req.body;
+
+    if (amount <= 0) {
+      throw new BAD_REQUEST('Amount must be greater than 0');
+    }
+
     const data = { username, amount, transaction } as CallbackTransactions;
     try {
       const {
@@ -143,7 +147,10 @@ export const changeBalance = async (req: Request, res: Response) => {
               id: user.parentAgentId as string
             }
           });
-          if (agent && ['win', 'agent.add_balance'].includes((transaction as any).type)) {
+          if (
+            agent &&
+            ['win', 'agent.add_balance'].includes((transaction as any).type)
+          ) {
             if (
               !checkBalance(
                 user as unknown as Users,
@@ -199,7 +206,6 @@ export const changeBalance = async (req: Request, res: Response) => {
       .json({ message: message.INTERNAL_SERVER_ERROR, error });
   }
 };
-
 // Transfer method
 export const addTransaction = async (
   req: RequestWithUser,
@@ -215,6 +221,14 @@ export const addTransaction = async (
   } = req.body;
 
   let amount = transactionAmount;
+
+  if (transactionAmount <= 0) {
+    throw new BAD_REQUEST('Amount must be greater than 0');
+  }
+
+  if (userSessionId === userId) {
+    throw new BAD_REQUEST('Cannot add money to yourself');
+  }
 
   if (
     transactionType === 'user.add_balance' &&
@@ -266,7 +280,7 @@ export const addTransaction = async (
             transactionType
           )
         ) {
-          throw new BAD_REQUEST(`'Not enough money'`);
+          throw new BAD_REQUEST('Not enough money');
         }
       }
     }
@@ -306,40 +320,27 @@ export const getTransactionDetailsByUserId = async (
   req: Request,
   res: Response
 ): Promise<any> => {
-  try {
-    const { userId } = req.params;
-    const type = req.query.type as string;
-    let arrayTypes: string[];
-    if (type) {
-      arrayTypes = type.split(',');
-    } else {
-      arrayTypes = [];
-    }
-    const data = (await getByIdWithType(userId, arrayTypes)) as any;
-    return res.status(200).json(data);
-  } catch (error) {
-    return res.status(500).json({
-      message: message.INTERNAL_SERVER_ERROR
-    });
+  const { userId } = req.params;
+  const type = req.query.type as string;
+  let arrayTypes: string[];
+  if (type) {
+    arrayTypes = type.split(',');
+  } else {
+    arrayTypes = [];
   }
+  const data = (await getByIdWithType(userId, arrayTypes)) as any;
+  return new OK({ data }).send(res);
 };
 
 export const getTransactionDetail = async (
   req: Request,
   res: Response
 ): Promise<any> => {
-  try {
-    const { id } = req.params;
-    const { id: userId } = (req as any).user;
-    const data = (await getDetailsById(id, userId)) as any;
+  const { id } = req.params;
+  const { id: userId } = (req as any).user;
+  const data = (await getDetailsById(id, userId)) as any;
 
-    return res.status(200).json({ message: message.SUCCESS, data });
-  } catch (error: any) {
-    if (error.message) {
-      return res.status(404).json({ message: error.message });
-    }
-    return res.status(500).json({ message: message.INTERNAL_SERVER_ERROR });
-  }
+  return new OK({ message: message.SUCCESS, data }).send(res);
 };
 
 export const landingPage = async (_: Request, res: Response): Promise<any> => {
@@ -351,135 +352,98 @@ export const landingPage = async (_: Request, res: Response): Promise<any> => {
 };
 
 export const getBetLimitations = async (req: Request, res: Response) => {
-  try {
-    const { id: userId } = (req as any).user;
-    const { page, size, search, type } = req.query;
+  const { id: userId } = (req as any).user;
+  const { page, size, search, type } = req.query;
 
-    const filter = {
-      agentId: userId,
-      type: type,
-      page: page,
-      size: size,
-      search: search
-    };
+  const filter = {
+    agentId: userId,
+    type: type,
+    page: page,
+    size: size,
+    search: search
+  };
 
-    const betLimits = (await prisma.transactionLimits.findMany({
-      where: filter
-    })) as TransactionLimits[];
+  const betLimits = (await prisma.transactionLimits.findMany({
+    where: filter
+  })) as TransactionLimits[];
 
-    return res.status(200).json({ data: betLimits });
-  } catch (error: any) {
-    if (error.message) {
-      return res.status(404).json({ message: error.message });
-    }
-    return res.status(500).json({ message: message.INTERNAL_SERVER_ERROR });
-  }
+  return new OK({ data: betLimits }).send(res);
 };
 
 export const getBetLimitById = async (req: Request, res: Response) => {
-  try {
-    const { id: userId } = (req as any).user;
-    const { id } = req.params;
+  const { id: userId } = (req as any).user;
+  const { id } = req.params;
 
-    const betLimit = (await prisma.transactionLimits.findUnique({
-      where: {
-        id: parseInt(id),
-        agentId: userId
-      }
-    })) as TransactionLimits;
-
-    return res.status(200).json({ data: betLimit });
-  } catch (error: any) {
-    if (error.message) {
-      return res.status(404).json({ message: error.message });
+  const betLimit = (await prisma.transactionLimits.findUnique({
+    where: {
+      id: parseInt(id),
+      agentId: userId
     }
-    return res.status(500).json({ message: message.INTERNAL_SERVER_ERROR });
+  })) as TransactionLimits;
+  if (betLimit) {
+    throw new NOT_FOUND('Bet Limit not found');
   }
+  return new OK({ data: betLimit }).send(res);
 };
 
 export const addBetLimit = async (req: Request, res: Response) => {
-  try {
-    const { id: userId } = (req as any).user;
+  const { id: userId } = (req as any).user;
 
-    const { limitType, limitTypeId, limit } = req.body;
-    const data = {
-      agentId: userId,
-      limitType,
-      limitTypeId,
-      limit
-    } as {
-      agentId: string;
-      limitType: string;
-      limitTypeId: string;
-      limit: number;
-    };
+  const { limitType, limitTypeId, limit } = req.body;
+  const data = {
+    agentId: userId,
+    limitType,
+    limitTypeId,
+    limit
+  } as {
+    agentId: string;
+    limitType: string;
+    limitTypeId: string;
+    limit: number;
+  };
 
-    const response = (await prisma.transactionLimits.create({
-      data
-    })) as TransactionLimits;
-    if (Object.keys(response).length != 0) {
-      return res.status(200).json({ response });
-    }
-
-    throw new Error('An error occurred. No transaction limit added');
-  } catch (error: any) {
-    if (error.message) {
-      return res.status(404).json({ message: error.message });
-    }
-    return res.status(500).json({ message: message.INTERNAL_SERVER_ERROR });
+  const response = (await prisma.transactionLimits.create({
+    data
+  })) as TransactionLimits;
+  if (Object.keys(response).length != 0) {
+    return new OK({ data: response }).send(res);
   }
+
+  throw new BAD_REQUEST('An error occurred. No transaction limit added');
 };
 
 export const updateBetLimit = async (req: Request, res: Response) => {
-  try {
-    const { id: userId } = (req as any).user;
-    const { id } = req.params;
-    req.body.agentId = userId;
-    const data = req.body;
+  const { id: userId } = (req as any).user;
+  const { id } = req.params;
+  req.body.agentId = userId;
+  const data = req.body;
 
-    const update = (await prisma.transactionLimits.update({
-      where: {
-        id: parseInt(id),
-        agentId: userId
-      },
-      data
-    })) as TransactionLimits;
+  const update = (await prisma.transactionLimits.update({
+    where: {
+      id: parseInt(id),
+      agentId: userId
+    },
+    data
+  })) as TransactionLimits;
 
-    if (Object.keys(update).length != 0)
-      return res.status(200).json({ data: userId });
+  if (Object.keys(update).length != 0)
+    return new UPDATED({ data: userId }).send(res);
 
-    throw new Error('An error occurred. No transaction limit updated');
-  } catch (error: any) {
-    if (error.message) {
-      return res.status(404).json({ message: error.message });
-    }
-    return res.status(500).json({ message: message.INTERNAL_SERVER_ERROR });
-  }
+  throw new BAD_REQUEST('An error occurred. No transaction limit added');
 };
 
 export const deleteBetLimit = async (req: Request, res: Response) => {
-  try {
-    const { id: userId } = (req as any).user;
-    const { id } = req.params;
+  const { id: userId } = (req as any).user;
+  const { id } = req.params;
 
-    try {
-      await prisma.transactionLimits.delete({
-        where: {
-          agentId: userId,
-          id: parseInt(id)
-        }
-      });
+  await prisma.transactionLimits.delete({
+    where: {
+      agentId: userId,
+      id: parseInt(id)
+    }
+  });
 
-      return res.status(200).json({ message: 'Deleted' });
-    } catch (error) {
-      throw new Error('An error occurred. No transaction limit deleted');
-    }
-  } catch (error: any) {
-    if (error.message) {
-      return res.status(404).json({ message: error.message });
-    }
-    return res.status(500).json({ message: message.INTERNAL_SERVER_ERROR });
-  }
+  return new DELETED({ message: 'Deleted' }).send(res);
 };
 
 type type = 'deposit' | 'withdraw' | 'user.add_balance' | 'bet';

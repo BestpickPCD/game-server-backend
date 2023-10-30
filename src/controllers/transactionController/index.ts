@@ -150,7 +150,10 @@ export const changeBalance = async (req: Request, res: Response) => {
           });
           if (agent) {
             if (
-              ['deposit', 'withdraw', 'user.add_balance', 'bet'].includes(
+              !checkBalance(
+                user as unknown as Users,
+                agent,
+                Math.abs(Number(amount)),
                 (transaction as any).type
               )
             ) {
@@ -271,7 +274,14 @@ export const addTransaction = async (
         });
         if (agent) {
           if (
+<<<<<<< HEAD
             ['deposit', 'withdraw', 'user.add_balance', 'bet'].includes(
+=======
+            !checkBalance(
+              user as unknown as Users,
+              agent,
+              Math.abs(amount),
+>>>>>>> 06c4c131382adda73871e69a0b0d951a2b36d5ba
               transactionType
             )
           ) {
@@ -528,6 +538,7 @@ const checkBalance = (
     }
     return false;
   }
+
   return allTypes[type];
 };
 

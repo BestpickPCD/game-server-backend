@@ -32,7 +32,20 @@ export const updateBalance = async (userId: string, amount: number, type: string
     let agentUpdate: any
 
     if(['bet', 'win', 'cancel'].includes(type)) {
-      userUpdate = {
+
+      if ( ['bet'].includes(type)) {
+        userUpdate = {
+          where: {
+            id: userId
+          },
+          data: {
+            balance: {
+              increment: -1 * amount
+            }
+          }
+        }
+      } else {
+        userUpdate = {
           where: {
             id: userId
           },
@@ -42,19 +55,24 @@ export const updateBalance = async (userId: string, amount: number, type: string
             }
           }
         }
+      }
 
-      if( agentId && method === "seamless" ) {
-        console.log("seamless")
-        agentUpdate = {
-          where: {
-            id: agentId
-          },
-          data: {
-            balance: {
-              increment: amount
+
+      if( method === "seamless" ) { 
+
+        if(agentId) {
+          agentUpdate = {
+            where: {
+              id: agentId
+            },
+            data: {
+              balance: {
+                increment: amount
+              }
             }
           }
         }
+
       }
 
     } else if (['deposit','withdraw','user.add_balance'].includes(type)) {
@@ -114,6 +132,8 @@ export const updateBalance = async (userId: string, amount: number, type: string
         }
       }
     }
+
+    console.log("userUpdate",userUpdate, "agentUpdate",agentUpdate)
 
     if (agentUpdate) {
       agentUpdate = await prisma.users.update(agentUpdate)

@@ -142,30 +142,32 @@ export const changeBalance = async (req: Request, res: Response) => {
           })) as usernameIds;
         }
 
-        const agent = await prisma.users.findUnique({
-          where: {
-            id: user.parentAgentId as string
-          }
-        });
-
-        if (agent) {
-          if (
-            ['deposit', 'withdraw', 'user.add_balance', 'bet'].includes(
-              (transaction as any).type
-            )
-          ) {
+        if (user.parentAgentId) {
+          const agent = await prisma.users.findUnique({
+            where: {
+              id: user.parentAgentId as string
+            }
+          });
+          if (agent) {
             if (
-              !checkBalance(
-                user as unknown as Users,
-                agent,
-                Number(amount),
+              ['deposit', 'withdraw', 'user.add_balance', 'bet'].includes(
                 (transaction as any).type
               )
             ) {
-              return res.status(400).json({ message: 'Not enough money' });
+              if (
+                !checkBalance(
+                  user as unknown as Users,
+                  agent,
+                  Number(amount),
+                  (transaction as any).type
+                )
+              ) {
+                return res.status(400).json({ message: 'Not enough money' });
+              }
             }
           }
         }
+
 
         const data = {
           userId: user.id,
@@ -203,6 +205,7 @@ export const changeBalance = async (req: Request, res: Response) => {
     } catch (error) {
       throw new BAD_REQUEST(message.FAILED);
     }
+    
   } catch (error) {
     return res
       .status(500)
@@ -256,32 +259,35 @@ export const addTransaction = async (
           }
         }
       }
-    })) as usernameIds;
+    })) as usernameIds; 
 
     if (user) {
-      const agent = await prisma.users.findUnique({
-        where: {
-          id: user.parentAgentId as string
-        }
-      });
-      if (agent) {
-        if (
-          ['deposit', 'withdraw', 'user.add_balance', 'bet'].includes(
-            transactionType
-          )
-        ) {
+
+      if(user.parentAgentId) {
+        const agent = await prisma.users.findUnique({
+          where: {
+            id: user.parentAgentId as string
+          }
+        });
+        if (agent) {
           if (
-            !checkBalance(
-              user as unknown as Users,
-              agent,
-              amount,
+            ['deposit', 'withdraw', 'user.add_balance', 'bet'].includes(
               transactionType
             )
           ) {
-            return res.status(400).json({ message: 'Not enough money' });
+            if (
+              !checkBalance(
+                user as unknown as Users,
+                agent,
+                amount,
+                transactionType
+              )
+            ) {
+              return res.status(400).json({ message: 'Not enough money' });
+            }
           }
         }
-      }
+      } 
 
       const data = {
         userId,
@@ -294,6 +300,7 @@ export const addTransaction = async (
         method: 'transfer',
         updateBy: userSessionId ?? null
       };
+
       const { type, agentId } = (await create(data)) as Transactions;
 
       const { balance } = await updateBalance(
@@ -307,6 +314,11 @@ export const addTransaction = async (
         .status(201)
         .json({ message: 'Transaction created successfully', balance });
     }
+
+    return res
+      .status(404)
+      .json({ message: message.INVALID_CREDENTIALS});
+
   } catch (error) {
     return res
       .status(500)

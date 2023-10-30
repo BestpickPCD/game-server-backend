@@ -65,10 +65,7 @@ export default {
             schema: {
               type: 'object',
               properties: {
-                firstName: {
-                  type: 'string'
-                },
-                lastName: {
+                name: {
                   type: 'string'
                 },
                 username: {
@@ -84,27 +81,22 @@ export default {
                   type: 'string'
                 },
                 type: {
-                  type: 'string'
-                },
-                agentId: {
-                  type: 'number'
+                  type: 'string',
+                  default: 'player'
                 },
                 roleId: {
-                  type: 'number'
+                  type: 'number',
+                  default: 3
                 },
                 parentAgentId: {
-                  type: 'number'
+                  type: 'number',
+                  default: 1
                 }
               },
               required: [
-                'firstName',
-                'lastName',
+                'name',
                 'username',
-                'email',
-                'password',
-                'confirmPassword',
                 'type',
-                'agentId',
                 'roleId',
                 'parentAgentId'
               ]

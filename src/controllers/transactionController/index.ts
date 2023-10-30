@@ -274,14 +274,10 @@ export const addTransaction = async (
         });
         if (agent) {
           if (
-<<<<<<< HEAD
-            ['deposit', 'withdraw', 'user.add_balance', 'bet'].includes(
-=======
             !checkBalance(
               user as unknown as Users,
               agent,
               Math.abs(amount),
->>>>>>> 06c4c131382adda73871e69a0b0d951a2b36d5ba
               transactionType
             )
           ) {

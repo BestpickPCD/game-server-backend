@@ -158,7 +158,7 @@ export const changeBalance = async (req: Request, res: Response) => {
               !checkBalance(
                 user as unknown as Users,
                 agent,
-                Number(amount),
+                Math.abs(Number(amount)),
                 (transaction as any).type
               )
             ) {
@@ -274,7 +274,7 @@ export const addTransaction = async (
             !checkBalance(
               user as unknown as Users,
               agent,
-              amount,
+              Math.abs(amount),
               transactionType
             )
           ) {
@@ -516,6 +516,7 @@ const checkBalance = (
     }
     return false;
   }
+
   return allTypes[type];
 };
 

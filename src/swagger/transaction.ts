@@ -96,9 +96,14 @@ export default {
     }
   },
   '/transaction': {
-    post: { 
+    post: {
       summary: 'Add a new transaction for transfer method',
       tags: ['Transactions'],
+      security: [
+        {
+          bearerAuth: []
+        }
+      ],
       requestBody: {
         required: true,
         content: {
@@ -223,7 +228,7 @@ export default {
                     type: 'string'
                   },
                   balance: {
-                    type: 'array', 
+                    type: 'array'
                   }
                 }
               }
@@ -235,7 +240,7 @@ export default {
           content: {
             'application/json': {
               schema: {
-                type: 'object', 
+                type: 'object'
               }
             }
           }
@@ -257,13 +262,13 @@ export default {
                 username: {
                   type: 'string',
                   default: 'test.callback.user.01'
-                },
+                }
               },
               required: ['username']
             }
           }
         }
-      },
+      }
     },
     responses: {
       '200': {

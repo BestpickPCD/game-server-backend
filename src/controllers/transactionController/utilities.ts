@@ -10,44 +10,46 @@ export const checkTransferAbility = async (
   receiverId: string
 ): Promise<any> => {
   let result = false;
-  const { parentAgentId } = await prisma.users.findUnique({
+  const user = await prisma.users.findUnique({
     where: {
       id: receiverId
     },
     select: {
       parentAgentId: true
     }
-  }) as {parentAgentId: string}
+  });
 
-  if (parentAgentId === senderId) {
+  if (user?.parentAgentId === senderId) {
     result = true;
   }
   return result;
 };
 
-export const updateBalance = async (userId: string, amount: number, type: string, agentId: string | null, method: string) => {
+export const updateBalance = async (
+  userId: string,
+  amount: number,
+  type: string,
+  agentId: string | null,
+  method: string
+) => {
   try {
+    let userUpdate: any;
+    let agentUpdate: any;
 
-    let userUpdate: any
-    let agentUpdate: any
-
-    if(['bet', 'win', 'cancel'].includes(type)) { 
-      
-        userUpdate = {
-          where: {
-            id: userId
-          },
-          data: {
-            balance: {
-              increment: amount
-            }
+    if (['bet', 'win', 'cancel'].includes(type)) {
+      userUpdate = {
+        where: {
+          id: userId
+        },
+        data: {
+          balance: {
+            increment: amount
           }
-        } 
+        }
+      };
 
-
-      if( method === "seamless" ) { 
-
-        if(agentId) {
+      if (method === 'seamless') {
+        if (agentId) {
           agentUpdate = {
             where: {
               id: agentId
@@ -57,24 +59,21 @@ export const updateBalance = async (userId: string, amount: number, type: string
                 increment: amount
               }
             }
-          }
+          };
         }
-
       }
-
-    } else if (['deposit','withdraw','user.add_balance'].includes(type)) {
-
+    } else if (['deposit', 'withdraw', 'user.add_balance'].includes(type)) {
       // if deposit amount has to be < 0 || withdraw amount > 0 || user.add_balance is the same as deposit < 0 happens when agents add_balance to users from backoffice
-      let agentAmt = amount
-      let userAmt = amount
+      let agentAmt = amount;
+      let userAmt = amount;
 
-      if(['deposit','user.add_balance'].includes(type)) {
-        if( amount < 0 ) {
-          userAmt = -1 * amount
+      if (['deposit', 'user.add_balance'].includes(type)) {
+        if (amount < 0) {
+          userAmt = -1 * amount;
         }
       } else {
-        if( amount > 0 ) {
-          userAmt = -1 * amount
+        if (amount > 0) {
+          userAmt = -1 * amount;
         }
       }
       userUpdate = {
@@ -86,15 +85,15 @@ export const updateBalance = async (userId: string, amount: number, type: string
             increment: userAmt
           }
         }
-      }
+      };
 
-      if(['deposit','user.add_balance'].includes(type)) {
-        if( amount > 0 ) {
-          agentAmt = -1 * amount
+      if (['deposit', 'user.add_balance'].includes(type)) {
+        if (amount > 0) {
+          agentAmt = -1 * amount;
         }
       }
 
-      if( agentId ) {
+      if (agentId) {
         agentUpdate = {
           where: {
             id: agentId
@@ -104,9 +103,8 @@ export const updateBalance = async (userId: string, amount: number, type: string
               increment: agentAmt
             }
           }
-        }
+        };
       }
-
     } else if (['agent.add_balance'].includes(type)) {
       agentUpdate = {
         where: {
@@ -117,26 +115,25 @@ export const updateBalance = async (userId: string, amount: number, type: string
             increment: amount
           }
         }
-      }
+      };
     }
 
-    console.log("userUpdate",userUpdate, "agentUpdate",agentUpdate)
+    console.log('userUpdate', userUpdate, 'agentUpdate', agentUpdate);
 
     if (agentUpdate) {
-      agentUpdate = await prisma.users.update(agentUpdate)
-      agentUpdate.success = true
+      agentUpdate = await prisma.users.update(agentUpdate);
+      agentUpdate.success = true;
     }
     if (userUpdate) {
-      userUpdate = await prisma.users.update(userUpdate)
-      userUpdate.success = true
+      userUpdate = await prisma.users.update(userUpdate);
+      userUpdate.success = true;
     }
 
-    return { balance: userUpdate ? userUpdate.balance : agentUpdate.balance }
-
+    return { balance: userUpdate ? userUpdate.balance : agentUpdate.balance };
   } catch (error) {
     throw new BAD_REQUEST(message.FAILED);
   }
-}
+};
 
 export const getBalances = async (userUsername: string): Promise<any> => {
   try {
@@ -186,10 +183,12 @@ export const paramsToArray = async (params: string): Promise<any> => {
   return formattedParams;
 };
 
-export const recalculateBalance = async (userUsername: string): Promise<any> => {
+export const recalculateBalance = async (
+  userUsername: string
+): Promise<any> => {
   try {
     // const balances = await getBalances(userUsername);
-    const balances = await sumBalances(userUsername) ;
+    const balances = await sumBalances(userUsername);
     const balance = (balances as any)[0]._sum.amount;
 
     const result = await prisma.users.update({
@@ -215,11 +214,11 @@ export const sumBalances = async (userUsername: string) => {
       },
       by: ['userId'],
       _sum: {
-        amount: true,
-      },
+        amount: true
+      }
     });
-    return userIdSums
+    return userIdSums;
   } catch (error) {
-    console.log(error)
+    console.log(error);
   }
-}
+};

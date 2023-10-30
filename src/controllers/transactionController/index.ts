@@ -10,7 +10,7 @@ import {
   PrismaClient as PrismaClientTransaction,
   Transactions
 } from '../../config/prisma/generated/transactions/index.js';
-import { BAD_REQUEST } from '../../core/error.response.ts';
+import { BAD_REQUEST, NOT_FOUND } from '../../core/error.response.ts';
 import { RequestWithUser } from '../../models/customInterfaces.ts';
 import {
   create,
@@ -24,6 +24,8 @@ import {
   recalculateBalance,
   updateBalance
 } from './utilities.ts';
+import { CREATED, OK } from '../../core/success.response.ts';
+import { log } from 'console';
 const prisma = new PrismaClient();
 
 const prismaTransaction = new PrismaClientTransaction();
@@ -33,6 +35,10 @@ interface usernameIds {
   parentAgentId: string;
   username: string;
   balance: Decimal | null;
+  currency: {
+    name: string;
+    code: string;
+  };
   parent: {
     username: string;
     id: string;
@@ -43,44 +49,33 @@ export const getTransactions = async (
   req: Request,
   res: Response
 ): Promise<any> => {
-  try {
-    const { id } = (req as any).user;
-    const data = (await getAllById(req.query, id)) as any;
+  const { id } = (req as any).user;
+  const data = (await getAllById(req.query, id)) as any;
 
-    const { transactions, count, page, size } = data;
+  const { transactions, count, page, size } = data;
 
-    return res.status(200).json({
-      message: message.SUCCESS,
-      data: {
-        data: transactions,
-        page: Number(page || 0),
-        size: Number(size || 10),
-        totalItems: Number(count)
-      }
-    });
-  } catch (error) {
-    return res
-      .status(500)
-      .json({ message: message.INTERNAL_SERVER_ERROR, error });
-  }
+  return new OK({
+    data: {
+      data: transactions,
+      page: Number(page || 0),
+      size: Number(size || 10),
+      totalItems: Number(count)
+    }
+  }).send(res);
 };
 
 export const getBalance = async (req: Request, res: Response) => {
-  try {
-    const { username } = req.query;
-    if (!username) {
-      throw new BAD_REQUEST(message.INVALID_CREDENTIALS);
-    } else {
-      const { balance } = (await prisma.users.findUnique({
-        where: {
-          username: username as string
-        }
-      })) as Users;
-
-      return res.status(200).json({ balance });
-    }
-  } catch (error) {
+  const { username } = req.query;
+  if (!username) {
     throw new BAD_REQUEST(message.INVALID_CREDENTIALS);
+  } else {
+    const { balance } = (await prisma.users.findUnique({
+      where: {
+        username: username as string
+      }
+    })) as Users;
+
+    return new OK({ data: balance }).send(res);
   }
 };
 
@@ -171,7 +166,6 @@ export const changeBalance = async (req: Request, res: Response) => {
           }
         }
 
-
         const data = {
           userId: user.id,
           callbackId,
@@ -208,7 +202,6 @@ export const changeBalance = async (req: Request, res: Response) => {
     } catch (error) {
       throw new BAD_REQUEST(message.FAILED);
     }
-    
   } catch (error) {
     return res
       .status(500)
@@ -221,115 +214,110 @@ export const addTransaction = async (
   req: RequestWithUser,
   res: Response
 ): Promise<any> => {
-  try {
-    const { id: userSessionId } = req.user as Users;
-    const {
-      userId,
-      type: transactionType,
-      amount: transactionAmount,
-      currencyCode
-    } = req.body;
+  const { id: userSessionId } = req.user as Users;
 
-    let amount = transactionAmount;
+  const {
+    userId,
+    type: transactionType,
+    amount: transactionAmount,
+    currencyCode
+  } = req.body;
 
-    if (
-      transactionType === 'user.add_balance' &&
-      !(await checkTransferAbility(userSessionId, userId))
-    ) {
-      return res.status(500).json({ message: `The transfer cannot be made.` });
-    }
+  let amount = transactionAmount;
 
-    if (
-      ['deposit', 'user.add_balance'].includes(transactionType) &&
-      amount > 0
-    ) {
-      amount = -1 * amount;
-    }
+  if (
+    transactionType === 'user.add_balance' &&
+    !(await checkTransferAbility(userSessionId, userId))
+  ) {
+    throw new BAD_REQUEST(`The transfer cannot be made.`);
+  }
 
-    const user = (await prisma.users.findUnique({
-      where: {
-        id: userId
+  if (['deposit', 'user.add_balance'].includes(transactionType) && amount > 0) {
+    amount = -1 * amount;
+  }
+
+  const user = (await prisma.users.findUnique({
+    where: {
+      id: userId
+    },
+    select: {
+      id: true,
+      parentAgentId: true,
+      username: true,
+      balance: true,
+      parent: {
+        select: {
+          id: true,
+          username: true
+        }
       },
-      select: {
-        id: true,
-        parentAgentId: true,
-        username: true,
-        balance: true,
-        parent: {
-          select: {
-            id: true,
-            username: true
-          }
+      currency: {
+        select: {
+          code: true
         }
       }
-    })) as usernameIds; 
+    }
+  })) as usernameIds;
 
-    if (user) {
-
-      if(user.parentAgentId) {
-        const agent = await prisma.users.findUnique({
-          where: {
-            id: user.parentAgentId as string
-          }
-        });
-        if (agent) {
+  if (user) {
+    if (user.parentAgentId) {
+      const agent = await prisma.users.findUnique({
+        where: {
+          id: user.parentAgentId as string
+        }
+      });
+      if (agent) {
+        if (
+          !checkBalance(
+            user as unknown as Users,
+            agent,
+            Math.abs(amount),
+            transactionType
+          )
+        ) {
           if (
             !checkBalance(
               user as unknown as Users,
               agent,
-              Math.abs(amount),
+              amount,
               transactionType
             )
           ) {
-            if (
-              !checkBalance(
-                user as unknown as Users,
-                agent,
-                amount,
-                transactionType
-              )
-            ) {
-              return res.status(400).json({ message: 'Not enough money' });
-            }
+            throw new BAD_REQUEST(`'Not enough money'`);
           }
         }
-      } 
-
-      const data = {
-        userId,
-        username: user.username,
-        agentId: user.parentAgentId ?? null,
-        agentUsername: user.parent?.username ?? null,
-        type: transactionType,
-        amount,
-        currencyCode: currencyCode ?? null,
-        method: 'transfer',
-        updateBy: userSessionId ?? null
-      };
-
-      const { type, agentId } = (await create(data)) as Transactions;
-
-      const { balance } = await updateBalance(
-        userId,
-        amount,
-        type,
-        agentId,
-        data.method
-      );
-      return res
-        .status(201)
-        .json({ message: 'Transaction created successfully', balance });
+      }
     }
 
-    return res
-      .status(404)
-      .json({ message: message.INVALID_CREDENTIALS});
+    const data = {
+      userId,
+      username: user.username,
+      agentId: user.parentAgentId ?? null,
+      agentUsername: user.parent?.username ?? null,
+      type: transactionType,
+      amount,
+      currencyCode: currencyCode ?? user.currency.code,
+      method: 'transfer',
+      updateBy: userSessionId ?? null
+    };
 
-  } catch (error) {
-    return res
-      .status(500)
-      .json({ message: message.INTERNAL_SERVER_ERROR, error });
+    const { type, agentId } = (await create(data)) as Transactions;
+
+    const { balance } = await updateBalance(
+      userId,
+      amount,
+      type,
+      agentId,
+      data.method
+    );
+
+    return new CREATED({
+      data: balance,
+      message: 'Transaction created successfully'
+    }).send(res);
   }
+
+  throw new NOT_FOUND(message.INVALID_CREDENTIALS);
 };
 
 export const getTransactionDetailsByUserId = async (

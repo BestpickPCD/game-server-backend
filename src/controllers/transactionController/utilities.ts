@@ -31,20 +31,8 @@ export const updateBalance = async (userId: string, amount: number, type: string
     let userUpdate: any
     let agentUpdate: any
 
-    if(['bet', 'win', 'cancel'].includes(type)) {
-
-      if ( ['bet'].includes(type)) {
-        userUpdate = {
-          where: {
-            id: userId
-          },
-          data: {
-            balance: {
-              increment: -1 * amount
-            }
-          }
-        }
-      } else {
+    if(['bet', 'win', 'cancel'].includes(type)) { 
+      
         userUpdate = {
           where: {
             id: userId
@@ -54,8 +42,7 @@ export const updateBalance = async (userId: string, amount: number, type: string
               increment: amount
             }
           }
-        }
-      }
+        } 
 
 
       if( method === "seamless" ) { 

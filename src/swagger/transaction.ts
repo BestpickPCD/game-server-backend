@@ -8,6 +8,52 @@ export default {
       ],
       summary: 'Get all transactions',
       tags: ['Transactions'],
+      parameters: [
+        {
+          name: 'type',
+          in: 'path',
+          description:
+            'bet | win | cancel | deposit | withdraw | user.add_balance ',
+          type: 'string'
+        },
+        {
+          name: 'page',
+          in: 'query',
+          description: 'Page number',
+          required: false,
+          type: 'number',
+          default: 0
+        },
+        {
+          name: 'size',
+          in: 'query',
+          description: 'Number of items per page',
+          required: false,
+          type: 'number',
+          default: 10
+        },
+        {
+          name: 'search',
+          in: 'query',
+          description: 'Search query',
+          required: false,
+          type: 'string'
+        },
+        {
+          name: 'dateFrom',
+          in: 'query',
+          description: 'Start date',
+          required: false,
+          type: 'string'
+        },
+        {
+          name: 'dateTo',
+          in: 'query',
+          description: 'End date',
+          required: false,
+          type: 'string'
+        }
+      ],
       responses: {
         '200': {
           description: 'Success',
@@ -56,7 +102,7 @@ export default {
           bearerAuth: []
         }
       ],
-      summary: 'Add a new transaction',
+      summary: 'Add a new transaction for transfer method',
       tags: ['Transactions'],
       requestBody: {
         required: true,
@@ -65,45 +111,91 @@ export default {
             schema: {
               type: 'object',
               properties: {
-                senderId: {
-                  type: 'number'
-                },
-                receiverId: {
-                  type: 'number'
-                },
-                gameId: {
+                userId: {
                   type: 'string'
                 },
                 type: {
                   type: 'string'
                 },
-                note: {
+                amount: {
+                  type: 'number'
+                },
+                currencyCode: {
+                  type: 'number'
+                }
+              },
+              required: ['userId', 'type', 'amount', 'currencyCode']
+            }
+          }
+        }
+      },
+      responses: {
+        '201': {
+          description: 'Transaction created successfully',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  message: {
+                    type: 'string'
+                  }
+                }
+              }
+            }
+          }
+        },
+        '500': {
+          description: 'Internal server error',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  message: {
+                    type: 'string'
+                  },
+                  error: {
+                    type: 'object'
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  '/callback/changeBalance': {
+    post: {
+      security: [
+        {
+          bearerAuth: []
+        }
+      ],
+      summary: 'Add a new transaction for callback',
+      tags: ['Transactions'],
+      requestBody: {
+        required: true,
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                userId: {
                   type: 'string'
                 },
-                token: {
-                  type: 'string'
-                },
-                status: {
+                type: {
                   type: 'string'
                 },
                 amount: {
                   type: 'number'
                 },
-                currencyId: {
-                  type: 'number'
-                },
-                updatedBy: {
+                currencyCode: {
                   type: 'number'
                 }
               },
-              required: [
-                'senderId',
-                'receiverId',
-                'gameId',
-                'type',
-                'amount',
-                'currencyId'
-              ]
+              required: ['userId', 'type', 'amount', 'currencyCode']
             }
           }
         }
@@ -161,8 +253,7 @@ export default {
           description: 'ID of the user to retrieve balance',
           required: true,
           schema: {
-            type: 'integer',
-            format: 'int64'
+            type: 'string'
           }
         }
       ],
@@ -184,6 +275,57 @@ export default {
                     type: 'number'
                   }
                 }
+              }
+            }
+          }
+        },
+        '500': {
+          description: 'Internal server error',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  error: {
+                    type: 'string'
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  '/transaction-details/{id}': {
+    get: {
+      security: [
+        {
+          bearerAuth: []
+        }
+      ],
+      summary: 'Get transaction detail by transaction id',
+      tags: ['Transactions'],
+      parameters: [
+        {
+          name: 'id',
+          in: 'path',
+          description: 'ID of the transaction',
+          required: true,
+          schema: {
+            type: 'string',
+            format: 'int64'
+          }
+        }
+      ],
+      responses: {
+        '200': {
+          description: 'Success',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {}
               }
             }
           }

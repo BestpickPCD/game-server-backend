@@ -64,9 +64,10 @@ export const getAllWithBalance = async (query: any, userId: number) => {
     `;
 
     const users = (await prisma.$queryRawUnsafe(`${rawQuery}
-    LIMIT ${size} OFFSET ${page * size}
+    LIMIT ${size} OFFSET ${page > 1 ? page * size : 0}
     `)) as any;
     const total = (await prisma.$queryRawUnsafe(`${rawQuery}`)) as any;
+    
 
     const allUsers = users.map((user: Users) => user.id);
 

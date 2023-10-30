@@ -143,7 +143,7 @@ export const changeBalance = async (req: Request, res: Response) => {
               id: user.parentAgentId as string
             }
           });
-          if (agent) {
+          if (agent && ['win', 'agent.add_balance'].includes((transaction as any).type)) {
             if (
               !checkBalance(
                 user as unknown as Users,
@@ -152,16 +152,7 @@ export const changeBalance = async (req: Request, res: Response) => {
                 (transaction as any).type
               )
             ) {
-              if (
-                !checkBalance(
-                  user as unknown as Users,
-                  agent,
-                  Number(amount),
-                  (transaction as any).type
-                )
-              ) {
-                return res.status(400).json({ message: 'Not enough money' });
-              }
+              throw new BAD_REQUEST(`'Not enough money'`);
             }
           }
         }
@@ -266,7 +257,7 @@ export const addTransaction = async (
           id: user.parentAgentId as string
         }
       });
-      if (agent) {
+      if (agent && ['win', 'agent.add_balance'].includes(transactionType)) {
         if (
           !checkBalance(
             user as unknown as Users,
@@ -275,16 +266,7 @@ export const addTransaction = async (
             transactionType
           )
         ) {
-          if (
-            !checkBalance(
-              user as unknown as Users,
-              agent,
-              amount,
-              transactionType
-            )
-          ) {
-            throw new BAD_REQUEST(`'Not enough money'`);
-          }
+          throw new BAD_REQUEST(`'Not enough money'`);
         }
       }
     }

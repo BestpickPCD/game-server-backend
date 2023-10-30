@@ -37,6 +37,7 @@ export const updateBalance = async (
     let agentUpdate: any;
 
     if (['bet', 'win', 'cancel'].includes(type)) {
+
       userUpdate = {
         where: {
           id: userId
@@ -62,6 +63,7 @@ export const updateBalance = async (
           };
         }
       }
+
     } else if (['deposit', 'withdraw', 'user.add_balance'].includes(type)) {
       // if deposit amount has to be < 0 || withdraw amount > 0 || user.add_balance is the same as deposit < 0 happens when agents add_balance to users from backoffice
       let agentAmt = amount;

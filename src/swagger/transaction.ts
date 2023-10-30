@@ -184,7 +184,7 @@ export default {
                 },
                 amount: {
                   type: 'number',
-                  default: 10
+                  default: -10
                 },
                 transaction: {
                   type: 'json',
@@ -192,7 +192,7 @@ export default {
                     "id": 2,
                     "type": "bet",
                     "referer_id": 1,
-                    "amount": 10,
+                    "amount": -10,
                     "processed_at": "2021-07-01T00:00:00.000000Z",
                     "target": {
                       "id": 1,
@@ -268,40 +268,41 @@ export default {
             }
           }
         }
+      },
+      responses: {
+        '200': {
+          description: 'Success',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  balance: {
+                    type: 'number'
+                  }
+                }
+              }
+            }
+          }
+        },
+        '500': {
+          description: 'Internal server error',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  error: {
+                    type: 'string'
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     },
-    responses: {
-      '200': {
-        description: 'Success',
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                balance: {
-                  type: 'number'
-                }
-              }
-            }
-          }
-        }
-      },
-      '500': {
-        description: 'Internal server error',
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                error: {
-                  type: 'string'
-                }
-              }
-            }
-          }
-        }
-      }
-    }
+    
   },
   '/transaction-details/{userId}': {
     get: {

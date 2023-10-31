@@ -35,14 +35,23 @@ app.use((req, res, next) => {
 
 app.use((error: any, req: Request, res: Response, next: NextFunction) => {
   const statusCode = error.statusCode || '500';
-  // if (!statusCode) {
-  //   logger.error({});
-  // }
+  const message = error.message || 'Internal Server Error';
+  logger.error({
+    userId: (req as any)?.user?.id || '',
+    method: req.method,
+    url: req.url,
+    body: req.body,
+    params: req.params,
+    status: statusCode,
+    message,
+    subMessage: error?.subMessage
+  });
+
   return res.status(statusCode).json({
     status: 'Error',
     code: statusCode,
     ...(error.subMessage && { subMessage: error.subMessage }),
-    message: error.message || 'Internal Server Error'
+    message
   });
 });
 

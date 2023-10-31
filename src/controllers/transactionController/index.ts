@@ -211,6 +211,9 @@ export const addTransaction = async (
   req: RequestWithUser,
   res: Response
 ): Promise<any> => {
+
+  let status: string | null = null
+
   const { id: userSessionId } = req.user as Users;
 
   const {
@@ -239,6 +242,10 @@ export const addTransaction = async (
 
   if (['deposit', 'user.add_balance'].includes(transactionType) && amount > 0) {
     amount = -1 * amount;
+  }
+
+  if(['deposit','agent.add_balance','withdraw'].includes(transactionType)) {
+    status = "pending"
   }
 
   const user = (await prisma.users.findUnique({
@@ -291,26 +298,30 @@ export const addTransaction = async (
       agentId: user.parentAgentId ?? null,
       agentUsername: user.parent?.username ?? null,
       type: transactionType,
+      status,
       amount,
       currencyCode: currencyCode ?? user.currency.code,
       method: 'transfer',
       updateBy: userSessionId ?? null
     };
 
-    const { type, agentId } = (await create(data)) as Transactions;
+    const { type, agentId, status: transactionStatus } = (await create(data)) as Transactions;
 
-    const { balance } = await updateBalance(
-      userId,
-      amount,
-      type,
-      agentId,
-      data.method
-    );
-
-    return new CREATED({
-      data: balance,
-      message: 'Transaction created successfully'
-    }).send(res);
+    if(transactionStatus != "pending") {
+      const { balance } = await updateBalance(
+        userId,
+        amount,
+        type,
+        agentId,
+        data.method
+      );
+      return new CREATED({
+        data: balance,
+        message: 'Transaction created successfully'
+      }).send(res);
+    } else {
+      return res.status(200).json({message: 'Transaction created, status pending '})
+    }
   }
 
   throw new NOT_FOUND(message.INVALID_CREDENTIALS);

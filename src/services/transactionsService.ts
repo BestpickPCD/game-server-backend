@@ -12,6 +12,7 @@ export const getAllById = async (queryParams: any, userId: string | null) => {
       dateFrom,
       dateTo,
       type,
+      status,
       gameId
       // search
     } = queryParams;
@@ -38,6 +39,9 @@ export const getAllById = async (queryParams: any, userId: string | null) => {
     }
     if (gameId) {
       filter.gameId = gameId;
+    }
+    if(status) {
+      filter.status = status
     }
 
     const transactions = await prismaTransaction.transactions.findMany({
@@ -74,7 +78,7 @@ export const getByIdWithType = async (
   arrayTypes: string[]
 ) => {
   try {
-    let filter: any
+    let filter: any = {}
 
     filter = {
       OR: [{ agentId: userId }, { userId: userId }]

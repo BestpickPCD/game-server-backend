@@ -11,7 +11,8 @@ import {
   landingPage,
   changeBalance,
   updateBetLimit,
-  getBalance
+  getBalance,
+  transactionAction
 } from '../controllers/transactionController/index.ts';
 import { authentication } from '../middleware/authentication.ts';
 import { permission } from '../middleware/permission.ts';
@@ -38,6 +39,7 @@ router.post(
   permission('transactions', 'create'),
   asyncHandler(addTransaction)
 );
+router.patch('/transaction-action/:id',authentication,permission('transactions', 'update'),asyncHandler(transactionAction))
 router.get(
   '/transaction-details/:userId',
   authentication,

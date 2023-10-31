@@ -212,7 +212,7 @@ export const addTransaction = async (
   res: Response
 ): Promise<any> => {
 
-  let status: string | null = null
+  let status: string | null = "approved"
 
   const { id: userSessionId } = req.user as Users;
 
@@ -244,7 +244,7 @@ export const addTransaction = async (
     amount = -1 * amount;
   }
 
-  if(['deposit','agent.add_balance','withdraw'].includes(transactionType)) {
+  if([/*'deposit',*/'agent.add_balance'/*,'withdraw'*/].includes(transactionType)) {
     status = "pending"
   }
 
@@ -278,7 +278,7 @@ export const addTransaction = async (
           id: user.parentAgentId as string
         }
       });
-      if (agent && ['win', 'agent.add_balance'].includes(transactionType)) {
+      if (agent && ['deposit', 'withdraw', 'user.add_balance'].includes(transactionType)) {
         if (
           !checkBalance(
             user as unknown as Users,
@@ -326,6 +326,41 @@ export const addTransaction = async (
 
   throw new NOT_FOUND(message.INVALID_CREDENTIALS);
 };
+
+export const transactionAction = async (req:RequestWithUser, res:Response): Promise<any> => {
+  const { id: updateBy } = req.user as Users ;
+  const { id } = req.params;
+  const { action } = req.body;
+  
+  const { userId, amount, type, agentId, method } = await prismaTransaction.transactions.update({
+    where: {
+      id
+    },
+    data: {
+      status: action,
+      updateBy
+    }
+  }) as {
+    userId: string,
+    amount: number,
+    type: string,
+    agentId: string | null,
+    method: string
+  };
+
+  const { balance } = await updateBalance(
+    userId,
+    amount,
+    type,
+    agentId,
+    method
+  );
+  return new CREATED({
+    data: balance,
+    message: 'Transaction Approved'
+  }).send(res); 
+
+}
 
 export const getTransactionDetailsByUserId = async (
   req: Request,

@@ -17,6 +17,13 @@ export default {
           type: 'string'
         },
         {
+          name: 'status',
+          in: 'path',
+          description:
+            ' pending | approved | rejected ',
+          type: 'string'
+        },
+        {
           name: 'page',
           in: 'query',
           description: 'Page number',
@@ -126,6 +133,79 @@ export default {
                 }
               },
               required: ['userId', 'type', 'amount', 'currencyCode']
+            }
+          }
+        }
+      },
+      responses: {
+        '201': {
+          description: 'Transaction created successfully',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  message: {
+                    type: 'string'
+                  }
+                }
+              }
+            }
+          }
+        },
+        '500': {
+          description: 'Internal server error',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  message: {
+                    type: 'string'
+                  },
+                  error: {
+                    type: 'object'
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  '/transaction-action/{id}': {
+    patch: {
+      summary: 'Approve or Reject Pending Transactions',
+      tags: ['Transactions'],
+      security: [
+        {
+          bearerAuth: []
+        }
+      ],
+      parameters: [
+        {
+          name: 'id',
+          in: 'path',
+          description: 'ID of the pending transactions',
+          required: true,
+          schema: {
+            type: 'string'
+          }
+        }
+      ],
+      requestBody: {
+        required: true,
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                action: {
+                  type: 'string'
+                }
+              },
+              required: ['action']
             }
           }
         }

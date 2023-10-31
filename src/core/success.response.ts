@@ -73,4 +73,4 @@ class DELETED extends SuccessResponse {
   }
 }
 
-export { OK, CREATED, UPDATED, DELETED };
+export { CREATED, DELETED, OK, UPDATED };

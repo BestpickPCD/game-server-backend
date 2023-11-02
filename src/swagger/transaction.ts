@@ -332,23 +332,14 @@ export default {
     get: {
       summary: 'A callback for balance check',
       tags: ['Transactions'],
-      requestBody: {
-        required: true,
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                username: {
-                  type: 'string',
-                  default: 'test.callback.user.01'
-                }
-              },
-              required: ['username']
-            }
-          }
-        }
-      },
+      parameters: [
+        {
+          name: 'username',
+          in: 'query',
+          default: 'test.callback.user.01',
+          type: 'string'
+        },
+      ],
       responses: {
         '200': {
           description: 'Success',

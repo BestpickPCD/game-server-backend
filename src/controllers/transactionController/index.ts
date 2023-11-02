@@ -65,6 +65,7 @@ export const getTransactions = async (
 
 export const getBalance = async (req: Request, res: Response) => {
   const { username } = req.query;
+  console.log(req.query)
   if (!username) {
     throw new BAD_REQUEST(message.INVALID_CREDENTIALS);
   } else {
@@ -328,11 +329,13 @@ export const addTransaction = async (
 };
 
 export const transactionAction = async (req:RequestWithUser, res:Response): Promise<any> => {
+
+  let balance = req.user?.balance;
   const { id: updateBy } = req.user as Users ;
   const { id } = req.params;
   const { action } = req.body;
   
-  const { userId, amount, type, agentId, method } = await prismaTransaction.transactions.update({
+  const { userId, amount, type, agentId, method, status } = await prismaTransaction.transactions.update({
     where: {
       id
     },
@@ -342,21 +345,27 @@ export const transactionAction = async (req:RequestWithUser, res:Response): Prom
     }
   }) as {
     userId: string,
+    status: string,
     amount: number,
     type: string,
     agentId: string | null,
     method: string
   };
 
-  const { balance } = await updateBalance(
-    userId,
-    amount,
-    type,
-    agentId,
-    method
-  );
-  return new CREATED({
-    data: balance,
+  if(status === "approved") {
+    const { balance: updatedBalance } = await updateBalance(
+      userId,
+      amount,
+      type,
+      agentId,
+      method
+    );
+
+    balance = updatedBalance;
+  }
+
+  return new UPDATED({
+    data: {balance, action},
     message: 'Transaction Approved'
   }).send(res); 
 

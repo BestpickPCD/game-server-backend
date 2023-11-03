@@ -64,8 +64,9 @@ export const getTransactions = async (
 };
 
 export const getBalance = async (req: Request, res: Response) => {
+  
   const { username } = req.query;
-  console.log(req.query)
+  
   if (!username) {
     throw new BAD_REQUEST(message.INVALID_CREDENTIALS);
   } else {

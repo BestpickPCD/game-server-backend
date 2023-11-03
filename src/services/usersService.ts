@@ -5,7 +5,7 @@ import {
   Users
 } from '../config/prisma/generated/base-default/index.js';
 const prisma = new PrismaClient();
-import { PrismaClient as PrismaClientTransaction } from '../config/prisma/generated/transactions/index.js';
+import { PrismaClient as PrismaClientTransaction, Transactions } from '../config/prisma/generated/transactions/index.js';
 const prismaTransaction = new PrismaClientTransaction();
 
 export const getAllWithBalance = async (query: any, userId: number) => {
@@ -328,101 +328,45 @@ export const getPlayerById = async (id: string, userId: string) => {
   }
 };
 
-export const getUserProfile = async (userId: number) => {
-  try {
-    const data = (await prisma.$queryRaw`
-      SELECT * FROM
-        (SELECT id, balance, name, type, username, currencyId FROM Users WHERE id = ${userId}) AS USER LEFT JOIN
-        (SELECT id, name AS currencyName, code AS currencyCode FROM Currencies WHERE deletedAt IS NULL) AS Currency ON Currency.id = USER.currencyId LEFT JOIN
-        (SELECT COUNT(id) AS subAgent, parentAgentId FROM Users WHERE parentAgentId = ${userId} AND type = 'agent' GROUP BY parentAgentId) AS subAgent ON subAgent.parentAgentId = User.id LEFT JOIN
-        (SELECT COUNT(id) AS players, parentAgentId FROM Users WHERE parentAgentId = ${userId} AND type = 'player' GROUP BY parentAgentId) AS player ON player.parentAgentId = User.id
-    `) as any;
-
-    return data;
-  } catch (error: any) {
-    throw Error(error);
-  }
-};
-
-export const getDashboardData = async (userId: string) => {
+export const getDashboardData = async (user: Users) => {
   try {
     const item = (await prisma.users.findUnique({
       where: {
-        id: userId,
+        id: user.id,
         deletedAt: null,
         isActive: true
       }
     })) as any;
-
     const { affiliatedAgents, affiliatedUserId } =
-      await getAffiliatedAgentsByUserId(userId);
+      await getAffiliatedAgentsByUserId(user.id);
 
-    const affiliatedSums = await _getAllSumsByUserId(affiliatedUserId);
+    const affiliatedSums = await _getAllSumsByUserId(affiliatedUserId); 
 
-    affiliatedAgents.map((affiliatedAgent: any) => {
-      const winGame = affiliatedSums.winGame[affiliatedAgent.id];
-      const betGame = affiliatedSums.betGame[affiliatedAgent.id];
-      const chargeGame = affiliatedSums.chargeGame[affiliatedAgent.id];
-      const userReceived = affiliatedSums.userReceived[affiliatedAgent.id];
-      const agentReceived = affiliatedSums.agentReceived[affiliatedAgent.id];
-      const deposit = affiliatedSums.deposit[affiliatedAgent.id];
-      const withdraw = affiliatedSums.withdraw[affiliatedAgent.id];
-      const allSums = {
-        winGame,
-        betGame,
-        chargeGame,
-        userReceived,
-        agentReceived,
-        deposit,
-        withdraw
-      };
-
-      affiliatedAgent.allSums = allSums;
+    affiliatedAgents.map((affiliatedAgent: any) => { 
+      affiliatedAgent.allSums = affiliatedSums[`${affiliatedAgent.id}`];
     });
 
-    const {
-      winGame,
-      betGame,
-      chargeGame,
-      userReceived,
-      agentReceived,
-      deposit,
-      withdraw
-    } = await _getAllSumsByUserId([item.id]);
+    const balance = await _getAllSumsByUserId([item.id]);
+    const userBalance = { ...balance[`${item.id}`], balance: item.balance ?? 0 }
 
     const data = {
       userId: item.id,
       name: item.name,
       username: item.username,
+      affiliatedAgents,
       currency: {
         name: item.currencyName,
         code: item.currencyCode
       },
-      affiliatedAgents,
       type: item.type,
       accountNumber: item.accountNumber,
       callbackUrl: item.callbackUrl,
       apiCall: item.apiCall,
-      subAgent: parseInt(item.subAgent),
+      // subAgent: parseInt(item.subAgent),
       parentAgentId: item.parentAgentId,
-      players: parseInt(item.players),
-      agentId: item.agentId,
-      balance: {
-        balance: item.balance ?? 0,
-        calculatedBalance:
-          (agentReceived[`${item.id}`]?._sum.amount ??
-            0 + winGame[`${item.id}`]?._sum.amount ??
-            0) -
-          (userReceived[`${item.id}`]?._sum.amount ??
-            0 + betGame[`${item.id}`]?._sum.amount ??
-            0 + chargeGame[`${item.id}`]?._sum.amount ??
-            0),
-        userReceived: userReceived[`${item.id}`]?._sum.amount ?? 0,
-        agentReceived: agentReceived[`${item.id}`]?._sum.amount ?? 0,
-        bet: betGame[`${item.id}`]?._sum.amount ?? 0,
-        win: winGame[`${item.id}`]?._sum.amount ?? 0,
-        charge: chargeGame[`${item.id}`]?._sum.amount ?? 0
-      }
+      // players: parseInt(item.players),
+      // agentId: item.agentId,
+      balance: userBalance
     };
 
     return data;
@@ -494,72 +438,73 @@ export const getAllByAgentId = async (query: any, id: string) => {
 
 const _getAllSumsByUserId = async (userIds: string[]) => {
   try {
-    const winGame = await _getSumTransactionByUserIds('win', 'userId', userIds);
-    const betGame = await _getSumTransactionByUserIds('bet', 'userId', userIds);
-    const chargeGame = await _getSumTransactionByUserIds(
-      'cancel',
-      'userId',
-      userIds
-    );
-    const userReceived = await _getSumTransactionByUserIds(
-      'user.add_balance',
-      'userId',
-      userIds
-    );
-    const deposit = await _getSumTransactionByUserIds(
-      'deposit',
-      'userId',
-      userIds
-    );
-    const withdraw = await _getSumTransactionByUserIds(
-      'withdraw',
-      'userId',
-      userIds
-    );
-    const agentReceived = await _getSumTransactionByUserIds(
-      'agent.add_balance',
-      'userId',
-      userIds
-    );
-
-    const balance = {
-      winGame,
-      betGame,
-      chargeGame,
-      userReceived,
-      agentReceived,
-      deposit,
-      withdraw
-    };
-
-    return balance;
+    const balances = await _getSumTransactionByUserIds(userIds);
+    return balances;
   } catch (error: any) {
+    console.log(error)
     throw Error(error);
   }
 };
 
+
+interface Sums {
+  win: number;
+  bet: number;
+  deposit: number;
+  withdraw: number;
+  'user.add_balance': number;
+  'agent.add_balance': number;
+}
+
 const _getSumTransactionByUserIds = async (
-  type: string,
-  groupBy: any,
   userIds: string[]
 ) => {
-  const sumBalance = (await prismaTransaction.transactions.groupBy({
-    by: [groupBy],
-    _sum: {
-      amount: true
-    },
+
+  const sumBalance = await prismaTransaction.transactions.findMany({
     where: {
-      type,
-      [`${groupBy}`]: {
+      userId: {
         in: userIds
       }
     }
-  })) as any;
+  }) as Transactions[];
 
-  const formattedResult = sumBalance.reduce((acc: any, item: any) => {
-    acc[item.userId] = item;
-    return acc;
-  }, {});
+  const sums: Record<string, Sums> = {};
+
+  sumBalance.forEach((transaction: any) => {
+    const { userId, type, amount } = transaction;
+
+    if (!sums[userId]) {
+      sums[userId] = {
+        win: 0,
+        bet: 0,
+        deposit: 0,
+        withdraw: 0,
+        'user.add_balance': 0,
+        'agent.add_balance': 0
+      };
+    }
+
+    switch (type) {
+      case 'win':
+        sums[userId].win += amount;
+        break;
+      case 'bet':
+        sums[userId].bet += amount;
+        break;
+      case 'deposit':
+        sums[userId].deposit += amount;
+        break;
+      case 'user.add_balance':
+        sums[userId]['user.add_balance'] += amount;
+        break;
+      case 'agent.add_balance':
+        sums[userId]['agent.add_balance'] += amount;
+        break;
+      default:
+    }
+  });
+
+  const formattedResult = sums
 
   return formattedResult;
 };

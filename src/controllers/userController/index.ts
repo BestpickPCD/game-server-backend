@@ -69,7 +69,6 @@ export const getAllUsersWithBalances = async (
       message: message.SUCCESS
     });
   } catch (error) {
-    console.log(error);
     return res.status(500).json({ message: message.INTERNAL_SERVER_ERROR });
   }
 };
@@ -328,9 +327,8 @@ export const getDashboard = async (
   req: RequestWithUser,
   res: Response
 ): Promise<any> => {
-  try {
-    const { id } = (req as any).user;
-    const data = (await getDashboardData(id)) as any;
+  try { 
+    const data = await getDashboardData(req.user as any);
     return res.status(200).json(data);
   } catch (error) {
     return res

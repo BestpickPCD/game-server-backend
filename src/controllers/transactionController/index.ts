@@ -83,13 +83,10 @@ export const getBalance = async (req: Request, res: Response) => {
 // Seamless method
 export const changeBalance = async (req: Request, res: Response) => {
   try {
-    const { username, amount, transaction } = req.body;
-
-    if (amount <= 0) {
-      throw new BAD_REQUEST('Amount must be greater than 0');
-    }
+    const { username, amount, transaction } = req.body; 
 
     const data = { username, amount, transaction } as CallbackTransactions;
+
     try {
       const {
         username,
@@ -99,7 +96,7 @@ export const changeBalance = async (req: Request, res: Response) => {
       } = (await prismaTransaction.callbackTransactions.create({
         data
       })) as CallbackTransactions;
-
+      
       if (username) {
         let user;
         user = (await prisma.users.findUnique({
@@ -216,7 +213,7 @@ export const addTransaction = async (
 
   let status: string | null = "approved"
 
-  const { id: userSessionId } = req.user as Users;
+  const { id: userSessionId, roleId:userSessionRoleId, type:userSessionType } = req.user as Users;
 
   const {
     userId,
@@ -227,11 +224,7 @@ export const addTransaction = async (
 
   let amount = transactionAmount;
 
-  if (transactionAmount <= 0) {
-    throw new BAD_REQUEST('Amount must be greater than 0');
-  }
-
-  if (userSessionId === userId) {
+  if (userSessionId === userId && userSessionRoleId !== 1 && userSessionType !== 'player') {
     throw new BAD_REQUEST('Cannot add money to yourself');
   }
 
@@ -306,6 +299,8 @@ export const addTransaction = async (
       method: 'transfer',
       updateBy: userSessionId ?? null
     };
+
+    console.log(data)
 
     const { type, agentId, status: transactionStatus } = (await create(data)) as Transactions;
 

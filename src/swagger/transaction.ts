@@ -102,77 +102,83 @@ export default {
       }
     }
   },
-  '/transaction': {
-    post: {
-      summary: 'Add a new transaction for transfer method',
-      tags: ['Transactions'],
-      security: [
-        {
-          bearerAuth: []
-        }
-      ],
-      requestBody: {
-        required: true,
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                userId: {
-                  type: 'string'
-                },
-                type: {
-                  type: 'string'
-                },
-                amount: {
-                  type: 'number'
-                },
-                currencyCode: {
-                  type: 'string',
-                  default: 'KRW'
-                }
-              },
-              required: ['userId', 'type', 'amount', 'currencyCode']
-            }
+  '/transaction': { 
+
+    post: 
+      {
+        tags: ['Transactions'],
+        operationId: 'agent.add_balance',
+        summary: 'Add a new transaction for transfer method',
+        security: [
+          {
+            bearerAuth: []
           }
-        }
-      },
-      responses: {
-        '201': {
-          description: 'Transaction created successfully',
+        ],
+        requestBody: {
+          required: true,
           content: {
             'application/json': {
               schema: {
                 type: 'object',
                 properties: {
-                  message: {
+                  userId: {
                     type: 'string'
+                  },
+                  type: {
+                    type: 'string',
+                    default: 'agent.add_balance',
+                    description: 'agent.add_balance | user.add_balance | win | bet | deposit | withdraw'
+                  },
+                  amount: {
+                    type: 'number'
+                  },
+                  currencyCode: {
+                    type: 'string',
+                    default: 'KRW'
                   }
-                }
+                },
+                required: ['userId', 'type', 'amount', 'currencyCode']
               }
             }
           }
         },
-        '500': {
-          description: 'Internal server error',
-          content: {
-            'application/json': {
-              schema: {
-                type: 'object',
-                properties: {
-                  message: {
-                    type: 'string'
-                  },
-                  error: {
-                    type: 'object'
+        responses: {
+          '201': {
+            description: 'Transaction created successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    message: {
+                      type: 'string'
+                    }
+                  }
+                }
+              }
+            }
+          },
+          '500': {
+            description: 'Internal server error',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    message: {
+                      type: 'string'
+                    },
+                    error: {
+                      type: 'object'
+                    }
                   }
                 }
               }
             }
           }
         }
-      }
-    }
+      } 
+    
   },
   '/transaction-action/{id}': {
     patch: {
@@ -202,7 +208,8 @@ export default {
               type: 'object',
               properties: {
                 action: {
-                  type: 'string'
+                  type: 'string',
+                  default: 'approved'
                 }
               },
               required: ['action']
@@ -246,134 +253,6 @@ export default {
         }
       }
     }
-  },
-  '/callback/changeBalance': {
-    post: {
-      summary: 'Add a new transaction for callback',
-      tags: ['Transactions'],
-      requestBody: {
-        required: true,
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                username: {
-                  type: 'string',
-                  default: 'test.callback.user.01'
-                },
-                amount: {
-                  type: 'number',
-                  default: -10
-                },
-                transaction: {
-                  type: 'json',
-                  default: `{
-                    "id": 2,
-                    "type": "bet",
-                    "referer_id": 1,
-                    "amount": -10,
-                    "processed_at": "2021-07-01T00:00:00.000000Z",
-                    "target": {
-                      "id": 1,
-                      "username": "test.callback.user.01",
-                      "balance": 99990
-                    },
-                    "details": {
-                      "game": {
-                        "id": "16000",
-                        "round": "string-12341234",
-                        "title": "TEST GAME",
-                        "type": "baccarat",
-                        "vendor": "evolution"
-                      }
-                    }
-                  }`
-                }
-              },
-              required: ['username', 'amount', 'transaction']
-            }
-          }
-        }
-      },
-      responses: {
-        '201': {
-          description: 'Transaction created successfully',
-          content: {
-            'application/json': {
-              schema: {
-                type: 'object',
-                properties: {
-                  message: {
-                    type: 'string'
-                  },
-                  balance: {
-                    type: 'array'
-                  }
-                }
-              }
-            }
-          }
-        },
-        '500': {
-          description: 'Internal server error',
-          content: {
-            'application/json': {
-              schema: {
-                type: 'object'
-              }
-            }
-          }
-        }
-      }
-    }
-  },
-  '/callback/balance': {
-    get: {
-      summary: 'A callback for balance check',
-      tags: ['Transactions'],
-      parameters: [
-        {
-          name: 'username',
-          in: 'query',
-          default: 'test.callback.user.01',
-          type: 'string'
-        },
-      ],
-      responses: {
-        '200': {
-          description: 'Success',
-          content: {
-            'application/json': {
-              schema: {
-                type: 'object',
-                properties: {
-                  balance: {
-                    type: 'number'
-                  }
-                }
-              }
-            }
-          }
-        },
-        '500': {
-          description: 'Internal server error',
-          content: {
-            'application/json': {
-              schema: {
-                type: 'object',
-                properties: {
-                  error: {
-                    type: 'string'
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    
   },
   '/transaction-details/{userId}': {
     get: {
@@ -485,5 +364,133 @@ export default {
         }
       }
     }
-  }
+  },
+  '/callback/changeBalance': {
+    post: {
+      summary: 'Add a new transaction for callback',
+      tags: ['Callback'],
+      requestBody: {
+        required: true,
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                username: {
+                  type: 'string',
+                  default: 'test.callback.user.01'
+                },
+                amount: {
+                  type: 'number',
+                  default: -10
+                },
+                transaction: {
+                  type: 'json',
+                  default: `{
+                    "id": 2,
+                    "type": "bet",
+                    "referer_id": 1,
+                    "amount": -10,
+                    "processed_at": "2021-07-01T00:00:00.000000Z",
+                    "target": {
+                      "id": 1,
+                      "username": "test.callback.user.01",
+                      "balance": 99990
+                    },
+                    "details": {
+                      "game": {
+                        "id": "16000",
+                        "round": "string-12341234",
+                        "title": "TEST GAME",
+                        "type": "baccarat",
+                        "vendor": "evolution"
+                      }
+                    }
+                  }`
+                }
+              },
+              required: ['username', 'amount', 'transaction']
+            }
+          }
+        }
+      },
+      responses: {
+        '201': {
+          description: 'Transaction created successfully',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  message: {
+                    type: 'string'
+                  },
+                  balance: {
+                    type: 'array'
+                  }
+                }
+              }
+            }
+          }
+        },
+        '500': {
+          description: 'Internal server error',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object'
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  '/callback/balance': {
+    get: {
+      summary: 'A callback for balance check',
+      tags: ['Callback'],
+      parameters: [
+        {
+          name: 'username',
+          in: 'query',
+          default: 'test.callback.user.01',
+          type: 'string'
+        },
+      ],
+      responses: {
+        '200': {
+          description: 'Success',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  balance: {
+                    type: 'number'
+                  }
+                }
+              }
+            }
+          }
+        },
+        '500': {
+          description: 'Internal server error',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  error: {
+                    type: 'string'
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    
+  },
 };

@@ -12,7 +12,8 @@ import {
   changeBalance,
   updateBetLimit,
   getBalance,
-  transactionAction
+  transactionAction,
+  getCallbackTransaction
 } from '../controllers/transactionController/index.ts';
 import { authentication } from '../middleware/authentication.ts';
 import { permission } from '../middleware/permission.ts';
@@ -21,6 +22,7 @@ import { asyncHandler } from '../utilities/helpers/asyncHandler.ts';
 const router = express.Router();
 router.get('/callback/balance', asyncHandler(getBalance));
 router.post('/callback/changeBalance', changeBalance);
+router.get('/callback-transaction/:id', authentication, asyncHandler(getCallbackTransaction) )
 router.get(
   '/transactions',
   authentication,

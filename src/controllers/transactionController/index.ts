@@ -153,6 +153,7 @@ export const changeBalance = async (req: Request, res: Response) => {
         }
 
         if (user.parentAgentId) {
+          
           const agent = await prisma.users.findUnique({
             where: {
               id: user.parentAgentId as string
@@ -160,7 +161,7 @@ export const changeBalance = async (req: Request, res: Response) => {
           });
           if (
             agent &&
-            ['win', 'agent.add_balance'].includes((transaction as any).type)
+            !['win', 'agent.add_balance'].includes((transaction as any).type)
           ) {
             if (
               !checkBalance(

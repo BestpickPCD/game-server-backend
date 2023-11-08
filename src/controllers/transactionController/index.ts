@@ -63,6 +63,18 @@ export const getTransactions = async (
   }).send(res);
 };
 
+export const  getCallbackTransaction = async (req:Request, res:Response) => {
+  const { id: callbackId } = req.params;
+  const { username, amount, transaction } = await prismaTransaction.callbackTransactions.findUnique({
+    where: {
+      id: callbackId
+    }
+  }) as CallbackTransactions;
+  
+  return new OK({ data: { username, amount, transaction } }).send(res);
+
+}
+
 export const getBalance = async (req: Request, res: Response) => {
   
   const { username } = req.query;

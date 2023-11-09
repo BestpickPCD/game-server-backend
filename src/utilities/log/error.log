@@ -1,223 +1,353 @@
 {
-  message: {
-    error: PrismaClientValidationError: 
-    Invalid `prisma.users.findMany()` invocation:
-    
-    {
-      select: {
-        id: true,
-        username: true,
-        name: true,
-        type: true,
-        currencyId: true,
-        roleId: true,
-        createdAt: true,
-        updatedAt: true,
-        Agents: {
-          select: {
-            id: true,
-            level: true,
-            parentAgent: {
-              select: {
-                name: true,
-                id: true
-              }
-            }
-          }
-        }
-      },
-      where: {
-        deletedAt: null,
-        type: "agent",
-        Agents: {
-          parentAgentIds: {
-            array_contains: [
-              1
-            ]
-          }
-        },
-        OR: [
-          {
-            name: {
-              contains: ""
-            }
-          },
-          {
-            username: {
-              contains: ""
-            }
-          }
-        ],
-        updatedAt: {
-          gte: "1970-01-01T00:00:00.000Z",
-          lte: "2100-01-01T00:00:00.000Z"
-        }
-      },
-      orderBy: {
-        id: "desc"
-      },
-      skip: "asd",
-            ~~~~~
-      take: 10
-    }
-    
-    Argument `skip`: Invalid value provided. Expected Int, provided String.
-        at Ur (/Users/truongphuocnguyen/Documents/web-project/game-server-backend/node_modules/@prisma/client/runtime/library.js:115:5803)
-        at zr.handleRequestError (/Users/truongphuocnguyen/Documents/web-project/game-server-backend/node_modules/@prisma/client/runtime/library.js:122:8007)
-        at zr.handleAndLogRequestError (/Users/truongphuocnguyen/Documents/web-project/game-server-backend/node_modules/@prisma/client/runtime/library.js:122:7697)
-        at zr.request (/Users/truongphuocnguyen/Documents/web-project/game-server-backend/node_modules/@prisma/client/runtime/library.js:122:7307) {
-      clientVersion: '5.0.0'
-    },
-    userId: 1,
-    url: '/?id=1&page=0&size=10&search=&dateFrom=&dateTo='
+  userId: '4e2eb1f4-57c9-43de-ba41-09e575560eb8',
+  error: 'FAILED',
+  url: '/transaction',
+  method: 'POST',
+  body: {
+    userId: 'ebf067a6-8d2a-4859-849f-49caf1d583b4',
+    amount: 1.2312312312312312e+23,
+    type: 'user.add_balance',
+    note: '',
+    token: '',
+    status: 'success',
+    currencyId: 1
   },
+  params: {},
+  message: 'FAILED',
+  subMessage: 'Bad Request',
   level: 'error',
-  timestamp: '2023-08-15T09:01:34.831Z'
+  timestamp: '2023-10-30T09:55:40.880Z'
 }
 {
-  name: 'PrismaClientValidationError',
-  clientVersion: '5.0.0',
+  userId: '',
+  method: 'GET',
+  url: '/agents',
+  body: {},
+  params: {},
+  status: 401,
+  message: 'Token is missing',
+  subMessage: 'Unauthorized',
   level: 'error',
-  timestamp: '2023-08-15T09:02:32.291Z'
+  timestamp: '2023-10-30T10:10:21.781Z'
 }
 {
-  message: {
-    name: 'PrismaClientValidationError',
-    clientVersion: '5.0.0',
-    userId: 1,
-    url: '/?id=1&page=0&size=10&search=&dateFrom=&dateTo='
+  userId: '4e2eb1f4-57c9-43de-ba41-09e575560eb8',
+  id: '::1',
+  method: 'POST',
+  url: '/transaction',
+  body: {
+    userId: 'ebf067a6-8d2a-4859-849f-49caf1d583b4',
+    amount: 1.2312312312312312e+23,
+    type: 'user.add_balance',
+    note: '',
+    token: '',
+    status: 'success',
+    currencyId: 1
   },
+  params: {},
+  status: 400,
+  message: 'FAILED',
+  subMessage: 'Bad Request',
   level: 'error',
-  timestamp: '2023-08-15T09:02:57.247Z'
+  timestamp: '2023-10-30T10:12:13.134Z'
 }
 {
-  message: {
-    name: 'PrismaClientValidationError',
-    clientVersion: '5.0.0',
-    userId: 1,
-    url: '//?id=1&page=0&size=10&search=&dateFrom=&dateTo='
+  userId: '4e2eb1f4-57c9-43de-ba41-09e575560eb8',
+  id: '::1',
+  method: 'POST',
+  url: '/transaction',
+  body: {
+    userId: 'ebf067a6-8d2a-4859-849f-49caf1d583b4',
+    amount: 1.2312312312312312e+23,
+    type: 'user.add_balance',
+    note: '',
+    token: '',
+    status: 'success',
+    currencyId: 1
   },
+  params: {},
+  status: 400,
+  message: 'FAILED',
+  subMessage: 'Bad Request',
   level: 'error',
-  timestamp: '2023-08-15T09:03:44.293Z'
+  timestamp: '2023-10-30T10:12:22.032Z'
 }
 {
-  message: {
-    name: 'PrismaClientValidationError',
-    clientVersion: '5.0.0',
-    userId: 1,
-    url: '//?id=1&page=0&size=10&search=&dateFrom=&dateTo='
+  userId: '4e2eb1f4-57c9-43de-ba41-09e575560eb8',
+  id: '::1',
+  method: 'POST',
+  url: '/transaction',
+  body: {
+    userId: 'ebf067a6-8d2a-4859-849f-49caf1d583b4',
+    amount: 123123123123,
+    type: 'user.add_balance',
+    note: '',
+    token: '',
+    status: 'success',
+    currencyId: 1
   },
+  params: {},
+  status: 400,
+  message: 'FAILED',
+  subMessage: 'Bad Request',
   level: 'error',
-  timestamp: '2023-08-15T09:03:49.875Z'
+  timestamp: '2023-10-30T10:12:31.609Z'
 }
 {
-  message: {
-    name: 'PrismaClientValidationError',
-    clientVersion: '5.0.0',
-    userId: 1,
-    url: '//?id=1&page=0&size=10&search=&dateFrom=&dateTo='
+  userId: '4e2eb1f4-57c9-43de-ba41-09e575560eb8',
+  method: 'POST',
+  url: '/transaction',
+  body: {
+    userId: 'ebf067a6-8d2a-4859-849f-49caf1d583b4',
+    amount: 123123123123,
+    type: 'user.add_balance',
+    note: '',
+    token: '',
+    status: 'success',
+    currencyId: 1
   },
+  params: {},
+  status: 400,
+  message: 'FAILED',
+  subMessage: 'Bad Request',
   level: 'error',
-  timestamp: '2023-08-15T09:04:30.652Z'
+  timestamp: '2023-10-30T10:24:00.976Z'
 }
 {
-  message: {
-    name: 'PrismaClientValidationError',
-    clientVersion: '5.0.0',
-    userId: 1,
-    url: '/agents/?id=1&page=0&size=10&search=&dateFrom=&dateTo='
+  userId: '4e2eb1f4-57c9-43de-ba41-09e575560eb8',
+  method: 'POST',
+  url: '/transaction',
+  body: {
+    userId: 'ebf067a6-8d2a-4859-849f-49caf1d583b4',
+    amount: 123123123123123130000,
+    type: 'user.add_balance',
+    note: '',
+    token: '',
+    status: 'success',
+    currencyId: 1
   },
+  params: {},
+  status: 400,
+  message: 'FAILED',
+  subMessage: 'Bad Request',
   level: 'error',
-  timestamp: '2023-08-15T09:04:48.500Z'
+  timestamp: '2023-10-30T10:38:54.608Z'
 }
 {
-  message: {
-    name: 'PrismaClientValidationError',
-    clientVersion: '5.0.0',
-    userId: 1,
-    url: '/agents/?id=1&page=0&size=10&search=&dateFrom=&dateTo=',
-    body: {},
-    query: {
-      id: '1',
-      page: '0',
-      size: '10',
-      search: '',
-      dateFrom: '',
-      dateTo: ''
-    }
+  userId: '4e2eb1f4-57c9-43de-ba41-09e575560eb8',
+  method: 'POST',
+  url: '/transaction',
+  body: {
+    userId: 'ebf067a6-8d2a-4859-849f-49caf1d583b4',
+    amount: 123123123123123130000,
+    type: 'user.add_balance',
+    note: '',
+    token: '',
+    status: 'success',
+    currencyId: 1
   },
+  params: {},
+  status: 400,
+  message: 'FAILED',
+  subMessage: 'Bad Request',
   level: 'error',
-  timestamp: '2023-08-15T09:06:12.847Z'
+  timestamp: '2023-10-30T10:39:21.835Z'
 }
 {
-  message: {
-    name: 'PrismaClientValidationError',
-    clientVersion: '5.0.0',
-    userId: 1,
-    url: '/agents/',
-    body: {},
-    query: {}
+  userId: '4e2eb1f4-57c9-43de-ba41-09e575560eb8',
+  method: 'POST',
+  url: '/transaction',
+  body: {
+    userId: 'ebf067a6-8d2a-4859-849f-49caf1d583b4',
+    amount: 123123123123123130000,
+    type: 'user.add_balance',
+    note: '',
+    token: '',
+    status: 'success',
+    currencyId: 1
   },
+  params: {},
+  status: 400,
+  message: 'FAILED',
+  subMessage: 'Bad Request',
   level: 'error',
-  timestamp: '2023-08-16T02:39:07.997Z'
+  timestamp: '2023-10-30T10:39:29.895Z'
 }
 {
-  message: {
-    name: 'PrismaClientValidationError',
-    clientVersion: '5.0.0',
-    userId: 1,
-    url: '/agents/',
-    body: {},
-    query: {}
+  userId: '4e2eb1f4-57c9-43de-ba41-09e575560eb8',
+  method: 'POST',
+  url: '/transaction',
+  body: {
+    userId: 'ebf067a6-8d2a-4859-849f-49caf1d583b4',
+    amount: 123123123123123130000,
+    type: 'user.add_balance',
+    note: '',
+    token: '',
+    status: 'success',
+    currencyId: 1
   },
+  params: {},
+  status: 400,
+  message: 'FAILED',
+  subMessage: 'Bad Request',
   level: 'error',
-  timestamp: '2023-08-16T02:39:15.157Z'
+  timestamp: '2023-10-30T10:40:44.419Z'
 }
 {
-  message: {
-    name: 'PrismaClientValidationError',
-    clientVersion: '5.0.0',
-    userId: 1,
-    url: '/agents/',
-    body: {},
-    query: {}
+  userId: '4e2eb1f4-57c9-43de-ba41-09e575560eb8',
+  method: 'POST',
+  url: '/transaction',
+  body: {
+    userId: 'ebf067a6-8d2a-4859-849f-49caf1d583b4',
+    amount: 123123123123123130000,
+    type: 'user.add_balance',
+    note: '',
+    token: '',
+    status: 'success',
+    currencyId: 1
   },
+  params: {},
+  status: 400,
+  message: 'FAILED',
+  subMessage: 'Bad Request',
   level: 'error',
-  timestamp: '2023-08-16T02:39:23.888Z'
+  timestamp: '2023-10-30T10:40:55.579Z'
 }
 {
-  message: {
-    name: 'PrismaClientValidationError',
-    clientVersion: '5.0.0',
-    userId: 1,
-    url: '/agents/',
-    body: {},
-    query: {}
+  userId: '4e2eb1f4-57c9-43de-ba41-09e575560eb8',
+  method: 'POST',
+  url: '/transaction',
+  body: {
+    userId: 'ebf067a6-8d2a-4859-849f-49caf1d583b4',
+    amount: 123123123123123130000,
+    type: 'user.add_balance',
+    note: '',
+    token: '',
+    status: 'success',
+    currencyId: 1
   },
+  params: {},
+  status: 400,
+  message: 'FAILED',
+  subMessage: 'Bad Request',
   level: 'error',
-  timestamp: '2023-08-16T02:39:27.588Z'
+  timestamp: '2023-10-30T10:42:45.105Z'
 }
 {
-  message: {
-    name: 'PrismaClientValidationError',
-    clientVersion: '5.0.0',
-    userId: 1,
-    url: '/agents/',
-    body: {},
-    query: {}
+  userId: '4e2eb1f4-57c9-43de-ba41-09e575560eb8',
+  method: 'POST',
+  url: '/transaction',
+  body: {
+    userId: 'ebf067a6-8d2a-4859-849f-49caf1d583b4',
+    amount: 123123123123123130000,
+    type: 'user.add_balance',
+    note: '',
+    token: '',
+    status: 'success',
+    currencyId: 1
   },
+  params: {},
+  status: 400,
+  message: 'FAILED',
+  subMessage: 'Bad Request',
   level: 'error',
-  timestamp: '2023-08-16T02:39:28.485Z'
+  timestamp: '2023-10-30T10:42:51.256Z'
 }
 {
-  message: {
-    name: 'PrismaClientValidationError',
-    clientVersion: '5.0.0',
-    userId: 1,
-    url: '/agents/',
-    body: {},
-    query: {}
-  },
+  userId: '',
+  method: 'GET',
+  url: '/permissions?',
+  body: {},
+  params: {},
+  status: 401,
+  message: 'Token is missing',
+  subMessage: 'Unauthorized',
   level: 'error',
-  timestamp: '2023-08-16T02:39:32.539Z'
+  timestamp: '2023-10-30T10:45:02.878Z'
+}
+{
+  userId: '4e2eb1f4-57c9-43de-ba41-09e575560eb8',
+  method: 'PUT',
+  url: '/agents/4e2eb1f4-57c9-43de-ba41-09e575560eb8',
+  body: {
+    name: 'Rodney Kuhic',
+    roleId: 1,
+    rate: 123,
+    currencyId: 1,
+    parentAgentId: '4e2eb1f4-57c9-43de-ba41-09e575560eb8'
+  },
+  params: {},
+  status: 400,
+  message: "Cannot be one's own agent",
+  subMessage: 'Bad Request',
+  level: 'error',
+  timestamp: '2023-10-30T10:45:18.478Z'
+}
+{
+  userId: '4e2eb1f4-57c9-43de-ba41-09e575560eb8',
+  method: 'POST',
+  url: '/transaction',
+  body: {
+    userId: 'ebf067a6-8d2a-4859-849f-49caf1d583b4',
+    amount: 123123123123123130000,
+    type: 'user.add_balance',
+    note: '',
+    token: '',
+    status: 'success',
+    currencyId: 1
+  },
+  params: {},
+  status: 400,
+  message: 'FAILED',
+  subMessage: 'Bad Request',
+  level: 'error',
+  timestamp: '2023-10-30T10:46:28.338Z'
+}
+{
+  userId: '4e2eb1f4-57c9-43de-ba41-09e575560eb8',
+  method: 'POST',
+  url: '/transaction',
+  body: {
+    userId: 'ebf067a6-8d2a-4859-849f-49caf1d583b4',
+    amount: 123123123123123130000,
+    type: 'user.add_balance',
+    note: '',
+    token: '',
+    status: 'success',
+    currencyId: 1
+  },
+  params: {},
+  status: 400,
+  message: '\n' +
+    'Invalid `prisma.users.update()` invocation:\n' +
+    '\n' +
+    '\n' +
+    "Value out of range for the type. Out of range value for column 'balance' at row 1",
+  subMessage: 'Bad Request',
+  level: 'error',
+  timestamp: '2023-10-30T10:51:22.148Z'
+}
+{
+  userId: '',
+  method: 'GET',
+  url: '/users?page=0&size=10&search=&dateFrom=&dateTo=',
+  body: {},
+  params: {},
+  status: 401,
+  message: 'jwt expired',
+  subMessage: 'Unauthorized',
+  level: 'error',
+  timestamp: '2023-10-31T02:50:26.913Z'
+}
+{
+  userId: '',
+  method: 'GET',
+  url: '/permissions?',
+  body: {},
+  params: {},
+  status: 401,
+  message: 'Token is missing',
+  subMessage: 'Unauthorized',
+  level: 'error',
+  timestamp: '2023-10-31T03:16:03.767Z'
 }

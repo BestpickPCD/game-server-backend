@@ -1,263 +1,222 @@
-import { Transactions } from '@prisma/client';
+import { PrismaClient } from '../../config/prisma/generated/base-default/index.js';
+const prisma = new PrismaClient();
+import { PrismaClient as PrismaClientTransaction } from '../../config/prisma/generated/transactions/index.js';
+import { BAD_REQUEST } from '../../core/error.response.js';
+import { message } from '../../utilities/constants/index.js';
+const prismaTransaction = new PrismaClientTransaction();
 
-export const arrangeTransactionDetails = async (
-  transactions: Transactions[],
-  userId: number
+export const checkTransferAbility = async (
+  senderId: string,
+  receiverId: string
 ): Promise<any> => {
-  let balance = 0;
-  const receive = {
-    from: {
-      agent: 0,
-      win: 0
+  let result = false;
+  const user = await prisma.users.findUnique({
+    where: {
+      id: receiverId
     },
-    total: 0
-  };
-  const lose = {
-    from: {
-      transfer: 0,
-      bet: 0,
-      charge: 0
-    },
-    total: 0
-  };
-
-  const details = transactions.map((transaction: any) => {
-    const data: any = {};
-    const {
-      id,
-      type,
-      amount,
-      status,
-      createdAt,
-      updatedUser,
-      sender,
-      receiver,
-      gameId
-    } = transaction;
-
-    data.id = id;
-    data.type = type;
-    data.status = status;
-    data.createdAt = createdAt;
-    data.refererId = updatedUser;
-    data.before = 0;
-
-    if (sender?.id == userId && sender?.type == 'agent') {
-      data.user = {
-        id: sender.id,
-        name: sender.username,
-        type: sender.type
-      };
-
-      if (transaction.type == 'add') {
-        data.amount = -parseFloat(amount);
-        data.action = 'adds to';
-        data.receiver = {
-          id: receiver.id,
-          name: receiver.username,
-          type: receiver.type
-        };
-        // agent transfer -> money out
-        lose.from.transfer += data.amount;
-      }
-
-      if (data.amount >= 0) {
-        receive.total += data.amount;
-      } else {
-        lose.total += data.amount;
-      }
-    } else if (receiver?.id == userId && receiver?.type == 'agent') {
-      data.user = {
-        id: receiver.id,
-        name: receiver.username,
-        type: receiver.type
-      };
-
-      if (transaction.type == 'add') {
-        data.amount = parseFloat(amount);
-        data.action = 'received from';
-        data.sender = {
-          id: sender.id,
-          name: sender.username,
-          type: sender.type
-        };
-        // Agent receives from agent -> money in
-        receive.from.agent += data.amount;
-      }
-
-      if (data.amount >= 0) {
-        receive.total += data.amount;
-      } else {
-        lose.total += data.amount;
-      }
-    } else if (
-      receiver?.id == userId &&
-      receiver?.type == 'player' &&
-      sender?.type == 'agent'
-    ) {
-      data.user = {
-        id: receiver.id,
-        name: receiver.username,
-        type: receiver.type
-      };
-
-      if (transaction.type == 'add') {
-        data.amount = parseFloat(amount);
-        data.action = 'received from';
-        data.sender = {
-          id: sender.id,
-          name: sender.username,
-          type: sender.type
-        };
-        // user recieves from agent -> money in
-        receive.from.agent += data.amount;
-      }
-
-      if (data.amount >= 0) {
-        receive.total += data.amount;
-      } else {
-        lose.total += data.amount;
-      }
-    } else if (
-      receiver?.id == userId &&
-      receiver?.type == 'player' &&
-      gameId != null
-    ) {
-      data.user = {
-        id: receiver.id,
-        name: receiver.username,
-        type: receiver.type
-      };
-
-      if (transaction.type == 'win') {
-        data.amount = parseFloat(amount);
-        data.action = 'wins on';
-        data.details = {
-          game: {
-            id: gameId,
-            type: 'baccarat',
-            round: 0,
-            title: 'Speed Baccarat J',
-            vendor: 'evolution'
-          }
-        };
-        // player wins from game -> money in
-        receive.from.win += data.amount;
-      } else if (transaction?.type == 'charge' || transaction?.type == 'lose') {
-        // LOSE
-        data.amount = -parseFloat(amount);
-        data.action = 'lost and charged from';
-        data.details = {
-          game: {
-            id: gameId,
-            type: 'baccarat',
-            round: 0,
-            title: 'Speed Baccarat J',
-            vendor: 'evolution'
-          }
-        };
-        // player gets charged when lose from game -> money out
-        lose.from.charge += data.amount;
-      }
-
-      if (data.amount >= 0) {
-        receive.total += data.amount;
-      } else {
-        lose.total += data.amount;
-      }
-    } else if (
-      sender?.id == userId &&
-      sender?.type == 'player' &&
-      gameId != null
-    ) {
-      data.user = {
-        id: sender.id,
-        name: sender.username,
-        type: sender.type
-      };
-
-      if (transaction.type == 'bet') {
-        data.amount = -parseFloat(amount);
-        data.action = 'bets on';
-        data.details = {
-          game: {
-            id: gameId,
-            type: 'baccarat',
-            round: 0,
-            title: 'Speed Baccarat J',
-            vendor: 'evolution'
-          }
-        };
-        // player bets on a game -> money out
-        lose.from.bet += data.amount;
-      }
-
-      if (data.amount >= 0) {
-        receive.total += data.amount;
-      } else {
-        lose.total += data.amount;
-      }
-    } else {
-      data.error = { message: 'error' };
+    select: {
+      parentAgentId: true
     }
-    balance += data.amount;
-    return data;
-  }) as any;
+  });
 
-  return { details, receive, lose, balance };
+  if (user?.parentAgentId === senderId) {
+    result = true;
+  }
+  return result;
 };
 
-export const arrangeTransactions = async (
-  transactions: Transactions[]
-): Promise<any> => {
-  const details = transactions.map((transaction: any) => {
-    const data: any = {};
-    const {
-      id,
-      type,
-      amount,
-      status,
-      createdAt,
-      updatedUser,
-      sender,
-      receiver,
-      gameId
-    } = transaction;
+export const updateBalance = async (
+  userId: string,
+  amount: number,
+  type: string,
+  agentId: string | null,
+  method: string
+) => {
+  try {
+    let userUpdate: any;
+    let agentUpdate: any;
 
-    data.id = id;
-    data.type = type;
-    data.status = status;
-    data.createdAt = createdAt;
-    data.refererId = updatedUser;
-    data.before = 0;
-    data.amount = parseFloat(amount);
-    if (type == 'bet' || type == 'win' || type == 'charge' || type == 'lose') {
-      data.from = {
-        id: sender ? sender.id : receiver.id,
-        name: sender ? sender.username : receiver.username,
-        type: sender ? sender.type : receiver.type
+    if (['bet', 'win', 'cancel'].includes(type)) {
+      userUpdate = {
+        where: {
+          id: userId
+        },
+        data: {
+          balance: {
+            increment: amount
+          }
+        }
       };
-      data.to = {
-        id: gameId ? gameId : '',
-        title: 'Speed Baccarat J',
-        type: 'baccarat',
-        round: 0,
-        vendor: 'evolution'
+
+      if (method === 'seamless') {
+        if (agentId) {
+          agentUpdate = {
+            where: {
+              id: agentId
+            },
+            data: {
+              balance: {
+                increment: amount
+              }
+            }
+          };
+        }
+      }
+    } else if (['deposit', 'withdraw', 'user.add_balance'].includes(type)) {
+      // if deposit amount has to be < 0 || withdraw amount > 0 || user.add_balance is the same as deposit < 0 happens when agents add_balance to users from backoffice
+      let agentAmt = amount;
+      let userAmt = amount;
+
+      if (['deposit', 'user.add_balance'].includes(type)) {
+        if (amount < 0) {
+          userAmt = -1 * amount;
+        }
+      } else {
+        if (amount > 0) {
+          userAmt = -1 * amount;
+        }
+      }
+      userUpdate = {
+        where: {
+          id: userId
+        },
+        data: {
+          balance: {
+            increment: userAmt
+          }
+        }
       };
-    } else {
-      data.from = {
-        id: sender ? sender.id : '',
-        name: sender ? sender.username : '',
-        type: sender ? sender.type : ''
-      };
-      data.to = {
-        id: receiver ? receiver.id : '',
-        name: receiver ? receiver.username : '',
-        type: receiver ? receiver.type : ''
+
+      if (['deposit', 'user.add_balance'].includes(type)) {
+        if (amount > 0) {
+          agentAmt = -1 * amount;
+        }
+      }
+
+      if (agentId) {
+        agentUpdate = {
+          where: {
+            id: agentId
+          },
+          data: {
+            balance: {
+              increment: agentAmt
+            }
+          }
+        };
+      }
+    } else if (['agent.add_balance'].includes(type)) {
+      agentUpdate = {
+        where: {
+          id: userId
+        },
+        data: {
+          balance: {
+            increment: amount
+          }
+        }
       };
     }
-    return data;
-  }) as any;
 
-  return details;
+    if (agentUpdate) {
+      agentUpdate = await prisma.users.update(agentUpdate);
+      agentUpdate.success = true;
+    }
+    if (userUpdate) {
+      userUpdate = await prisma.users.update(userUpdate);
+      userUpdate.success = true;
+    }
+
+    return { balance: userUpdate ? userUpdate.balance : agentUpdate.balance };
+  } catch (error: any) {
+    throw new BAD_REQUEST(error?.message || message.FAILED);
+  }
+};
+
+export const getBalances = async (userUsername: string): Promise<any> => {
+  try {
+    const sender = await prismaTransaction.transactions.aggregate({
+      where: {
+        userId: userUsername,
+        type: { in: ['add', 'lose', 'charge', 'bet'] } // Adjust types as needed
+      },
+      _sum: { amount: true }
+    });
+
+    const receiver = await prismaTransaction.transactions.aggregate({
+      where: {
+        agentId: userUsername,
+        type: { in: ['add', 'win'] } // Adjust types as needed
+      },
+      _sum: { amount: true }
+    });
+
+    const gameResult = await prismaTransaction.transactions.aggregate({
+      where: {
+        userId: userUsername,
+        type: { in: ['lose', 'charge'] } // Adjust types as needed
+      },
+      _sum: { amount: true }
+    });
+
+    const balance = {
+      out: sender._sum?.amount || 0,
+      in: receiver._sum?.amount || 0,
+      gameOut: gameResult._sum?.amount || 0,
+      balance:
+        (receiver._sum?.amount || 0) -
+        (sender._sum?.amount || 0) -
+        (gameResult._sum?.amount || 0)
+    } as any;
+
+    return balance;
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+export const paramsToArray = async (params: string): Promise<any> => {
+  const array = params.split(',');
+  const formattedParams = `('${array.join("','")}')`;
+  return formattedParams;
+};
+
+export const recalculateBalance = async (
+  userUsername: string
+): Promise<any> => {
+  try {
+    // const balances = await getBalances(userUsername);
+    const balances = await sumBalances(userUsername);
+    const balance = (balances as any)[0]._sum.amount;
+
+    const result = await prisma.users.update({
+      data: {
+        balance
+      },
+      where: {
+        username: userUsername
+      }
+    });
+
+    return result;
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+export const sumBalances = async (userUsername: string) => {
+  try {
+    const userIdSums = await prismaTransaction.transactions.groupBy({
+      where: {
+        userId: userUsername
+      },
+      by: ['userId'],
+      _sum: {
+        amount: true
+      }
+    });
+    return userIdSums;
+  } catch (error) {
+    console.log(error);
+  }
 };

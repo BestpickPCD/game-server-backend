@@ -1,10 +1,13 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '../../config/prisma/generated/base-default/index.js';
 const prisma = new PrismaClient();
+import { PrismaClient as PrismaClientTransaction } from '../../config/prisma/generated/transactions/index.js';
+const prismaTransaction = new PrismaClientTransaction();
 
 export const getParentAgentIdsByParentAgentId = async (
-  parentAgentId: number
+  parentAgentId: string
 ): Promise<any> => {
-  const agent = (await prisma.agents.findUnique({
+  
+  const agent = (await prisma.users.findUnique({
     where: {
       id: parentAgentId
     }
@@ -33,39 +36,20 @@ export const findCurrencyById = async (currencyId: number): Promise<any> => {
   return currency;
 };
 
-export const getBalanceSummariesByIds = async (
-  userIds: number[]
-): Promise<any> => {
-  const stringIds = userIds.join(',');
+export const getAffiliatedAgentsByUserId = async (userId: string) => {
+  try { 
+    const affiliatedAgents = await prisma.users.findMany({
+      where: {
+        parentAgentIds: {
+          array_contains: [String(userId)]
+        }
+      }
+    });
 
-  const usersWithBalances = await prisma.$queryRaw`
-    SELECT
-      sender.id AS senderId, receiver.id AS receiverId, Users.id AS userGameId, 
-      IFNULL(sender.out, 0) AS \`out\`,
-      IFNULL(receiver.in, 0) AS \`in\`,
-      IFNULL(gameResult.gameOut, 0) AS gameOut,
-      IFNULL((IFNULL(receiver.in, 0) - IFNULL(sender.out, 0) - IFNULL(gameResult.gameOut, 0)), 0) AS balance
-    FROM Users
-    LEFT JOIN (
-      SELECT SUM(IFNULL(amount, 0)) AS \`out\`, senderId AS id
-      FROM Transactions
-      WHERE TYPE IN ('add', 'lose', 'charge', 'bet') AND senderId IN (${stringIds})
-      GROUP BY senderId
-    ) AS sender ON sender.id = Users.id
-    LEFT JOIN (
-      SELECT SUM(IFNULL(amount, 0)) AS \`in\`, receiverId AS id
-      FROM Transactions
-      WHERE TYPE IN ('add', 'win') AND receiverId IN (${stringIds})
-      GROUP BY receiverId
-    ) AS receiver ON receiver.id = Users.id
-    LEFT JOIN (
-      SELECT SUM(IFNULL(amount, 0)) AS gameOut, receiverId AS id
-      FROM Transactions
-      WHERE TYPE IN ('lose', 'charge') AND receiverId IN (${stringIds})
-      GROUP BY receiverId
-    ) AS gameResult ON gameResult.id = Users.id
-    WHERE Users.id IN (${stringIds})
-  `;
+    const affiliatedUserId = affiliatedAgents.map(({ id }:{id:string}) => id);
 
-  return usersWithBalances;
+    return { affiliatedAgents, affiliatedUserId };
+  } catch (error: any) {
+    throw Error(error);
+  }
 };

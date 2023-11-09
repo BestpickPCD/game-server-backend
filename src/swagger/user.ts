@@ -12,10 +12,12 @@ export default {
               type: 'object',
               properties: {
                 username: {
-                  type: 'string'
+                  type: 'string',
+                  default: 'user.master.1'
                 },
                 password: {
-                  type: 'string'
+                  type: 'string',
+                  default: 'user.master.1'
                 }
               },
               required: ['username', 'password']
@@ -63,10 +65,7 @@ export default {
             schema: {
               type: 'object',
               properties: {
-                firstName: {
-                  type: 'string'
-                },
-                lastName: {
+                name: {
                   type: 'string'
                 },
                 username: {
@@ -82,27 +81,22 @@ export default {
                   type: 'string'
                 },
                 type: {
-                  type: 'string'
-                },
-                agentId: {
-                  type: 'number'
+                  type: 'string',
+                  default: 'player'
                 },
                 roleId: {
-                  type: 'number'
+                  type: 'number',
+                  default: 3
                 },
                 parentAgentId: {
-                  type: 'number'
+                  type: 'number',
+                  default: 1
                 }
               },
               required: [
-                'firstName',
-                'lastName',
+                'name',
                 'username',
-                'email',
-                'password',
-                'confirmPassword',
                 'type',
-                'agentId',
                 'roleId',
                 'parentAgentId'
               ]
@@ -302,6 +296,65 @@ export default {
                 parentAgentId: {
                   type: 'number'
                 }
+              }
+            }
+          }
+        }
+      },
+      responses: {
+        '200': {
+          description: 'Success',
+          schema: {
+            type: 'object',
+            properties: {
+              data: {
+                type: 'object'
+              },
+              messages: {
+                type: 'string'
+              }
+            }
+          }
+        },
+        '401': {
+          description: 'Unauthorized'
+        },
+        '404': {
+          description: 'NOT_FOUND'
+        },
+        '500': {
+          description: 'Internal server error'
+        }
+      }
+    },
+     // james for password added
+     patch: {
+      security: [
+        {
+          bearerAuth: []
+        }
+      ],
+      summary: 'Update user by userId',
+      tags: ['Users'],
+      parameters: [
+        {
+          name: 'userId',
+          in: 'path',
+          description: 'ID of the user to retrieve',
+          required: true,
+          type: 'string'
+        }
+      ],
+      requestBody: {
+        required: true,
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                name: {
+                  password: 'string'
+                },
               }
             }
           }

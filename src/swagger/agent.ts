@@ -50,13 +50,6 @@ export default {
           description: 'Level',
           required: false,
           type: 'number'
-        },
-        {
-          name: 'id',
-          in: 'query',
-          description: 'Number',
-          required: false,
-          type: 'number'
         }
       ],
       responses: {

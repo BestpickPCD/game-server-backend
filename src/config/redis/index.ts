@@ -1,4 +1,7 @@
 import Redis from 'ioredis';
+import dotenv from 'dotenv';
+dotenv.config();
+
 const redis = new Redis({
   username: process.env.REDIS_USERNAME,
   password: process.env.REDIS_PASSWORD,
@@ -26,6 +29,24 @@ export const removeRedisKeys = async (key: string): Promise<any> => {
     if (matchKeys.length > 0) {
       redis.del(matchKeys);
     }
+  } catch (error) {
+    return Promise.reject(error);
+  }
+};
+
+export const getRedisData = async (
+  id: string,
+  name: string,
+  invalidMessage: string
+): Promise<any> => {
+  try {
+    if (!id) {
+      throw Error(invalidMessage);
+    }
+    const redisKeyWithId = `${name}-${id}`;
+    const redisData = await redis.get(redisKeyWithId);
+
+    return { redisData, redisKeyWithId };
   } catch (error) {
     return Promise.reject(error);
   }

@@ -8,6 +8,59 @@ export default {
       ],
       summary: 'Get all transactions',
       tags: ['Transactions'],
+      parameters: [
+        {
+          name: 'type',
+          in: 'path',
+          description:
+            'bet | win | cancel | deposit | withdraw | user.add_balance | agent.add_balance ',
+          type: 'string'
+        },
+        {
+          name: 'status',
+          in: 'path',
+          description:
+            ' pending | approved | rejected ',
+          type: 'string'
+        },
+        {
+          name: 'page',
+          in: 'query',
+          description: 'Page number',
+          required: false,
+          type: 'number',
+          default: 0
+        },
+        {
+          name: 'size',
+          in: 'query',
+          description: 'Number of items per page',
+          required: false,
+          type: 'number',
+          default: 10
+        },
+        {
+          name: 'search',
+          in: 'query',
+          description: 'Search query',
+          required: false,
+          type: 'string'
+        },
+        {
+          name: 'dateFrom',
+          in: 'query',
+          description: 'Start date',
+          required: false,
+          type: 'string'
+        },
+        {
+          name: 'dateTo',
+          in: 'query',
+          description: 'End date',
+          required: false,
+          type: 'string'
+        }
+      ],
       responses: {
         '200': {
           description: 'Success',
@@ -49,15 +102,104 @@ export default {
       }
     }
   },
-  '/transaction': {
-    post: {
+  '/transaction': { 
+
+    post: 
+      {
+        tags: ['Transactions'],
+        operationId: 'agent.add_balance',
+        summary: 'Add a new transaction for transfer method',
+        security: [
+          {
+            bearerAuth: []
+          }
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  userId: {
+                    type: 'string'
+                  },
+                  type: {
+                    type: 'string',
+                    default: 'agent.add_balance',
+                    description: 'agent.add_balance | user.add_balance | win | bet | deposit | withdraw'
+                  },
+                  amount: {
+                    type: 'number'
+                  },
+                  currencyCode: {
+                    type: 'string',
+                    default: 'KRW'
+                  }
+                },
+                required: ['userId', 'type', 'amount', 'currencyCode']
+              }
+            }
+          }
+        },
+        responses: {
+          '201': {
+            description: 'Transaction created successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    message: {
+                      type: 'string'
+                    }
+                  }
+                }
+              }
+            }
+          },
+          '500': {
+            description: 'Internal server error',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    message: {
+                      type: 'string'
+                    },
+                    error: {
+                      type: 'object'
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      } 
+    
+  },
+  '/transaction-action/{id}': {
+    patch: {
+      summary: 'Approve or Reject Pending Transactions',
+      tags: ['Transactions'],
       security: [
         {
           bearerAuth: []
         }
       ],
-      summary: 'Add a new transaction',
-      tags: ['Transactions'],
+      parameters: [
+        {
+          name: 'id',
+          in: 'path',
+          description: 'ID of the pending transactions',
+          required: true,
+          schema: {
+            type: 'string'
+          }
+        }
+      ],
       requestBody: {
         required: true,
         content: {
@@ -65,45 +207,12 @@ export default {
             schema: {
               type: 'object',
               properties: {
-                senderId: {
-                  type: 'number'
-                },
-                receiverId: {
-                  type: 'number'
-                },
-                gameId: {
-                  type: 'number'
-                },
-                type: {
-                  type: 'string'
-                },
-                note: {
-                  type: 'string'
-                },
-                token: {
-                  type: 'string'
-                },
-                status: {
-                  type: 'string'
-                },
-                amount: {
-                  type: 'number'
-                },
-                currencyId: {
-                  type: 'number'
-                },
-                updatedBy: {
-                  type: 'number'
+                action: {
+                  type: 'string',
+                  default: 'approved'
                 }
               },
-              required: [
-                'senderId',
-                'receiverId',
-                'gameId',
-                'type',
-                'amount',
-                'currencyId'
-              ]
+              required: ['action']
             }
           }
         }
@@ -161,8 +270,7 @@ export default {
           description: 'ID of the user to retrieve balance',
           required: true,
           schema: {
-            type: 'integer',
-            format: 'int64'
+            type: 'string'
           }
         }
       ],
@@ -205,5 +313,184 @@ export default {
         }
       }
     }
-  }
+  },
+  '/transaction-details/{id}': {
+    get: {
+      security: [
+        {
+          bearerAuth: []
+        }
+      ],
+      summary: 'Get transaction detail by transaction id',
+      tags: ['Transactions'],
+      parameters: [
+        {
+          name: 'id',
+          in: 'path',
+          description: 'ID of the transaction',
+          required: true,
+          schema: {
+            type: 'string',
+            format: 'int64'
+          }
+        }
+      ],
+      responses: {
+        '200': {
+          description: 'Success',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {}
+              }
+            }
+          }
+        },
+        '500': {
+          description: 'Internal server error',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  error: {
+                    type: 'string'
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  '/callback/changeBalance': {
+    post: {
+      summary: 'Add a new transaction for callback',
+      tags: ['Callback'],
+      requestBody: {
+        required: true,
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                username: {
+                  type: 'string',
+                  default: 'test.callback.user.01'
+                },
+                amount: {
+                  type: 'number',
+                  default: -10
+                },
+                transaction: {
+                  type: 'json',
+                  default: `{
+                    "id": 2,
+                    "type": "bet",
+                    "referer_id": 1,
+                    "amount": -10,
+                    "processed_at": "2021-07-01T00:00:00.000000Z",
+                    "target": {
+                      "id": 1,
+                      "username": "test.callback.user.01",
+                      "balance": 99990
+                    },
+                    "details": {
+                      "game": {
+                        "id": "16000",
+                        "round": "string-12341234",
+                        "title": "TEST GAME",
+                        "type": "baccarat",
+                        "vendor": "evolution"
+                      }
+                    }
+                  }`
+                }
+              },
+              required: ['username', 'amount', 'transaction']
+            }
+          }
+        }
+      },
+      responses: {
+        '201': {
+          description: 'Transaction created successfully',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  message: {
+                    type: 'string'
+                  },
+                  balance: {
+                    type: 'array'
+                  }
+                }
+              }
+            }
+          }
+        },
+        '500': {
+          description: 'Internal server error',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object'
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  '/callback/balance': {
+    get: {
+      summary: 'A callback for balance check',
+      tags: ['Callback'],
+      parameters: [
+        {
+          name: 'username',
+          in: 'query',
+          default: 'test.callback.user.01',
+          type: 'string'
+        },
+      ],
+      responses: {
+        '200': {
+          description: 'Success',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  balance: {
+                    type: 'number'
+                  }
+                }
+              }
+            }
+          }
+        },
+        '500': {
+          description: 'Internal server error',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  error: {
+                    type: 'string'
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    
+  },
 };

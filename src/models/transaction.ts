@@ -4,7 +4,7 @@ export interface Transaction {
   token: string;
   status: string;
   amount: number;
-  gameId: number;
+  gameId: string;
   sender?: { connect: { id: number } };
   receiver?: { connect: { id: number } };
   currency?: { connect: { id: number } };

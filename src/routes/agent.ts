@@ -3,25 +3,32 @@ import {
   deleteAgent,
   getAgentById,
   getAllAgents,
-  getUsersByAgentId,
-  // createAgent,
   updateAgent
+  // getUsersByAgentId,
+  // createAgent,
 } from '../controllers/agentController.ts';
 import { authentication } from '../middleware/authentication.ts';
 import { permission } from '../middleware/permission.ts';
-
+import { asyncHandler } from '../utilities/helpers/asyncHandler.ts';
 const router = express.Router();
 
-router.get('', authentication, permission('roles', 'get'), getAllAgents);
+router.get(
+  '',
+  authentication,
+  permission('agents', 'get'),
+  asyncHandler(getAllAgents)
+);
 router.get(
   '/:id',
   authentication,
-  permission('transactions', 'get'),
-  getAgentById
+  permission('agents', 'getById'),
+  asyncHandler(getAgentById)
 );
-// router.post('', createAgent);
-router.put('/:id', permission('roles', 'update'), updateAgent);
-router.delete('/:id', permission('roles', 'delete'), deleteAgent);
-router.get('/:id/users', permission('roles', 'get'), getUsersByAgentId);
+router.put('/:id', permission('agents', 'update'), asyncHandler(updateAgent));
+router.delete(
+  '/:id',
+  permission('agents', 'delete'),
+  asyncHandler(deleteAgent)
+);
 
 export default router;

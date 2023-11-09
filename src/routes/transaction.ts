@@ -1,49 +1,83 @@
 import express from 'express';
 import {
+  addBetLimit,
   addTransaction,
+  deleteBetLimit,
+  getBetLimitById,
+  getBetLimitations,
   getTransactionDetail,
-  // getBalance,
   getTransactionDetailsByUserId,
-  getTransactionDetailsByUserIdView,
   getTransactions,
-  getTransactionsView
+  landingPage,
+  changeBalance,
+  updateBetLimit,
+  getBalance,
+  transactionAction,
+  getCallbackTransaction
 } from '../controllers/transactionController/index.ts';
 import { authentication } from '../middleware/authentication.ts';
 import { permission } from '../middleware/permission.ts';
-import { Transaction } from '../middleware/transaction.ts';
+import { asyncHandler } from '../utilities/helpers/asyncHandler.ts';
 
 const router = express.Router();
-
+router.get('/callback/balance', asyncHandler(getBalance));
+router.post('/callback/changeBalance', changeBalance);
+router.get('/callback-transaction/:id', authentication, asyncHandler(getCallbackTransaction) )
 router.get(
   '/transactions',
   authentication,
   permission('transactions', 'get'),
-  Transaction,
-  getTransactions
+  asyncHandler(getTransactions)
 );
 router.get(
   '/transactions/:id',
   authentication,
   permission('transactions', 'getById'),
-  getTransactionDetail
+  asyncHandler(getTransactionDetail)
 );
-// router.get("/transaction/:userId", getBalance)
 router.post(
   '/transaction',
   authentication,
   permission('transactions', 'create'),
-  addTransaction
+  asyncHandler(addTransaction)
 );
+router.patch('/transaction-action/:id',authentication,permission('transactions', 'update'),asyncHandler(transactionAction))
 router.get(
   '/transaction-details/:userId',
   authentication,
   permission('transactions', 'get'),
-  getTransactionDetailsByUserId
+  asyncHandler(getTransactionDetailsByUserId)
 );
 router.get(
-  '/transaction-details/view/:userId',
-  getTransactionDetailsByUserIdView
+  '/bet-limit',
+  authentication,
+  permission('transactions', 'get'),
+  asyncHandler(getBetLimitations)
 );
-router.get('/transactions/view', getTransactionsView);
+router.get(
+  '/bet-limit/:id',
+  authentication,
+  permission('transactions', 'getById'),
+  asyncHandler(getBetLimitById)
+);
+router.post(
+  '/bet-limit',
+  authentication,
+  permission('transactions', 'create'),
+  asyncHandler(addBetLimit)
+);
+router.patch(
+  '/bet-limit/:id',
+  authentication,
+  permission('transactions', 'update'),
+  asyncHandler(updateBetLimit)
+);
+router.delete(
+  '/bet-limit/:id',
+  authentication,
+  permission('transactions', 'delete'),
+  asyncHandler(deleteBetLimit)
+);
+router.get('/landing-page', landingPage);
 
 export default router;

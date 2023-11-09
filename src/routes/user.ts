@@ -1,17 +1,33 @@
 import express from 'express';
 import {
   getUserById,
-  getAllUsers,
+  // getAllUsers,
   deleteUser,
-  updateUser
+  updateUser,
+  getAllUsersWithBalances,
+  getDashboard,
+  getAllAffiliatedAgents,
+  blockUser,
+  updatePassword,
+  checkUser
 } from '../controllers/userController/index.ts';
 import { authentication } from '../middleware/authentication.ts';
+import { permission } from '../middleware/permission.ts';
 
 const router = express.Router();
 
-router.get('/users', authentication, getAllUsers);
+router.get(
+  '/users',
+  authentication,
+  permission('players', 'get'),
+  getAllUsersWithBalances
+);
 router.get('/user/:userId', authentication, getUserById);
-router.put('/user/:userId', authentication, updateUser);
+router.get('/user-affiliated-agents', authentication, getAllAffiliatedAgents);
+router.patch('/user/:userId', authentication, updateUser);
 router.delete('/user/:userId', authentication, deleteUser);
-
+router.put('/blockUser', authentication, blockUser);
+router.patch('/user', authentication, updatePassword);
+router.get('/dashboard', authentication, getDashboard);
+router.post('/user/check-user', authentication, checkUser);
 export default router;

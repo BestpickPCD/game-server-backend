@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken';
 
-export const generateApiKey = async (userId: number): Promise<any> => {
+export const generateApiKey = async (userId: string): Promise<any> => {
   const secretKey = process.env.SECRET_KEY ?? '';
   const payload = {
     userId

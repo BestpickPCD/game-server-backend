@@ -9,9 +9,9 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon ./src/server.ts --exec",
-    "lint": "eslint --fix --ext .ts, .",
-    "postinstall": "husky install"
+    "start": "nodemon ./server.ts",
+    "postinstall": "husky install",
+    "prisma": "prisma generate --schema ./src/config/prisma/schema-base-default.prisma && prisma generate --schema ./src/config/prisma/schema-transactions.prisma "
   },
   "author": "nguyen truong <nguyentp@bestpicktechnology.com>",
   "license": "ISC",
@@ -19,6 +19,7 @@
     "@prisma/client": "^5.0.0",
     "axios": "^1.4.0",
     "bcrypt": "^5.1.0",
+    "body-parser": "^1.20.2",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "ejs": "^3.1.9",
@@ -52,14 +53,6 @@
   },
   "prisma": {
     "seed": "ts-node ./src/config/prisma/seed.ts",
-    "schema": "./src/config/prisma/schema.prisma"
-  },
-  "lint-staged": {
-    "**/*.{js,jsx,json}": [
-      "prettier --write ."
-    ],
-    "*.ts": [
-      "npm run lint"
-    ]
+    "schema": "./src/config/prisma/schema-base-default.prisma"
   }
 }

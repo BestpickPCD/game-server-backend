@@ -1,4 +1,7 @@
-import { Users, Roles, Agents, Transactions } from '@prisma/client';
+import {
+  Users,
+  Roles
+} from '../config/prisma/generated/base-default/index.ts';
 import { Request } from 'express';
 
 export interface balanceSummary {
@@ -22,43 +25,10 @@ export interface RequestWithUser extends Request {
 
 export interface UserAll extends Users {
   role?: Roles | null;
-  agent?: Agents | null;
+  agent?: Users | null;
 }
 
-export interface TransactionAll extends Transactions {
-  role?: Roles | null;
-  agent?: Agents | null;
-}
-
-export type RouteType =
-  | 'users'
-  | 'permissions'
-  | 'agents'
-  | 'roles'
-  | 'transactions'
-  | 'players'
-  | 'currencies'
-  | 'games';
-export type PermissionType = 'get' | 'getById' | 'update' | 'create' | 'delete';
-
-export interface Permissions {
-  admin: RolePermissions;
-  distributor: RolePermissions;
-  operator: RolePermissions;
-}
-
-export const commonPermissions: PermissionType[] = [
-  'get',
-  'getById',
-  'update',
-  'create',
-  'delete'
-];
-
-export type RoleType = 'admin' | 'distributor' | 'operator';
-
-export const roles: RoleType[] = ['admin', 'distributor', 'operator'];
-
-export type RolePermissions = {
-  [key in RouteType]: PermissionType[];
-};
+// export interface TransactionAll extends Transactions {
+//   role?: Roles | null;
+//   agent?: Agents | null;
+// }

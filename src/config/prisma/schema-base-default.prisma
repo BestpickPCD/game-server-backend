@@ -1,0 +1,129 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "./generated/base-default"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Users {
+  id             String    @id @default(uuid())
+  name           String
+  email          String?
+  username       String    @unique
+  password       String?
+  type           String?
+  parentAgentId  String?
+  level          Int?
+  parentAgentIds Json?
+  balance        Decimal?  @default(0) @db.Decimal(10, 2)
+  rate           Decimal?  @default(0) @db.Decimal(10, 2)
+  apiKey         String?
+  accountNumber  String?
+  callbackUrl    String?
+  apiCall        String?
+  roleId         Int?
+  agentBalance   Decimal?  @default(0) @db.Decimal(10, 2)
+  currencyId     Int?
+  isActive       Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime? @updatedAt
+  deletedAt      DateTime?
+  lockedAt       DateTime?
+
+  parent   Users?  @relation("Children", fields: [parentAgentId], references: [id])
+  children Users[] @relation("Children")
+
+  role     Roles?      @relation(fields: [roleId], references: [id])
+  currency Currencies? @relation(fields: [currencyId], references: [id])
+
+  ip_user          ip_user[]
+  vendors          AgentVendor[]
+  transactionLimit TransactionLimits[]
+
+  @@unique([email], name: "UniqueEmail")
+}
+
+model Roles {
+  id          Int       @id @default(autoincrement())
+  name        String    @unique
+  permissions Json?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+  Users       Users[]
+}
+
+model Permissions {
+  id          Int       @id @default(autoincrement())
+  name        String    @unique
+  permissions Json?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+}
+
+model Currencies {
+  id        Int       @id @default(autoincrement())
+  name      String    @unique
+  code      String    @unique
+  createdAt DateTime  @default(now())
+  updatedAt DateTime? @updatedAt
+  deletedAt DateTime?
+
+  Users Users[]
+}
+
+model ip_user {
+  id        Int       @id @default(autoincrement())
+  userId    String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime? @updatedAt
+  deletedAt DateTime?
+
+  users Users? @relation(fields: [userId], references: [id])
+}
+
+model AgentVendor {
+  id        Int       @id @default(autoincrement())
+  agentId   String
+  vendorId  Int
+  startDate DateTime?
+  endDate   DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime? @updatedAt
+  deletedAt DateTime?
+
+  agent  Users?   @relation(fields: [agentId], references: [id])
+  vendor Vendors? @relation(fields: [vendorId], references: [id])
+}
+
+model Vendors {
+  id         Int       @id @default(autoincrement())
+  name       String    @unique
+  url        String?   @unique
+  fetchGames Json?
+  contract   String?
+  startDate  DateTime?
+  endDate    DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime? @updatedAt
+  deletedAt  DateTime?
+
+  agents AgentVendor[]
+}
+
+model TransactionLimits {
+  id          Int       @id @default(autoincrement())
+  agentId     String
+  limitType   String
+  limitTypeId String
+  limit       Decimal?  @default(0) @db.Decimal(10, 2)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime? @updatedAt
+  deletedAt   DateTime?
+
+  agent Users? @relation(fields: [agentId], references: [id])
+}

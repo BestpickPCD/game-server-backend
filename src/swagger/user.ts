@@ -334,7 +334,7 @@ export default {
           bearerAuth: []
         }
       ],
-      summary: 'Update user by userId',
+      summary: 'Update Password',
       tags: ['Users'],
       parameters: [
         {
@@ -352,8 +352,8 @@ export default {
             schema: {
               type: 'object',
               properties: {
-                name: {
-                  password: 'string'
+                password: {
+                  type: 'string'
                 },
               }
             }

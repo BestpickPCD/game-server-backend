@@ -14,8 +14,8 @@ export const gameList = async (
   req: RequestWithUser,
   res: Response
 ): Promise<any> => {
-  try {
-    const vendor = req.query.vendor as string;
+  try { 
+    const vendor = req.query.vendors as string;
     const vendors : string[] = vendor.split(','); 
 
     const getVendors = await prisma.vendors.findMany({
@@ -38,8 +38,6 @@ export const gameList = async (
       console.log(gameList.data.data)
       list = list.concat(gameList.data.data);
     }));
-
-    console.log(list)
 
     return res.status(200).json( list )
 

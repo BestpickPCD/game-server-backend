@@ -55,6 +55,11 @@ async function main() {
         name: 'ezugi',
         url: `https://api.ezugi.org`,
         fetchGames: ezugi
+      },
+      {
+        name: 'Bestpick',
+        url: `http://157.230.251.158:6195`,
+        apiKey: 'SRKPWNZ-6ZB48WE-PQBYJED-4B6XRPT'
       }
     ]
   }); 

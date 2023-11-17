@@ -5,7 +5,8 @@ import {
   getGameContractByAgentId,
   getVendors,
   getGameUrl,
-  getGamesByPlayerId
+  getGamesByPlayerId,
+  gameList
 } from '../controllers/gameController/index.ts';
 import express from 'express';
 import { authentication } from '../middleware/authentication.ts';
@@ -17,7 +18,8 @@ router.get(
   '/game-list',
   authentication,
   permission('games', 'get'),
-  getGameVendors
+  gameList
+  // getGameVendors
 );
 router.get(
   '/game-list-test',

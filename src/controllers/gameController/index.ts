@@ -2,13 +2,51 @@ import {
   PrismaClient,
   Vendors
 } from '../../config/prisma/generated/base-default/index.js';
-// import axios from 'axios';
+import axios from 'axios';
 import { NextFunction, Response } from 'express';
 import { RequestWithUser } from '../../models/customInterfaces.ts';
 // import agent from 'src/swagger/agent';
 import { getGamesByPlayerId as getGamesByPlayerIdService } from '../../services/vendorService.ts';
 import { message } from '../../utilities/constants/index.ts';
 const prisma = new PrismaClient();
+
+export const gameList = async (
+  req: RequestWithUser,
+  res: Response
+): Promise<any> => {
+  try {
+    const vendor = req.query.vendor as string;
+    const vendors : string[] = vendor.split(','); 
+
+    const getVendors = await prisma.vendors.findMany({
+      where: {
+        name: {
+          in: vendors
+        }
+      }
+    })
+
+    let list = [] as any[]
+
+    await Promise.all(getVendors.map( async (vendor) => {
+      const { url, apiKey } = vendor
+      const gameList = await axios.get(`${url}/api/game_list`, {
+        headers: {
+            'api-key': apiKey,
+        }
+      });
+      console.log(gameList.data.data)
+      list = list.concat(gameList.data.data);
+    }));
+
+    console.log(list)
+
+    return res.status(200).json( list )
+
+  } catch (error) {
+    console.log(error)
+  }
+}
 
 export const getVendors = async (
   req: RequestWithUser,

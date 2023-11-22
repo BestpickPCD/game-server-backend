@@ -6,7 +6,8 @@ import {
   getVendors,
   getGameUrl,
   getGamesByPlayerId,
-  gameList
+  gameList,
+  openGame
 } from '../controllers/gameController/index.ts';
 import express from 'express';
 import { authentication } from '../middleware/authentication.ts';
@@ -20,6 +21,11 @@ router.get(
   permission('games', 'get'),
   gameList
   // getGameVendors
+);
+router.post(
+  '/game/open',
+  authentication,
+  openGame
 );
 router.get(
   '/game-list-test',

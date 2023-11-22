@@ -10,33 +10,69 @@ import { getGamesByPlayerId as getGamesByPlayerIdService } from '../../services/
 import { message } from '../../utilities/constants/index.ts';
 const prisma = new PrismaClient();
 
+export const openGame = async (
+  req: RequestWithUser,
+  res: Response
+): Promise<any> => {
+  try {
+    const { gameId } = req.body;
+    const username = req.user?.username;
+    const url = 'http://157.230.251.158:6175/v1/game/open';
+    
+    const gameOpenResponse = await axios.post(url, {
+      game_id: gameId,
+      user_id: 'dev2',
+      ag_code: 'dev2',
+      currency: 'usd',
+      language: 'en',
+      cash: 1000,
+    }, { 
+      headers: {
+        'ag-token': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6ImNyeXB0byIsImlhdCI6MTUxNjIzOTAyMn0.ZAGAuEn3ifbPB37oVc1NtqcgQAo6xOu_MLXqN6smdro',
+        'ag-code': 'A01',
+      } 
+    });
+
+    // Extract only the necessary data from the response
+    const responseData = {
+      status: gameOpenResponse.status,
+      data: gameOpenResponse.data,
+    }; 
+
+    return res.status(200).json(responseData);
+  } catch (error) {
+    console.error('Error in openGame:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
 export const gameList = async (
   req: RequestWithUser,
   res: Response
 ): Promise<any> => {
   try { 
     const vendor = req.query.vendors as string;
-    const vendors : string[] = vendor.split(','); 
-
+    const vendors : string[] = vendor.split(',');
+    const vendorsNoNull = vendors.filter(item => item !== '');
     const getVendors = await prisma.vendors.findMany({
       where: {
         name: {
-          in: vendors
+          in: vendorsNoNull
         }
       }
-    })
-
+    }) as Vendors[];
     let list = [] as any[]
 
     await Promise.all(getVendors.map( async (vendor) => {
       const { url, apiKey } = vendor
-      const gameList = await axios.get(`${url}/api/game_list`, {
+      const gameList = await axios.get(`${url}:6195/api/game_list`, {
         headers: {
             'api-key': apiKey,
         }
-      });
-      console.log(gameList.data.data)
+      }); 
+
       list = list.concat(gameList.data.data);
+      
     }));
 
     return res.status(200).json( list )

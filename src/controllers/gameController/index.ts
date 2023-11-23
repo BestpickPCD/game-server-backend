@@ -69,7 +69,7 @@ export const gameList = async (
         headers: {
             'api-key': apiKey,
         }
-      }); 
+      }) as any; 
 
       list = list.concat(gameList.data.data);
       

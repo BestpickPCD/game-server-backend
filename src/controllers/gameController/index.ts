@@ -64,17 +64,12 @@ export const gameList = async (
     let list = [] as any[]
     await Promise.all(getVendors.map( async (vendor) => {
       const { url, apiKey } = vendor as any;
-      console.log(vendor,'vendor')
-      console.log(url, apiKey, 'url, apiKey')
       const gameList = await axios.get(`${url}:6195/api/game_list`, {
         headers: {
             'api-key': apiKey,
         }
       }); 
-      console.log(gameList.data.data,'gameList')
-
       list = list.concat(gameList.data.data);
-      
     }));
 
     return res.status(200).json( list )

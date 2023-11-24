@@ -2,7 +2,6 @@ import { NextFunction, Response } from 'express';
 import jwt, { JwtPayload } from 'jsonwebtoken';
 import { PrismaClient } from '../config/prisma/generated/base-default/index.js';
 import redisClient from '../config/redis/index.ts';
-import { UNAUTHORIZED } from '../core/error.response.ts';
 import { RequestWithUser } from '../models/customInterfaces.ts';
 
 const prisma = new PrismaClient();
@@ -43,7 +42,7 @@ const findUser = async (id: string) => {
 
 export const authentication = async (
   req: RequestWithUser,
-  _: Response,
+  res: Response,
   next: NextFunction
 ): Promise<any> => {
   try {
@@ -67,6 +66,7 @@ export const authentication = async (
       (req as any).user = parsedResult;
       return next();
     }
+
     throw new Error(message.TOKEN_NOT_VALID);
   } catch (error: any) {
     if (req.body?.refreshToken) {
@@ -78,6 +78,8 @@ export const authentication = async (
       (req as any).user = user;
       return next();
     }
-    return next(new UNAUTHORIZED(error.message));
+    return res
+      .status(401)
+      .json({ data: null, message: error.message, subMessage: 'UNAUTHORIZED' });
   }
 };

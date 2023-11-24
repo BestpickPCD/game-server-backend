@@ -53,6 +53,7 @@ export const gameList = async (
   try { 
     const vendor = req.query.vendors as string;
     const vendors : string[] = vendor.split(',');
+    console.log(vendors,'vendors')
     const vendorsNoNull = vendors.filter(item => item !== '');
     const getVendors = await prisma.vendors.findMany({
       where: {
@@ -73,6 +74,7 @@ export const gameList = async (
       list = list.concat(gameList.data.data);
       
     }));
+    console.log(list,'list')
 
     return res.status(200).json( list )
 

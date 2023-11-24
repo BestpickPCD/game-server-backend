@@ -53,7 +53,6 @@ export const gameList = async (
   try { 
     const vendor = req.query.vendors as string;
     const vendors : string[] = vendor.split(',');
-    console.log(vendors,'vendors')
     const vendorsNoNull = vendors.filter(item => item !== '');
     const getVendors = await prisma.vendors.findMany({
       where: {
@@ -65,7 +64,8 @@ export const gameList = async (
     let list = [] as any[]
     await Promise.all(getVendors.map( async (vendor) => {
       const { url, apiKey } = vendor as any;
-      console.log(vendor,'vendor url, apiKey')
+      console.log(vendor,'vendor')
+      console.log(url, apiKey, 'url, apiKey')
       const gameList = await axios.get(`${url}:6195/api/game_list`, {
         headers: {
             'api-key': apiKey,

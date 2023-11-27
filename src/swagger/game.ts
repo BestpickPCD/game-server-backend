@@ -34,6 +34,7 @@ export default {
         {
           name: 'vendors',
           in: 'query',
+          default: 'Bestpick',
           description: 'evolution,ezugi',
           required: false,
           type: 'string'

@@ -68,7 +68,7 @@ export const gameList = async (
         id: true,
         name: true,
         url: true,
-        apiKey: true,
+        keys: true,
         agents: {
           where: {
             agentId: agentId ?? req.user?.id
@@ -130,55 +130,6 @@ export const getVendors = async (
   }
 };
 
-export const getGameVendors = async (
-  req: RequestWithUser,
-  res: Response
-): Promise<any> => {
-  try {
-    const queryParams = req.query;
-    const vendorStr = queryParams.vendors as string;
-    const vendors: string[] = vendorStr.split(',') ?? [];
-    const games = await prisma.agentVendor.findMany({
-      where: {
-        agentId: req.user?.id,
-        vendor: {
-          name: {
-            in: vendors
-          }
-        }
-      },
-      select: {
-        vendor: true
-      }
-    });
-
-    if (!games.length) {
-      return res
-        .status(400)
-        .json({ message: 'No contract with the vendors selected' });
-    }
-
-    const gamesDetails = await Promise.all(
-      games.map(async (game) => {
-        if (!game) {
-          return null;
-        }
-        try {
-          return game.vendor?.fetchGames;
-        } catch (error) {
-          console.log(error);
-          return null;
-        }
-      })
-    );
-
-    return res.status(200).json(gamesDetails.flat());
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: 'Something went wrong', error });
-  }
-};
-
 export const getGameContractByAgentId = async (
   req: RequestWithUser,
   res: Response
@@ -203,7 +154,6 @@ export const getGameContractByAgentId = async (
 
     return res.status(200).json(contracts);
   } catch (error) {
-    console.log(error);
     return res.status(500).json({ message: error });
   }
 };

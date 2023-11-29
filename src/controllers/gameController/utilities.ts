@@ -1,22 +1,22 @@
 import axios from 'axios';
+import { __bestpickGameList, __evolutionGameList, __pgsoftGameList } from './vendors.ts';
 
 export const getGameList = async ( vendors: any[] ) => {
     let list = [] as any[] 
     await Promise.all(vendors.map( async (vendor) => {
-        const { name, url, apiKey, agents } = vendor as any;
+        const { name, url, keys, agents } = vendor as any;
         const { directUrl } = agents[0]; 
         if(directUrl) {
-            const gameList = await _getDirectURL(url, apiKey, name);
-            const arrangedData = await _rearrangeData(gameList.data.data)
+            const gameList = await _getDirectURL(url, keys, name);
+            const arrangedData = await _rearrangeData(gameList.data.data, name)
             list = list.concat(arrangedData);
         } else {
             const gameList = await axios.get(`${process.env.HONORLINK_URL}/api/game-list?vendor=${name}`,{
                 headers: {
-                    'Authorization': `Bearer ${process.env.HONORLINK_AGENT_KEY}`
+                    Authorization: `Bearer ${process.env.HONORLINK_AGENT_KEY}`
                 }
             }) as any;
-            console.log(gameList.data)
-            const arrangedData = await _rearrangeData(gameList.data)
+            const arrangedData = await _rearrangeData(gameList.data, name)
             list = list.concat(arrangedData);
         }
 
@@ -24,25 +24,42 @@ export const getGameList = async ( vendors: any[] ) => {
     return list;
 }
 
-const _getDirectURL = async (url: string, apiKey: string, name: string) => {
-
-    const data = await axios.get(`${url}:6195/api/game_list`, {
-        headers: {
-            'api-key': apiKey,
-        }
-    });
+const _getDirectURL = async (url: string, keys: any, name: string) => {
+ 
+    let data
+    switch (name) {
+        case "Bestpick":
+            data = await __bestpickGameList(url, keys);
+            break;
+        case "evolution":
+            data = await __evolutionGameList(url, keys);
+            break
+        case "PG Soft":
+            data = await __pgsoftGameList(url, keys);
+            break
+        default: {
+                const { apiKey } = keys;
+                data = await axios.get(`${url}:6195/api/game_list`, {
+                    headers: {
+                        'api-key': apiKey,
+                    }
+                });
+            }
+            break;
+    }
 
     return data
 
 }
 
-const _rearrangeData = async (data:any[]) => {
+const _rearrangeData = async (data:any[], vendorName: string | null) => {
 
     return data.map((datum) => ({
-        id: datum.id ?? datum.game_id ?? null,
-        name: datum.game_name ?? datum.title ?? datum.name ?? null,
+        id: datum.id ?? datum.game_id ?? datum.gameId ?? null,
+        name: datum.game_name ?? datum.title ?? datum.name ?? datum.gameName ?? null,
+        code: datum.gameCode ?? datum.code ?? datum['game-code'] ?? datum.game_code ?? null,
         type: datum.type ?? null,
-        vendor: datum.vendor ?? null,
+        vendor: datum.vendor ?? vendorName,
         img: datum.thumbnail ?? datum.img_path ?? null,
     }))
 

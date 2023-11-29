@@ -106,7 +106,7 @@ model Vendors {
   name       String    @unique
   url        String?   @unique
   fetchGames Json?
-  apiKey      String?
+  keys       Json?
   contract   String?
   startDate  DateTime?
   endDate    DateTime?

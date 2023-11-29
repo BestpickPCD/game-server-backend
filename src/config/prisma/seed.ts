@@ -2,10 +2,6 @@ import bcrypt from 'bcrypt';
 import { faker } from '@faker-js/faker';
 import { PrismaClient } from '../../config/prisma/generated/base-default/index.js';
 import {
-  evolution,
-  PragmaticPlay,
-  Habanero,
-  ezugi,
   permissions
 } from './fakedData.ts';
 const prisma = new PrismaClient();
@@ -34,34 +30,39 @@ async function main() {
       code: 'KRW'
     }
   });
-  await prisma.vendors.createMany({
-    data: [
-      {
-        name: 'evolution',
-        url: `https://api.honorlink.org`,
-        fetchGames: evolution
-      },
-      {
-        name: 'PragmaticPlay',
-        url: `https://api.pragmaticplay.org`,
-        fetchGames: PragmaticPlay
-      },
-      {
-        name: 'Habanero',
-        url: `https://api.Habanero.org`,
-        fetchGames: Habanero
-      },
-      {
-        name: 'ezugi',
-        url: `https://api.ezugi.org`,
-        fetchGames: ezugi
-      },
-      {
-        name: 'Bestpick',
-        url: `http://157.230.251.158`,
+
+  const vendors = [
+    {
+      name: 'evolution',
+      url: `https://api.honorlink.org`
+    },
+    {
+      name: 'PragmaticPlay',
+      url: `https://api.pragmaticplay.org`
+    },
+    {
+      name: 'Habanero',
+      url: `https://api.Habanero.org`
+    },
+    {
+      name: 'PG Soft',
+      url: `https://api.pg-bo.me`,
+      keys: {
+        operator_token: '49f127e31e0d9200b4f71502d33f45a4',
+        secret_key: 'f26290c7f4ecfa7983a72731c5444f36'
+      }
+    },
+    {
+      name: 'Bestpick',
+      url: `http://157.230.251.158`,
+      keys: {
         apiKey: 'SRKPWNZ-6ZB48WE-PQBYJED-4B6XRPT'
       }
-    ]
+    }
+  ]
+
+  await prisma.vendors.createMany({
+    data: vendors
   }); 
     const user = await prisma.users.create({
       data: {
@@ -85,18 +86,17 @@ async function main() {
       }
     });
 
+    const agentVendor = []
+    for(let i = 1; i <= vendors.length; i++ ) {
+      agentVendor.push({
+        agentId: user.id,
+        directUrl: false,
+        vendorId: i
+      })
+    }
+
     await prisma.agentVendor.createMany({
-      data: [
-        {
-          agentId: user.id,
-          directUrl: false,
-          vendorId: 1
-        },{
-          agentId: user.id,
-          directUrl: true,
-          vendorId: 5
-        }
-      ]
+      data: agentVendor
     });
   } 
 

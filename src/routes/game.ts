@@ -1,5 +1,4 @@
 import {
-  getGameVendors,
   gameLaunchLink,
   gameContract,
   getGameContractByAgentId,
@@ -20,18 +19,11 @@ router.get(
   authentication,
   permission('games', 'get'),
   gameList
-  // getGameVendors
 );
 router.post(
   '/game/open',
   authentication,
   openGame
-);
-router.get(
-  '/game-list-test',
-  authentication,
-  permission('games', 'get'),
-  getGameVendors
 );
 router.get(
   '/game-vendors',

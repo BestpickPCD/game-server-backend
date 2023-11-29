@@ -58,7 +58,7 @@ async function main() {
       },
       {
         name: 'Bestpick',
-        url: `http://157.230.251.158:6195`,
+        url: `http://157.230.251.158`,
         apiKey: 'SRKPWNZ-6ZB48WE-PQBYJED-4B6XRPT'
       }
     ]
@@ -85,11 +85,18 @@ async function main() {
       }
     });
 
-    await prisma.agentVendor.create({
-      data: {
-        agentId: user.id,
-        vendorId: 1
-      }
+    await prisma.agentVendor.createMany({
+      data: [
+        {
+          agentId: user.id,
+          directUrl: false,
+          vendorId: 1
+        },{
+          agentId: user.id,
+          directUrl: true,
+          vendorId: 5
+        }
+      ]
     });
   } 
 

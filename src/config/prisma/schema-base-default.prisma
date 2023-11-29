@@ -90,6 +90,7 @@ model AgentVendor {
   id        Int       @id @default(autoincrement())
   agentId   String
   vendorId  Int
+  directUrl Boolean @default(false)
   startDate DateTime?
   endDate   DateTime?
   createdAt DateTime  @default(now())

@@ -5,10 +5,12 @@ export const getGameList = async ( vendors: any[] ) => {
     let list = [] as any[] 
     await Promise.all(vendors.map( async (vendor) => {
         const { name, url, keys, agents } = vendor as any;
-        const { directUrl } = agents[0]; 
-        if(directUrl) {
+        const { directUrl } = agents[0];
+
+        // If directUrl but no url - call through honorlink
+        if(directUrl && url) {
             const gameList = await _getDirectURL(url, keys, name);
-            const arrangedData = await _rearrangeData(gameList.data.data, name)
+            const arrangedData = await _rearrangeData(gameList.data.data, name);
             list = list.concat(arrangedData);
         } else {
             const gameList = await axios.get(`${process.env.HONORLINK_URL}/api/game-list?vendor=${name}`,{
@@ -16,7 +18,7 @@ export const getGameList = async ( vendors: any[] ) => {
                     Authorization: `Bearer ${process.env.HONORLINK_AGENT_KEY}`
                 }
             }) as any;
-            const arrangedData = await _rearrangeData(gameList.data, name)
+            const arrangedData = await _rearrangeData(gameList.data, name);
             list = list.concat(arrangedData);
         }
 
@@ -31,9 +33,6 @@ const _getDirectURL = async (url: string, keys: any, name: string) => {
         case "Bestpick":
             data = await __bestpickGameList(url, keys);
             break;
-        case "evolution":
-            data = await __evolutionGameList(url, keys);
-            break
         case "PG Soft":
             data = await __pgsoftGameList(url, keys);
             break

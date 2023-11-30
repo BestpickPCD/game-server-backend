@@ -313,8 +313,6 @@ export const addTransaction = async (
       updateBy: userSessionId ?? null
     };
 
-    console.log(data)
-
     const { type, agentId, status: transactionStatus } = (await create(data)) as Transactions;
 
     if(transactionStatus != "pending") {

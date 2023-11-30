@@ -2,6 +2,7 @@ import bcrypt from 'bcrypt';
 import { faker } from '@faker-js/faker';
 import { PrismaClient } from '../../config/prisma/generated/base-default/index.js';
 import {
+  vendors,
   permissions
 } from './fakedData.ts';
 const prisma = new PrismaClient();
@@ -30,36 +31,6 @@ async function main() {
       code: 'KRW'
     }
   });
-
-  const vendors = [
-    {
-      name: 'evolution',
-      url: `https://api.honorlink.org`
-    },
-    {
-      name: 'PragmaticPlay',
-      url: `https://api.pragmaticplay.org`
-    },
-    {
-      name: 'Habanero',
-      url: `https://api.Habanero.org`
-    },
-    {
-      name: 'PG Soft',
-      url: `https://api.pg-bo.me`,
-      keys: {
-        operator_token: '49f127e31e0d9200b4f71502d33f45a4',
-        secret_key: 'f26290c7f4ecfa7983a72731c5444f36'
-      }
-    },
-    {
-      name: 'Bestpick',
-      url: `http://157.230.251.158`,
-      keys: {
-        apiKey: 'SRKPWNZ-6ZB48WE-PQBYJED-4B6XRPT'
-      }
-    }
-  ]
 
   await prisma.vendors.createMany({
     data: vendors

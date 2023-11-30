@@ -55,15 +55,20 @@ export const gameList = async (
 
     const agentId = req.user?.parentAgentId;
     const vendor = req.query.vendors as string;
-    const vendors : string[] = vendor.split(',');
-    const vendorsNoNull = vendors.filter(item => item !== '');
 
-    const getVendors = await prisma.vendors.findMany({
-      where: {
+    let whereVendor
+    if (vendor) {
+      const vendors : string[] = vendor.split(',');
+      const vendorsNoNull = vendors.filter(item => item !== '');
+      whereVendor = {
         name: {
           in: vendorsNoNull
         }
-      },
+      }
+    }
+
+    const getVendors = await prisma.vendors.findMany({
+      where: whereVendor,
       select: {
         id: true,
         name: true,
@@ -170,7 +175,6 @@ export const gameContract = async (
     });
     return res.status(200).json({ message: 'Contract created' });
   } catch (error) {
-    console.log(error);
     return res.status(500).json(error);
   }
 };

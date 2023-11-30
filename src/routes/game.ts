@@ -7,7 +7,8 @@ import {
   getGameUrl,
   getGamesByPlayerId,
   gameList,
-  openGame
+  openGame,
+  updateVendor
 } from '../controllers/gameController/index.ts';
 import express from 'express';
 import { authentication } from '../middleware/authentication.ts';
@@ -22,11 +23,7 @@ router.get(
   gameList
   // getGameVendors
 );
-router.post(
-  '/game/open',
-  authentication,
-  openGame
-);
+router.post('/game/open', authentication, openGame);
 router.get(
   '/game-list-test',
   authentication,
@@ -58,5 +55,11 @@ router.get(
   authentication,
   permission('games', 'get'),
   getGamesByPlayerId
+);
+router.put(
+  '/games/vendors/:id',
+  authentication,
+  permission('games', 'update'),
+  updateVendor
 );
 export default router;

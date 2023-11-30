@@ -331,3 +331,39 @@
   level: 'error',
   timestamp: '2023-10-31T03:16:03.767Z'
 }
+{
+  userId: '4e2eb1f4-57c9-43de-ba41-09e575560eb8',
+  method: 'PUT',
+  url: '/games/vendors/1900',
+  body: {},
+  params: {},
+  status: '500',
+  message: 'Vendor not found',
+  subMessage: undefined,
+  level: 'error',
+  timestamp: '2023-11-30T08:32:54.082Z'
+}
+{
+  userId: '4e2eb1f4-57c9-43de-ba41-09e575560eb8',
+  method: 'PUT',
+  url: '/games/vendors/1900',
+  body: {},
+  params: {},
+  status: '500',
+  message: 'Vendor not found',
+  subMessage: undefined,
+  level: 'error',
+  timestamp: '2023-11-30T08:33:15.502Z'
+}
+{
+  userId: '4e2eb1f4-57c9-43de-ba41-09e575560eb8',
+  method: 'PUT',
+  url: '/games/vendors/1900',
+  body: {},
+  params: {},
+  status: '500',
+  message: 'Vendor not found',
+  subMessage: undefined,
+  level: 'error',
+  timestamp: '2023-11-30T08:33:17.601Z'
+}

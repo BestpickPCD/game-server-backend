@@ -9,6 +9,8 @@ import { RequestWithUser } from '../../models/customInterfaces.ts';
 import { getGamesByPlayerId as getGamesByPlayerIdService } from '../../services/vendorService.ts';
 import { message } from '../../utilities/constants/index.ts';
 import { getGameList } from './utilities.ts';
+import { BAD_REQUEST, NOT_FOUND } from '../../core/error.response.ts';
+import { OK } from '../../core/success.response.ts';
 const prisma = new PrismaClient();
 
 export const openGame = async (
@@ -19,26 +21,31 @@ export const openGame = async (
     const { gameId } = req.body;
     const username = req.user?.username;
     const url = 'http://157.230.251.158:6175/v1/game/open';
-    
-    const gameOpenResponse = await axios.post(url, {
-      game_id: gameId,
-      user_id: 'dev2',
-      ag_code: 'dev2',
-      currency: 'usd',
-      language: 'en',
-      cash: 1000,
-    }, { 
-      headers: {
-        'ag-token': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6ImNyeXB0byIsImlhdCI6MTUxNjIzOTAyMn0.ZAGAuEn3ifbPB37oVc1NtqcgQAo6xOu_MLXqN6smdro',
-        'ag-code': 'A01',
-      } 
-    });
+
+    const gameOpenResponse = await axios.post(
+      url,
+      {
+        game_id: gameId,
+        user_id: 'dev2',
+        ag_code: 'dev2',
+        currency: 'usd',
+        language: 'en',
+        cash: 1000
+      },
+      {
+        headers: {
+          'ag-token':
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6ImNyeXB0byIsImlhdCI6MTUxNjIzOTAyMn0.ZAGAuEn3ifbPB37oVc1NtqcgQAo6xOu_MLXqN6smdro',
+          'ag-code': 'A01'
+        }
+      }
+    );
 
     // Extract only the necessary data from the response
     const responseData = {
       status: gameOpenResponse.status,
-      data: gameOpenResponse.data,
-    }; 
+      data: gameOpenResponse.data
+    };
 
     return res.status(200).json(responseData);
   } catch (error) {
@@ -47,24 +54,64 @@ export const openGame = async (
   }
 };
 
+export const updateVendor = async (
+  req: RequestWithUser,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const vendorId = Number(req.params.id);
+
+    if (!vendorId) {
+      throw new Error('VendorId is required');
+    }
+
+    const foundAgentVendor = await prisma.agentVendor.findUnique({
+      where: {
+        id: vendorId
+      }
+    });
+
+    if (!foundAgentVendor) {
+      throw new Error('Vendor not found');
+    }
+
+    const vendor = await prisma.agentVendor.update({
+      data: {
+        directUrl: !foundAgentVendor.directUrl
+      },
+      where: {
+        id: vendorId
+      }
+    });
+
+    return res
+      .status(200)
+      .json({ data: vendor, message: 'Vendor updated successfully' });
+  } catch (error) {
+    return next(error);
+  }
+};
+
 export const gameList = async (
   req: RequestWithUser,
   res: Response
 ): Promise<any> => {
-  try { 
-
+  try {
     const agentId = req.user?.parentAgentId;
     const vendor = req.query.vendors as string;
+    const vendors: string[] = vendor.split(',');
+    const vendorsNoNull = vendors.filter((item) => item !== '');
 
-    let whereVendor
+    let whereVendor;
     if (vendor) {
-      const vendors : string[] = vendor.split(',');
-      const vendorsNoNull = vendors.filter(item => item !== '');
+      const vendors: string[] = vendor.split(',');
+      const vendorsNoNull = vendors.filter((item) => item !== '');
       whereVendor = {
         name: {
           in: vendorsNoNull
         }
-      }
+      };
     }
 
     const getVendors = await prisma.vendors.findMany({
@@ -87,12 +134,11 @@ export const gameList = async (
 
     const list = await getGameList(getVendors);
 
-    return res.status(200).json( list )
-
+    return res.status(200).json(list);
   } catch (error) {
-    console.log(error)
+    return res.status(500).json(error);
   }
-}
+};
 
 export const getVendors = async (
   req: RequestWithUser,
@@ -107,7 +153,8 @@ export const getVendors = async (
         fetchGames: true,
         agents: {
           select: {
-            vendorId: true
+            vendorId: true,
+            directUrl: true
           },
           where: {
             agentId: req.user?.id
@@ -121,7 +168,7 @@ export const getVendors = async (
 
     const rearrangedVendors = vendors.map((vendor) => {
       const canSee = vendor.agents.length == 1 ? true : false; // Check if there agent is linked to vendor
-      const { fetchGames, agents, ...data } = {
+      const { fetchGames, ...data } = {
         ...vendor,
         gamesTotal: (vendor.fetchGames as [])?.length ?? 0,
         canSee

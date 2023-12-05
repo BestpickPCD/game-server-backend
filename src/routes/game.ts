@@ -2,7 +2,6 @@ import {
   gameLaunchLink,
   gameContract,
   getGameContractByAgentId,
-  getVendors,
   getGameUrl,
   getGamesByPlayerId,
   gameList,
@@ -24,12 +23,6 @@ router.post(
   '/game/open',
   authentication,
   openGame
-);
-router.get(
-  '/game-vendors',
-  authentication,
-  permission('games', 'get'),
-  getVendors
 );
 router.get(
   '/game-contract/:agentId',

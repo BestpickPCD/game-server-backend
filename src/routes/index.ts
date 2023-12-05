@@ -8,6 +8,7 @@ import permissionRouter from './permission.ts';
 import roleRouter from './role.js';
 import transactionRouter from './transaction.js';
 import userRouter from './user.js';
+import vendorRouter from './vendor.js';
 
 const router = express.Router();
 
@@ -17,6 +18,7 @@ router.use('', currencyRouter);
 router.use('', userRouter);
 router.use('', transactionRouter);
 router.use('', gameRouter);
+router.use('', vendorRouter);
 router.use('/agents', authentication, agentRouter);
 
 router.use('/roles', roleRouter);

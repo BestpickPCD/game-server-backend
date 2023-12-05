@@ -18,7 +18,7 @@ app.use(cors());
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
-
+app.use(express.static('public'));
 app.set('view engine', 'ejs');
 
 mysqlConnection;

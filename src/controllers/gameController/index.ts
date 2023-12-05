@@ -94,47 +94,6 @@ export const gameList = async (
   }
 }
 
-export const getVendors = async (
-  req: RequestWithUser,
-  res: Response
-): Promise<any> => {
-  try {
-    const vendors = await prisma.vendors.findMany({
-      select: {
-        id: true,
-        name: true,
-        url: true,
-        fetchGames: true,
-        agents: {
-          select: {
-            vendorId: true
-          },
-          where: {
-            agentId: req.user?.id
-          }
-        }
-      },
-      where: {
-        deletedAt: null
-      }
-    });
-
-    const rearrangedVendors = vendors.map((vendor) => {
-      const canSee = vendor.agents.length == 1 ? true : false; // Check if there agent is linked to vendor
-      const { fetchGames, agents, ...data } = {
-        ...vendor,
-        gamesTotal: (vendor.fetchGames as [])?.length ?? 0,
-        canSee
-      };
-      return data;
-    });
-
-    return res.status(200).json(rearrangedVendors);
-  } catch (error) {
-    return res.status(500).json(error);
-  }
-};
-
 export const getGameContractByAgentId = async (
   req: RequestWithUser,
   res: Response

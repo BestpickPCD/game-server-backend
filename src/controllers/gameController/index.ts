@@ -100,8 +100,6 @@ export const gameList = async (
   try {
     const agentId = req.user?.parentAgentId;
     const vendor = req.query.vendors as string;
-    const vendors: string[] = vendor.split(',');
-    const vendorsNoNull = vendors.filter((item) => item !== '');
 
     let whereVendor;
     if (vendor) {

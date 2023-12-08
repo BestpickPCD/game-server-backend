@@ -24,7 +24,7 @@ export const getVendors = async (
                     vendorId: true
                 },
                 where: {
-                    agentId: `${req.query.agentId}` ?? req.user?.id
+                    agentId: req.query.agentId ? `${req.query.agentId}` : req.user?.id
                 }
             }
         },

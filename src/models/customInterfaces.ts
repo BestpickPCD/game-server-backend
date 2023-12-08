@@ -19,7 +19,7 @@ export interface balanceSummary {
 }
 
 export interface RequestWithUser extends Request {
-  user?: Users;
+  user?: Users | null;
   balanceSummary?: balanceSummary | null;
 }
 

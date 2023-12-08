@@ -11,7 +11,8 @@ const prisma = new PrismaClient()
 export const getVendors = async (
     req: RequestWithUser,
     res: Response
-): Promise<any> => { 
+): Promise<any> => {
+    
     const vendors = await prisma.vendors.findMany({
         select: {
             id: true,
@@ -23,7 +24,7 @@ export const getVendors = async (
                     vendorId: true
                 },
                 where: {
-                    agentId: req.user?.id
+                    agentId: `${req.query.agentId}` ?? req.user?.id
                 }
             }
         },
@@ -33,7 +34,7 @@ export const getVendors = async (
     });
 
     const rearrangedVendors = vendors.map((vendor) => {
-        const canSee = vendor.agents.length == 1 ? true : false; // Check if there agent is linked to vendor 
+        const canSee = vendor.agents.length === 1 ? true : false; // Check if there agent is linked to vendor 
         const { fetchGames, agents, ...data } = {
             ...vendor,
             img: getLogo(req.headers.host, vendor.name),
@@ -63,7 +64,6 @@ export const getVendorList = async (req:Request, res: Response) => {
         return new OK({ data: vendorList }).send(res);
 
     } catch (error) {
-        console.log(error)
         return res.status(500).json({ error: 'Internal Server Error' });
     }
 }
@@ -100,14 +100,39 @@ export const updateVendor = async (req:Request, res:Response) => {
 
 export const addVendorAgent = async (req:Request, res:Response) => {
 
-    const { agentId, vendorId } = req.body;
-    await prisma.agentVendor.create({
-        data: {
-            agentId, vendorId
+    const { agentId, selectedVendors }: { agentId: string, selectedVendors: Vendors[] } = req.body;
+
+    const existingVendors = await prisma.agentVendor.findMany({
+        select: { vendorId: true },
+        where: { agentId }
+    }) as AgentVendor[]
+
+    const existingIds = existingVendors.map(obj => obj.vendorId);
+    const selectedIds = selectedVendors.map(obj => obj.id);
+    const add = selectedIds.filter(id => !existingIds.includes(id));
+    const remove = existingIds.filter(id => !selectedIds.includes(id));
+
+    const toAdd = add.map((vendor) => {
+        return {
+            agentId,
+            vendorId: vendor
         }
     });
+    if( add.length > 0) {
+        await prisma.agentVendor.createMany({data:toAdd})
+    }
+    if( remove.length > 0) {
+        await prisma.agentVendor.deleteMany({
+            where: {
+                agentId,
+                vendorId:{
+                    in: remove ?? []
+                }
+            }
+        })
+    }
 
-    return new CREATED({message: message.CREATED}).send(res);
+    return new OK({message: message.SUCCESS}).send(res);
 
 }
 

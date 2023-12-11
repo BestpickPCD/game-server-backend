@@ -151,7 +151,7 @@ export const getVendors = async (
         fetchGames: true,
         agents: {
           select: {
-            vendorId: true,
+            id: true,
             directUrl: true
           },
           where: {

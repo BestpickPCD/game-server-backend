@@ -10,46 +10,7 @@ import { message } from '../../utilities/constants/index.ts';
 import { getLogo } from './utilities.ts';
 
 const prisma = new PrismaClient();
-
-export const getVendors = async (
-  req: RequestWithUser,
-  res: Response
-): Promise<any> => {
-  const vendors = await prisma.vendors.findMany({
-    select: {
-      id: true,
-      name: true,
-      url: true,
-      fetchGames: true,
-      agents: {
-        select: {
-          vendorId: true,
-          directUrl: true
-        },
-        where: {
-          agentId: req.query.agentId ? `${req.query.agentId}` : req.user?.id
-        }
-      }
-    },
-    where: {
-      deletedAt: null
-    }
-  });
-
-  const rearrangedVendors = vendors.map((vendor) => {
-    const canSee = vendor.agents.length === 1 ? true : false; // Check if there agent is linked to vendor
-    const { fetchGames, ...data } = {
-      ...vendor,
-      img: getLogo(req.headers.host, vendor.name),
-      gamesTotal: (vendor.fetchGames as [])?.length ?? 0,
-      canSee
-    };
-    return data;
-  });
-
-  return new OK({ data: rearrangedVendors }).send(res);
-};
-
+ 
 export const getVendorList = async (req: Request, res: Response) => {
   const { vendorId } = req.query;
   const filter = typeof vendorId === 'string' ? { id: parseInt(vendorId) } : {};

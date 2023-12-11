@@ -6,7 +6,8 @@ import {
   getGamesByPlayerId,
   gameList,
   openGame,
-  updateVendor
+  updateVendor,
+  getVendors
 } from '../controllers/gameController/index.ts';
 import express from 'express';
 import { authentication } from '../middleware/authentication.ts';
@@ -19,6 +20,13 @@ router.get(
   authentication,
   permission('games', 'get'),
   gameList
+);
+router.post('/game/open', authentication, openGame);
+router.get(
+  '/game-vendors',
+  authentication,
+  permission('games', 'get'),
+  getVendors
 );
 router.post('/game/open', authentication, openGame);
 router.get(

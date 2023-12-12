@@ -143,6 +143,7 @@ export const getVendors = async (
   res: Response
 ): Promise<any> => {
   try {
+    const agentId = req.query.agentId;
     const vendors = await prisma.vendors.findMany({
       select: {
         id: true,
@@ -155,14 +156,14 @@ export const getVendors = async (
             directUrl: true
           },
           where: {
-            agentId: req.user?.id
+            agentId: agentId ? `${agentId}` : req.user?.id
           }
         }
       },
       where: {
         deletedAt: null
       }
-    });
+    }); 
 
     const rearrangedVendors = vendors.map((vendor) => {
       const canSee = vendor.agents.length == 1 ? true : false; // Check if there agent is linked to vendor

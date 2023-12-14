@@ -163,7 +163,7 @@ export const getVendors = async (
       where: {
         deletedAt: null
       }
-    }); 
+    });
 
     const rearrangedVendors = vendors.map((vendor) => {
       const canSee = vendor.agents.length == 1 ? true : false; // Check if there agent is linked to vendor
@@ -293,7 +293,6 @@ export const getGamesByPlayerId = async (
       message: message.SUCCESS
     });
   } catch (error) {
-    console.log(error);
-    return next(error);
+    return res.status(500).json(error);
   }
 };

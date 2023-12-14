@@ -8,9 +8,49 @@ import { CREATED, DELETED, OK, UPDATED } from '../../core/success.response.ts';
 import { RequestWithUser } from '../../models/customInterfaces.ts';
 import { message } from '../../utilities/constants/index.ts';
 import { getLogo } from './utilities.ts';
+import { BAD_REQUEST, NOT_FOUND } from '../../core/error.response.ts';
 
 const prisma = new PrismaClient();
- 
+
+export const getVendors = async (
+  req: RequestWithUser,
+  res: Response
+): Promise<any> => {
+  const vendors = await prisma.vendors.findMany({
+    select: {
+      id: true,
+      name: true,
+      url: true,
+      fetchGames: true,
+      agents: {
+        select: {
+          vendorId: true,
+          directUrl: true
+        },
+        where: {
+          agentId: req.query.agentId ? `${req.query.agentId}` : req.user?.id
+        }
+      }
+    },
+    where: {
+      deletedAt: null
+    }
+  });
+
+  const rearrangedVendors = vendors.map((vendor) => {
+    const canSee = vendor.agents.length === 1 ? true : false; // Check if there agent is linked to vendor
+    const { fetchGames, ...data } = {
+      ...vendor,
+      img: getLogo(req.headers.host, vendor.name),
+      gamesTotal: (vendor.fetchGames as [])?.length ?? 0,
+      canSee
+    };
+    return data;
+  });
+
+  return new OK({ data: rearrangedVendors }).send(res);
+};
+
 export const getVendorList = async (req: Request, res: Response) => {
   const { vendorId } = req.query;
   const filter = typeof vendorId === 'string' ? { id: parseInt(vendorId) } : {};
@@ -18,6 +58,7 @@ export const getVendorList = async (req: Request, res: Response) => {
   const vendors = (await prisma.vendors.findMany({
     where: filter
   })) as Vendors[];
+
   const vendorList = vendors.map((vendor) => {
     const img = getLogo(req.headers.host, vendor.name);
     const {
@@ -26,10 +67,9 @@ export const getVendorList = async (req: Request, res: Response) => {
       deletedAt,
       startDate,
       endDate,
-      keys,
       ...returnVendor
     } = vendor;
-    return { ...returnVendor, ...{ img: img } };
+    return { ...returnVendor, ...{ img } };
   });
 
   return new OK({ data: vendorList }).send(res);
@@ -132,4 +172,19 @@ export const updateVendorAgent = async (req: Request, res: Response) => {
   });
 
   return new UPDATED({ message: message.UPDATED }).send(res);
+};
+
+export const getVendorById = async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  if (!id) {
+    throw new BAD_REQUEST('Id is required');
+  }
+  const vendor = await prisma.vendors.findUnique({
+    where: { id: Number(id) }
+  });
+  if (!vendor) {
+    throw new NOT_FOUND('Vendor not found');
+  }
+  return new OK({ data: vendor, message: 'Get vendor successfully' }).send(res);
 };

@@ -69,17 +69,27 @@ export const authentication = async (
 
     throw new Error(message.TOKEN_NOT_VALID);
   } catch (error: any) {
-    if (req.body?.refreshToken) {
-      const { userId } = (await verifyToken(
-        req.body?.refreshToken,
-        REFRESH_TOKEN_KEY
-      )) as JwtPayload;
-      const user = await findUser(String(userId));
-      (req as any).user = user;
-      return next();
+    try {
+      if (req.body?.refreshToken) {
+        const { userId } = (await verifyToken(
+          req.body?.refreshToken,
+          REFRESH_TOKEN_KEY
+        )) as JwtPayload;
+        const user = await findUser(String(userId));
+        (req as any).user = user;
+        return next();
+      }
+      return res.status(401).json({
+        data: null,
+        message: error.message,
+        subMessage: 'UNAUTHORIZED'
+      });
+    } catch (error: any) {
+      return res.status(401).json({
+        data: null,
+        message: error.message,
+        subMessage: 'UNAUTHORIZED'
+      });
     }
-    return res
-      .status(401)
-      .json({ data: null, message: error.message, subMessage: 'UNAUTHORIZED' });
   }
 };

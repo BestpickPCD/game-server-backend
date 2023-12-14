@@ -3,11 +3,13 @@ import { authentication } from '../middleware/authentication.ts';
 import { permission } from '../middleware/permission.ts';
 import {
   addVendor,
+  getVendors,
   updateVendor,
   getVendorList,
   addVendorAgent,
   removeVendorAgent,
-  updateVendorAgent
+  updateVendorAgent,
+  getVendorById
 } from '../controllers/vendorController/index.ts';
 import multer from 'multer';
 import { asyncHandler } from '../utilities/helpers/asyncHandler.ts';
@@ -27,10 +29,24 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 router.get(
+  '/game-vendors',
+  authentication,
+  permission('games', 'get'),
+  asyncHandler(getVendors)
+);
+
+router.get(
   '/vendors',
   authentication,
   permission('games', 'get'),
   asyncHandler(getVendorList)
+);
+
+router.get(
+  '/vendor/:id',
+  authentication,
+  permission('games', 'getById'),
+  asyncHandler(getVendorById)
 );
 
 router.post(

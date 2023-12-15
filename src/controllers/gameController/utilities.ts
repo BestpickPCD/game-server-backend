@@ -1,5 +1,24 @@
 import axios from 'axios';
 import { __bestpickGameList, __evolutionGameList, __pgsoftGameList } from './vendors.ts';
+import { __bestpickGameLaunch, __evolutionGameLaunch, __pgsoftGameLaunch } from './launch.ts';
+import { BAD_REQUEST } from '../../core/error.response.ts';
+
+export const getGameLaunch = async (gameId:string, vendor:string, directUrl:boolean, username:string, nickname:string | null) => {
+    
+    let list
+    if(directUrl) {
+        list = await _getLaunchURL(gameId, vendor, username, nickname)
+    } else { 
+        const nicknameFilter: string | null = nickname ? `&nickname=${nickname}` : null;
+        const { data } = await axios.get(`${process.env.HONORLINK_URL}/api/game-launch-link?username=${username}${nicknameFilter}&game_id=${gameId}&vendor=${vendor}`,{
+            headers: {
+                Authorization: `Bearer ${process.env.HONORLINK_AGENT_KEY}`
+            }
+        })
+        list = data
+    } 
+    return list
+}
 
 export const getGameList = async ( vendors: any[] ) => {
     let list = [] as any[] 
@@ -36,19 +55,32 @@ const _getDirectURL = async (url: string, keys: any, name: string) => {
         case "PG Soft":
             data = await __pgsoftGameList(url, keys);
             break
-        default: {
-                const { apiKey } = keys;
-                data = await axios.get(`${url}:6195/api/game_list`, {
-                    headers: {
-                        'api-key': apiKey,
-                    }
-                });
-            }
-            break;
+        default: 
+            throw new BAD_REQUEST('No Game launch method found'); 
     }
 
     return data
 
+}
+
+const _getLaunchURL = async (gameId:string, vendor:string, username:string, nickname:string | null) => {
+
+    let data
+    switch (vendor) {
+        case "Bestpick":
+            data = await __bestpickGameLaunch({gameId, vendor, username, nickname});
+            break;
+        case "evolution":
+            data = await __evolutionGameLaunch({gameId, vendor, username, nickname});
+            break
+        case "PG Soft":
+            data = await __pgsoftGameLaunch({gameId, vendor, username, nickname});
+            break
+        default:
+            throw new BAD_REQUEST('No Game launch method found'); 
+    }
+
+    return data
 }
 
 const _rearrangeData = async (data:any[], vendorName: string | null, directUrl: boolean) => {

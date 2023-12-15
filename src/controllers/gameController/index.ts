@@ -1,57 +1,44 @@
 import {
   PrismaClient,
+  Users,
   Vendors
 } from '../../config/prisma/generated/base-default/index.js';
-import axios from 'axios';
 import { NextFunction, Response } from 'express';
 import { RequestWithUser } from '../../models/customInterfaces.ts';
-// import agent from 'src/swagger/agent';
 import { getGamesByPlayerId as getGamesByPlayerIdService } from '../../services/vendorService.ts';
 import { message } from '../../utilities/constants/index.ts';
-import { getGameList } from './utilities.ts';
-import { BAD_REQUEST, NOT_FOUND } from '../../core/error.response.ts';
-import { OK } from '../../core/success.response.ts';
+import { getGameLaunch, getGameList } from './utilities.ts';
+import { OK } from '../../core/success.response.ts';  
+import { __bestpickGameLaunch } from './launch.ts';
+import { _userInsert } from '../authenticationController/index.ts';
 const prisma = new PrismaClient();
 
 export const openGame = async (
   req: RequestWithUser,
   res: Response
 ): Promise<any> => {
-  try {
-    const { gameId } = req.body;
-    const username = req.user?.username;
-    const url = 'http://157.230.251.158:6175/v1/game/open';
 
-    const gameOpenResponse = await axios.post(
-      url,
-      {
-        game_id: gameId,
-        user_id: 'dev2',
-        ag_code: 'dev2',
-        currency: 'usd',
-        language: 'en',
-        cash: 1000
-      },
-      {
-        headers: {
-          'ag-token':
-            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6ImNyeXB0byIsImlhdCI6MTUxNjIzOTAyMn0.ZAGAuEn3ifbPB37oVc1NtqcgQAo6xOu_MLXqN6smdro',
-          'ag-code': 'A01'
-        }
-      }
-    );
+  const { gameId, vendor, directUrl, username, nickname } = req.body;
+ 
+  const user = await prisma.users.findUnique({
+    where: {
+      username
+    }
+  }) as Users;
 
-    // Extract only the necessary data from the response
-    const responseData = {
-      status: gameOpenResponse.status,
-      data: gameOpenResponse.data
-    };
-
-    return res.status(200).json(responseData);
-  } catch (error) {
-    console.error('Error in openGame:', error);
-    return res.status(500).json({ error: 'Internal Server Error' });
+  if(!user) { 
+    const create = await _userInsert({
+      name: username,
+      username,
+      type: 'player'
+    });
+    if(!create)
+      throw new Error('User not found, cant create new user')
   }
+
+  const responseData = await getGameLaunch(gameId, vendor, directUrl, username, nickname);
+  return new OK({message:"Game open", data:responseData}).send(res);
+
 };
 
 export const updateVendor = async (

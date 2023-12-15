@@ -24,17 +24,15 @@ export const __evolutionGameLaunch = async (data: GameLaunch) => {
 
 export const __pgsoftGameLaunch = async (data: GameLaunch) => {
   
-  
+
 
 }
 
 export const __bestpickGameLaunch = async (data: GameLaunch) => {
 
-    const { gameId, vendor, username, nickname } = data
-    const url = 'http://157.230.251.158:6175/v1/game/open';
-
+    const { gameId, vendor, username, nickname } = data;
     const response: any = await axios.post(
-      url,
+      'http://157.230.251.158:6175/v1/game/open',
       {
         game_id: gameId,
         user_id: 'dev2',
@@ -51,8 +49,7 @@ export const __bestpickGameLaunch = async (data: GameLaunch) => {
         }
       }
     );
-    const { user_id, cash, game_id, status, url: link } = response.data
-    
+    const { user_id, cash, game_id, status, url: link } = response.data;
     return {
       user: {
         id: user_id ,

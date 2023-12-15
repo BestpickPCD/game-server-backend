@@ -3,13 +3,12 @@ import { __bestpickGameList, __evolutionGameList, __pgsoftGameList } from './ven
 import { __bestpickGameLaunch, __evolutionGameLaunch, __pgsoftGameLaunch } from './launch.ts';
 import { BAD_REQUEST } from '../../core/error.response.ts';
 
-export const getGameLaunch = async (gameId:string, vendor:string, directUrl:boolean, username:string, nickname:string | null) => {
-    
+export const getGameLaunch = async (gameId:string, vendor:string, directUrl:boolean, username:string, nickname:string | null) => { 
     let list
-    if(directUrl && vendor.includes('Bestpick') && vendor.includes('evolution')) { // remove includes out when can work on all direct APIs
+    if(directUrl && (vendor.includes('Bestpick') || vendor.includes('evolution'))) { // remove includes out when can work on all direct APIs
         list = await _getLaunchURL(gameId, vendor, username, nickname)
     } else { 
-        const nicknameFilter: string | null = nickname ? `&nickname=${nickname}` : null;
+        const nicknameFilter = nickname ? `&nickname=${nickname}` : '';
         const { data } = await axios.get(`${process.env.HONORLINK_URL}/api/game-launch-link?username=${username}${nicknameFilter}&game_id=${gameId}&vendor=${vendor}`,{
             headers: {
                 Authorization: `Bearer ${process.env.HONORLINK_AGENT_KEY}`
@@ -83,7 +82,7 @@ const _getLaunchURL = async (gameId:string, vendor:string, username:string, nick
 const _rearrangeData = async (data:any[], vendorName: string | null, directUrl: boolean) => {
 
     return data.map((datum) => ({
-        id: datum.id ?? datum.game_id ?? datum.gameId ?? null,
+        id: datum.game_id ?? datum.gameId ?? datum.id ?? null,
         name: datum.game_name ?? datum.title ?? datum.name ?? datum.gameName ?? null,
         code: datum.gameCode ?? datum.code ?? datum['game-code'] ?? datum.game_code ?? null,
         provider: directUrl ? vendorName : 'Honorlink',

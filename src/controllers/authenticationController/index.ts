@@ -261,7 +261,7 @@ const _agentInsert = async (userSchema: any, res: Response) => {
   }
 };
 
-const _userInsert = async (userSchema: any) => {
+export const _userInsert = async (userSchema: any) => {
   const data = userSchema;
   const newUser = await prisma.users.create({
     data

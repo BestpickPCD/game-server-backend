@@ -5,7 +5,10 @@ import {
   Users
 } from '../config/prisma/generated/base-default/index.js';
 const prisma = new PrismaClient();
-import { PrismaClient as PrismaClientTransaction, Transactions } from '../config/prisma/generated/transactions/index.js';
+import {
+  PrismaClient as PrismaClientTransaction,
+  Transactions
+} from '../config/prisma/generated/transactions/index.js';
 const prismaTransaction = new PrismaClientTransaction();
 
 export const getAllWithBalance = async (query: any, userId: number) => {
@@ -67,7 +70,6 @@ export const getAllWithBalance = async (query: any, userId: number) => {
     LIMIT ${size} OFFSET ${page > 1 ? page * size : 0}
     `)) as any;
     const total = (await prisma.$queryRawUnsafe(`${rawQuery}`)) as any;
-    
 
     const allUsers = users.map((user: Users) => user.id);
 
@@ -328,47 +330,118 @@ export const getPlayerById = async (id: string, userId: string) => {
   }
 };
 
+export const getUsers = async (agentId: string) => {
+  const users = await prisma.users.findMany({
+    select: {
+      id: true,
+      username: true,
+      name: true,
+      balance: true,
+      type: true,
+      role: {
+        select: {
+          id: true,
+          name: true
+        }
+      }
+    },
+    where: {
+      parentAgentId: agentId
+    }
+  });
+  return users;
+};
+
 export const getDashboardData = async (user: Users) => {
   try {
     const item = (await prisma.users.findUnique({
+      select: {
+        id: true,
+        name: true,
+        username: true,
+        currency: {
+          select: {
+            name: true,
+            code: true
+          }
+        },
+        type: true,
+        accountNumber: true,
+        callbackUrl: true,
+        apiCall: true,
+        parentAgentId: true,
+        balance: true
+      },
       where: {
         id: user.id,
         deletedAt: null,
         isActive: true
       }
     })) as any;
+
+    const users = await getUsers(user.id);
+    const players = users.filter((item) => item.type === 'player');
+
+    const balanceOfChildUsers = players.reduce(
+      (acc, cur) => acc + Number(cur.balance),
+      0
+    );
+
+    const distributionSubAgent = users.filter(
+      (item) => item?.role?.id === 3 && item.type === 'agent'
+    ).length;
+    const operationSubAgent = users.filter(
+      (item) => item?.role?.id === 2 && item.type === 'agent'
+    ).length;
+    const parallelSubAgent = users.filter(
+      (item) => item?.role?.id === 4 && item.type === 'agent'
+    ).length;
+
     const { affiliatedAgents, affiliatedUserId } =
       await getAffiliatedAgentsByUserId(user.id);
 
-    const { sums:affiliatedSums, agentSums:agentAffiliatedSums } = await _getAllSumsByUserId(false, affiliatedUserId); 
+    const { sums: affiliatedSums, agentSums: agentAffiliatedSums } =
+      await _getAllSumsByUserId(false, affiliatedUserId);
 
-    affiliatedAgents.map((affiliatedAgent: any) => { 
+    affiliatedAgents.map((affiliatedAgent: any) => {
       affiliatedAgent.allSums = affiliatedSums[`${affiliatedAgent.id}`];
-      affiliatedAgent.agentAllSums = agentAffiliatedSums[`${affiliatedAgent.id}`];
+      affiliatedAgent.agentAllSums =
+        agentAffiliatedSums[`${affiliatedAgent.id}`];
     });
 
-    const { sums:balance, agentSums:agentSums } = await _getAllSumsByUserId(true, [item.id]); 
-    const userBalance = { ...balance[`${item.id}`], balance: parseFloat(item.balance) ?? 0 } 
+    const { sums: balance, agentSums: agentSums } = await _getAllSumsByUserId(
+      true,
+      [item.id]
+    );
+    const userBalance = {
+      ...balance[`${item.id}`],
+      balance: parseFloat(item.balance) ?? 0
+    };
+
+    const balanceOfChildAgents = affiliatedAgents.reduce(
+      (acc, cur) => acc + Number(cur.balance),
+      0
+    );
 
     const data = {
       userId: item.id,
       name: item.name,
       username: item.username,
       affiliatedAgents,
-      currency: {
-        name: item.currencyName,
-        code: item.currencyCode
-      },
+      currency: item.currency,
       type: item.type,
       accountNumber: item.accountNumber,
       callbackUrl: item.callbackUrl,
       apiCall: item.apiCall,
-      // subAgent: parseInt(item.subAgent),
       parentAgentId: item.parentAgentId,
-      // players: parseInt(item.players),
-      // agentId: item.agentId,
       balance: userBalance,
-      balanceAsAgent: agentSums[`${item.id}`]
+      balanceAsAgent: agentSums[`${item.id}`],
+      totalSubAgent: affiliatedAgents.length,
+      balanceOfChildAgents,
+      balanceOfChildUsers,
+      distributionSubAgent,
+      operationSubAgent,
+      parallelSubAgent
     };
 
     return data;
@@ -438,16 +511,14 @@ export const getAllByAgentId = async (query: any, id: string) => {
   }
 };
 
-const _getAllSumsByUserId = async (isAgent: boolean,userIds: string[]) => {
+const _getAllSumsByUserId = async (isAgent: boolean, userIds: string[]) => {
   try {
     const balances = await _getSumTransactionByUserIds(isAgent, userIds);
     return balances;
   } catch (error: any) {
-    console.log(error)
     throw Error(error);
   }
 };
-
 
 interface Sums {
   win: number;
@@ -462,22 +533,21 @@ const _getSumTransactionByUserIds = async (
   isAgent: boolean,
   userIds: string[]
 ) => {
-
-  let agentFilter: any
-  if(isAgent) {
+  let agentFilter: any;
+  if (isAgent) {
     agentFilter = {
       agentId: {
-        in: userIds,
+        in: userIds
       }
-    }
+    };
   }
 
-  const sumBalance = await prismaTransaction.transactions.findMany({
+  const sumBalance = (await prismaTransaction.transactions.findMany({
     where: {
       OR: [
         {
           userId: {
-            in: userIds,
+            in: userIds
           }
         },
         agentFilter
@@ -488,13 +558,12 @@ const _getSumTransactionByUserIds = async (
         }
       }
     }
-  }) as Transactions[];
+  })) as Transactions[];
 
-  const sums: Record<string, Sums> = {}; 
-  const agentSums: Record<string, Sums> = {}; 
-  
+  const sums: Record<string, Sums> = {};
+  const agentSums: Record<string, Sums> = {};
+
   sumBalance.forEach((transaction: any) => {
-
     const { userId, type, amount, agentId } = transaction;
 
     if (!sums[userId]) {
@@ -535,10 +604,10 @@ const _getSumTransactionByUserIds = async (
           deposit: 0,
           withdraw: 0,
           'user.add_balance': 0,
-          'agent.add_balance': 0,
+          'agent.add_balance': 0
         };
       }
-    
+
       switch (type) {
         case 'win':
           agentSums[agentId].win += amount;
@@ -561,8 +630,8 @@ const _getSumTransactionByUserIds = async (
         default:
       }
     }
-  }); 
+  });
 
-  const formattedResult = {sums, agentSums}; 
+  const formattedResult = { sums, agentSums };
   return formattedResult;
 };

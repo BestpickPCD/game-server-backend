@@ -6,7 +6,7 @@ import { BAD_REQUEST } from '../../core/error.response.ts';
 export const getGameLaunch = async (gameId:string, vendor:string, directUrl:boolean, username:string, nickname:string | null) => {
     
     let list
-    if(directUrl) {
+    if(directUrl && vendor.includes('Bestpick') && vendor.includes('evolution')) { // remove includes out when can work on all direct APIs
         list = await _getLaunchURL(gameId, vendor, username, nickname)
     } else { 
         const nicknameFilter: string | null = nickname ? `&nickname=${nickname}` : null;
@@ -72,9 +72,6 @@ const _getLaunchURL = async (gameId:string, vendor:string, username:string, nick
             break;
         case "evolution":
             data = await __evolutionGameLaunch({gameId, vendor, username, nickname});
-            break
-        case "PG Soft":
-            data = await __pgsoftGameLaunch({gameId, vendor, username, nickname});
             break
         default:
             throw new BAD_REQUEST('No Game launch method found'); 

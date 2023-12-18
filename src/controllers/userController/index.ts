@@ -42,22 +42,10 @@ export const getAllUsersWithBalances = async (
 ): Promise<any> => {
   try {
     const { id } = (req as any).user;
-    // const { redisData, redisKeyWithId } = await getRedisData(
-    //   id,
-    //   'users',
-    //   'Invalid users Id'
-    // );
-    // let data: any;
-    // if (redisData) {
-    //   data = JSON.parse(redisData);
-    // } else {
-    // data = (await getAllWithBalance(id)) as any;
     const { userDetails, page, size, total } = (await getAllWithBalance(
       req.query,
       id
     )) as any;
-    // }
-    // !redisData && (await Redis.set(redisKeyWithId, JSON.stringify(data)));
 
     return res.status(200).json({
       data: {
@@ -106,19 +94,7 @@ export const getAllUsers = async (
 export const updateUser = async (req: Request, res: Response): Promise<any> => {
   try {
     const { userId } = req.params;
-    // const redisKey = 'userById';
-    // const { redisData, redisKeyWithId } = await getRedisData(
-    //   userId,
-    //   redisKey,
-    //   'Invalid users Id'
-    // );
-    // let data: any;
-    // if (redisData) {
-    //   data = JSON.parse(redisData);
-    // } else {
     const data = (await getById(userId)) as any;
-    // }
-    // !redisData && (await Redis.set(redisKeyWithId, JSON.stringify(data)));
 
     if (!data) {
       return res.status(404).json({ message: message.NOT_FOUND });
@@ -131,12 +107,15 @@ export const updateUser = async (req: Request, res: Response): Promise<any> => {
       currencyId,
       agentId,
       rate,
+      isActive,
       parentAgentId,
       accountNumber,
       callbackUrl,
       apiCall
     } = req.body;
+
     const updatedUser = {
+      isActive,
       ...(name && { name }),
       ...(email && { email }),
       ...(roleId && { roleId }),
@@ -147,14 +126,12 @@ export const updateUser = async (req: Request, res: Response): Promise<any> => {
       ...(rate && { rate }),
       ...(apiCall && { apiCall })
     };
-
+    
     const newUser = await prisma.users.update({
       where: { id: userId },
       data: updatedUser
     });
-
-    // await Redis.del(redisKey);
-    // await Redis.del(redisKeyWithId);
+    
     if (agentId) {
       if (newUser && newUser.type == 'agent') {
         return _updateAgent(newUser, parentAgentId, res);
@@ -267,18 +244,7 @@ export const getUserById = async (
 ): Promise<any> => {
   try {
     const { userId } = req.params;
-    // const { redisData, redisKeyWithId } = await getRedisData(
-    //   userId,
-    //   'userById',
-    //   'Invalid users Id'
-    // );
-    // let data: any;
-    // if (redisData) {
-    //   data = JSON.parse(redisData);
-    // } else {
-    const data = (await getById(userId)) as any;
-    // }
-    // !redisData && (await Redis.set(redisKeyWithId, JSON.stringify(data)));
+    const data = await getById(userId); 
 
     if (!data) {
       return res.status(404).json({ message: message.NOT_FOUND });

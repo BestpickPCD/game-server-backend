@@ -249,6 +249,7 @@ export const getById = async (id: string) => {
         email: true,
         apiKey: true,
         balance: true,
+        isActive: true,
         createdAt: true,
         updatedAt: true,
         currency: {
@@ -266,7 +267,7 @@ export const getById = async (id: string) => {
           }
         }
       }
-    })) as any;
+    }));
 
     return user;
   } catch (error: any) {

@@ -34,9 +34,9 @@ export const getAllWithBalance = async (query: any, userId: number) => {
     users.id, users.name, users.email, users.username, 
     users.type, users.balance, users.currencyId, users.isActive, 
     users.updatedAt, users.parentAgentIds, parentAgentId AS agentId,
-    users.balance, agents.name as agentName
+    users.balance, agents.name AS agentName
     FROM Users users
-    JOIN ( SELECT name, id FROM Users Where Type = 'agent' ) as agents ON agents.id = users.parentAgentId
+    JOIN (SELECT id, name FROM Users Where type = 'agent') agents ON agents.id = users.parentAgentId
     WHERE
       users.deletedAt IS NULL
       AND users.type = 'player'

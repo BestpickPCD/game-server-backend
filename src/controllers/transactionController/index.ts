@@ -63,22 +63,21 @@ export const getTransactions = async (
   }).send(res);
 };
 
-export const  getCallbackTransaction = async (req:Request, res:Response) => {
+export const getCallbackTransaction = async (req: Request, res: Response) => {
   const { id: callbackId } = req.params;
-  const { username, amount, transaction } = await prismaTransaction.callbackTransactions.findUnique({
-    where: {
-      id: callbackId
-    }
-  }) as CallbackTransactions;
-  
-  return new OK({ data: { username, amount, transaction } }).send(res);
+  const { username, amount, transaction } =
+    (await prismaTransaction.callbackTransactions.findUnique({
+      where: {
+        id: callbackId
+      }
+    })) as CallbackTransactions;
 
-}
+  return new OK({ data: { username, amount, transaction } }).send(res);
+};
 
 export const getBalance = async (req: Request, res: Response) => {
-  
   const { username } = req.query;
-  
+
   if (!username) {
     throw new BAD_REQUEST(message.INVALID_CREDENTIALS);
   } else {
@@ -95,7 +94,7 @@ export const getBalance = async (req: Request, res: Response) => {
 // Seamless method
 export const changeBalance = async (req: Request, res: Response) => {
   try {
-    const { username, amount, transaction } = req.body; 
+    const { username, amount, transaction } = req.body;
 
     const data = { username, amount, transaction } as CallbackTransactions;
 
@@ -108,7 +107,7 @@ export const changeBalance = async (req: Request, res: Response) => {
       } = (await prismaTransaction.callbackTransactions.create({
         data
       })) as CallbackTransactions;
-      
+
       if (username) {
         let user;
         user = (await prisma.users.findUnique({
@@ -153,7 +152,6 @@ export const changeBalance = async (req: Request, res: Response) => {
         }
 
         if (user.parentAgentId) {
-          
           const agent = await prisma.users.findUnique({
             where: {
               id: user.parentAgentId as string
@@ -223,10 +221,13 @@ export const addTransaction = async (
   req: RequestWithUser,
   res: Response
 ): Promise<any> => {
+  let status: string | null = 'approved';
 
-  let status: string | null = "approved"
-
-  const { id: userSessionId, roleId:userSessionRoleId, type:userSessionType } = req.user as Users;
+  const {
+    id: userSessionId,
+    roleId: userSessionRoleId,
+    type: userSessionType
+  } = req.user as Users;
 
   const {
     userId,
@@ -237,7 +238,11 @@ export const addTransaction = async (
 
   let amount = transactionAmount;
 
-  if (userSessionId === userId && userSessionRoleId !== 1 && userSessionType !== 'player') {
+  if (
+    userSessionId === userId &&
+    userSessionRoleId !== 1 &&
+    userSessionType !== 'player'
+  ) {
     throw new BAD_REQUEST('Cannot add money to yourself');
   }
 
@@ -252,8 +257,12 @@ export const addTransaction = async (
     amount = -1 * amount;
   }
 
-  if([/*'deposit',*/'agent.add_balance'/*,'withdraw'*/].includes(transactionType)) {
-    status = "pending"
+  if (
+    [/*'deposit',*/ 'agent.add_balance' /*,'withdraw'*/].includes(
+      transactionType
+    )
+  ) {
+    status = 'pending';
   }
 
   const user = (await prisma.users.findUnique({
@@ -286,7 +295,10 @@ export const addTransaction = async (
           id: user.parentAgentId as string
         }
       });
-      if (agent && ['deposit', 'withdraw', 'user.add_balance'].includes(transactionType)) {
+      if (
+        agent &&
+        ['deposit', 'withdraw', 'user.add_balance'].includes(transactionType)
+      ) {
         if (
           !checkBalance(
             user as unknown as Users,
@@ -313,9 +325,13 @@ export const addTransaction = async (
       updateBy: userSessionId ?? null
     };
 
-    const { type, agentId, status: transactionStatus } = (await create(data)) as Transactions;
+    const {
+      type,
+      agentId,
+      status: transactionStatus
+    } = (await create(data)) as Transactions;
 
-    if(transactionStatus != "pending") {
+    if (transactionStatus != 'pending') {
       const { balance } = await updateBalance(
         userId,
         amount,
@@ -328,38 +344,43 @@ export const addTransaction = async (
         message: 'Transaction created successfully'
       }).send(res);
     } else {
-      return res.status(200).json({message: 'Transaction created, status pending '})
+      return res
+        .status(200)
+        .json({ message: 'Transaction created, status pending ' });
     }
   }
 
   throw new NOT_FOUND(message.INVALID_CREDENTIALS);
 };
 
-export const transactionAction = async (req:RequestWithUser, res:Response): Promise<any> => {
-
+export const transactionAction = async (
+  req: RequestWithUser,
+  res: Response
+): Promise<any> => {
   let balance = req.user?.balance;
-  const { id: updateBy } = req.user as Users ;
+  const { id: updateBy } = req.user as Users;
   const { id } = req.params;
   const { action } = req.body;
-  
-  const { userId, amount, type, agentId, method, status } = await prismaTransaction.transactions.update({
-    where: {
-      id
-    },
-    data: {
-      status: action,
-      updateBy
-    }
-  }) as {
-    userId: string,
-    status: string,
-    amount: number,
-    type: string,
-    agentId: string | null,
-    method: string
-  };
 
-  if(status === "approved") {
+  const { userId, amount, type, agentId, method, status } =
+    (await prismaTransaction.transactions.update({
+      where: {
+        id
+      },
+      data: {
+        status: action,
+        updateBy
+      }
+    })) as {
+      userId: string;
+      status: string;
+      amount: number;
+      type: string;
+      agentId: string | null;
+      method: string;
+    };
+
+  if (status === 'approved') {
     const { balance: updatedBalance } = await updateBalance(
       userId,
       amount,
@@ -372,26 +393,38 @@ export const transactionAction = async (req:RequestWithUser, res:Response): Prom
   }
 
   return new UPDATED({
-    data: {balance, action},
+    data: { balance, action },
     message: 'Transaction Approved'
-  }).send(res); 
-
-}
+  }).send(res);
+};
 
 export const getTransactionDetailsByUserId = async (
   req: Request,
   res: Response
 ): Promise<any> => {
   const { userId } = req.params;
-  const type = req.query.type as string;
-  let arrayTypes: string[];
+  const { dateFrom, dateTo, status, page, size } = req.query;
+  let type = req.query?.type as string | string[];
   if (type) {
-    arrayTypes = type.split(',');
-  } else {
-    arrayTypes = [];
+    type = (type as string).split(',');
   }
-  const data = (await getByIdWithType(userId, arrayTypes)) as any;
-  return new OK({ data }).send(res);
+
+  const { transactions, countTransactions } = (await getByIdWithType(userId, {
+    dateFrom: dateFrom as string,
+    dateTo: dateTo as string,
+    status: status as string,
+    type: type as string[],
+    page: Number(page) || 0,
+    size: Number(size) || 10
+  })) as any;
+  return new OK({
+    data: {
+      data: transactions,
+      page: Number(page),
+      size: Number(size),
+      totalItems: countTransactions
+    }
+  }).send(res);
 };
 
 export const getTransactionDetail = async (

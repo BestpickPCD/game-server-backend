@@ -22,7 +22,11 @@ import { asyncHandler } from '../utilities/helpers/asyncHandler.ts';
 const router = express.Router();
 router.get('/callback/balance', asyncHandler(getBalance));
 router.post('/callback/changeBalance', changeBalance);
-router.get('/callback-transaction/:id', authentication, asyncHandler(getCallbackTransaction) )
+router.get(
+  '/callback-transaction/:id',
+  authentication,
+  asyncHandler(getCallbackTransaction)
+);
 router.get(
   '/transactions',
   authentication,
@@ -41,7 +45,12 @@ router.post(
   permission('transactions', 'create'),
   asyncHandler(addTransaction)
 );
-router.patch('/transaction-action/:id',authentication,permission('transactions', 'update'),asyncHandler(transactionAction))
+router.patch(
+  '/transaction-action/:id',
+  authentication,
+  permission('transactions', 'update'),
+  asyncHandler(transactionAction)
+);
 router.get(
   '/transaction-details/:userId',
   authentication,

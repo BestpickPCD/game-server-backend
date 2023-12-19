@@ -24,7 +24,12 @@ export const __evolutionGameLaunch = async (data: GameLaunch) => {
 
 export const __pgsoftGameLaunch = async (data: GameLaunch) => {
   
-
+  const { gameId, vendor, username, nickname } = data
+  const operatorToken = '49f127e31e0d9200b4f71502d33f45a4';
+  const GUID = '';
+  console.log(`https://m.pg-redirect.net/${gameId}/index.html?ot=${operatorToken}&ops=${GUID}&btt=1`)
+  const game = await axios.get(`https://m.pg-redirect.net/${gameId}/index.html?ot=${operatorToken}&ops=${GUID}&btt=1`)
+  
 
 }
 

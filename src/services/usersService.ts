@@ -1,4 +1,4 @@
-import { getAffiliatedAgentsByUserId } from '../controllers/userController/utilities.js';
+import { getAffiliatedAgentsByUserId, subBalancesByUserIds } from '../controllers/userController/utilities.js';
 import {
   Prisma,
   PrismaClient,
@@ -34,7 +34,7 @@ export const getAllWithBalance = async (query: any, userId: number) => {
     users.id, users.name, users.email, users.username, 
     users.type, users.balance, users.currencyId, users.isActive, 
     users.updatedAt, users.parentAgentIds, parentAgentId AS agentId,
-    users.balance, agents.name AS agentName
+    users.balance, users.loggedIn, agents.name AS agentName
     FROM Users users
     JOIN (SELECT id, name FROM Users Where type = 'agent') agents ON agents.id = users.parentAgentId
     WHERE
@@ -66,50 +66,19 @@ export const getAllWithBalance = async (query: any, userId: number) => {
     }
     ORDER BY users.updatedAt DESC
     `;
-
+    
     const users = (await prisma.$queryRawUnsafe(`${rawQuery}
     LIMIT ${size} OFFSET ${page > 1 ? page * size : 0}
     `)) as any;
+
     const total = (await prisma.$queryRawUnsafe(`${rawQuery}`)) as any;
-
     const allUsers = users.map((user: Users) => user.id);
-
-    const transactions = await prismaTransaction.transactions.findMany({
-      where: {
-        userId: {
-          in: allUsers
-        }
-      },
-      select: {
-        userId: true,
-        type: true,
-        amount: true
-      },
-      orderBy: {
-        userId: 'asc'
-      }
-    });
-
-    const transformedData: Record<string, Record<string, number>> = {};
-
-    transactions.forEach((transaction) => {
-      const { userId, type, amount } = transaction;
-
-      if (!transformedData[userId as string]) {
-        transformedData[userId as string] = {};
-      }
-
-      if (!transformedData[userId as string][type]) {
-        transformedData[userId as string][type] = 0;
-      }
-
-      transformedData[userId as string][type] += amount;
-    });
+    const balances = await subBalancesByUserIds(allUsers);
 
     const userDetails = users.map((row: any) => {
       const data = {
         ...row,
-        balances: transformedData[`${row.id}`]
+        balances: balances[`${row.id}`]
       };
       return data;
     });
@@ -236,11 +205,14 @@ export const getAll = async (query: any, id: number) => {
   }
 };
 
-export const getById = async (id: string) => {
+export const getById = async (ids: string) => {
   try {
-    const user = (await prisma.users.findUnique({
+    const inIds = ids.split(','); 
+    const users = (await prisma.users.findMany({
       where: {
-        id
+        id: {
+          in: inIds
+        }
       },
       select: {
         id: true,
@@ -270,7 +242,17 @@ export const getById = async (id: string) => {
       }
     }));
 
-    return user;
+    const balances = await subBalancesByUserIds(inIds);
+    const userDetails = users.map((row: any) => {
+      const data = {
+        ...row,
+        balances: balances[`${row.id}`]
+      };
+      return data;
+    });
+
+    return inIds.length === 1 ? userDetails[0] : userDetails;
+
   } catch (error: any) {
     throw Error(error);
   }

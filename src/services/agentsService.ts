@@ -61,6 +61,7 @@ export const getAll = async ({
       roleId: true,
       createdAt: true,
       updatedAt: true,
+      loggedIn: true,
       balance: true,
       rate: true,
       level: true,

@@ -32,6 +32,7 @@ model Users {
   updatedAt      DateTime? @updatedAt
   deletedAt      DateTime?
   lockedAt       DateTime?
+  loggedIn       DateTime?
 
   parent   Users?  @relation("Children", fields: [parentAgentId], references: [id])
   children Users[] @relation("Children")

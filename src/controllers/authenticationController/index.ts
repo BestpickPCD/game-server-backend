@@ -104,6 +104,13 @@ export const login = async (req: Request, res: Response): Promise<any> => {
         const loginDate = new Date();
         const lockDate = user.lockedAt;
 
+        await prisma.users.update({
+          where: {
+            id: user.id
+          },
+          data: { loggedIn: loginDate }
+        });
+
         lockDate?.setDate(lockDate.getDate() + 3);
         if (!lockDate || lockDate < loginDate) {
           await prisma.users.update({
@@ -114,6 +121,7 @@ export const login = async (req: Request, res: Response): Promise<any> => {
               isActive: true
             }
           });
+
         } else {
           return res.status(500).json({ message: 'your account is not valid' });
         }

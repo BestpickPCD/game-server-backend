@@ -53,3 +53,46 @@ export const getAffiliatedAgentsByUserId = async (userId: string) => {
     throw Error(error);
   }
 };
+
+export const subBalancesByUserIds =  async (userIds: string[]) => {
+
+  try {
+    const transactions = await prismaTransaction.transactions.findMany({
+      where: {
+        userId: {
+          in: userIds
+        }
+      },
+      select: {
+        userId: true,
+        type: true,
+        amount: true
+      },
+      orderBy: {
+        userId: 'asc'
+      }
+    });
+  
+    const transformedData: Record<string, Record<string, number>> = {};
+  
+    transactions.forEach((transaction) => {
+      const { userId, type, amount } = transaction;
+  
+      if (!transformedData[userId as string]) {
+        transformedData[userId as string] = {};
+      }
+  
+      if (!transformedData[userId as string][type]) {
+        transformedData[userId as string][type] = 0;
+      }
+  
+      transformedData[userId as string][type] += amount;
+    });
+  
+    return transformedData;
+    
+  } catch (error: any) {
+    throw Error(error);
+  }
+
+}

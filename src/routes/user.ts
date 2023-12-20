@@ -22,7 +22,7 @@ router.get(
   permission('players', 'get'),
   getAllUsersWithBalances
 );
-router.get('/user/:userId', authentication, getUserById);
+router.get('/user/:userIds', authentication, getUserById);
 router.get('/user-affiliated-agents', authentication, getAllAffiliatedAgents);
 router.patch('/user/:userId', authentication, updateUser);
 router.delete('/user/:userId', authentication, deleteUser);

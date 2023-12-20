@@ -1,4 +1,5 @@
 import axios from "axios";
+import { v4 as GUIDGen } from "uuid";
 
 interface GameLaunch {
   gameId:string,
@@ -24,7 +25,12 @@ export const __evolutionGameLaunch = async (data: GameLaunch) => {
 
 export const __pgsoftGameLaunch = async (data: GameLaunch) => {
   
-
+  const { gameId, vendor, username, nickname } = data
+  const operatorToken = '49f127e31e0d9200b4f71502d33f45a4';
+  const guid = GUIDGen();
+  const game = await axios.get(`https://m.pg-redirect.net/${gameId}/index.html?ot=${operatorToken}&ops=${guid}&btt=1`)
+  // WIP
+  
 
 }
 

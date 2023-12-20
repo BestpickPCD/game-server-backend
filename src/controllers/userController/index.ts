@@ -30,7 +30,6 @@ export const getAllAffiliatedAgents = async (
     const affiliatedAgents = await getAffiliatedAgentsByUserId(id);
     return res.status(200).json(affiliatedAgents);
   } catch (error) {
-    console.log(error);
     return res.status(500).json({ message: message.INTERNAL_SERVER_ERROR });
   }
 };
@@ -243,8 +242,8 @@ export const getUserById = async (
   res: Response
 ): Promise<any> => {
   try {
-    const { userId } = req.params;
-    const data = await getById(userId); 
+    const { userIds } = req.params;
+    const data = await getById(userIds); 
 
     if (!data) {
       return res.status(404).json({ message: message.NOT_FOUND });

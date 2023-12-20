@@ -27,8 +27,7 @@ router.get(
   authentication,
   permission('games', 'get'),
   getVendors
-);
-router.post('/game/open', authentication, openGame);
+); 
 router.get(
   '/game-contract/:agentId',
   authentication,

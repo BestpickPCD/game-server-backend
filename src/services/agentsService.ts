@@ -71,6 +71,7 @@ export const getAll = async ({
           id: true
         }
       },
+      parentAgentIds: true,
       parentAgentId: true
     },
     where: {

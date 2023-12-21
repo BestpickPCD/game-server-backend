@@ -1,13 +1,12 @@
-import { NextFunction, Request, Response } from 'express';
-import Redis, { removeRedisKeys } from '../config/redis/index.ts';
+import { Request, Response } from 'express';
+import { BAD_REQUEST } from '../core/error.response.ts';
+import { DELETED, OK, UPDATED } from '../core/success.response.ts';
 import {
   deleteAgent as deleteAgentService,
   getAll,
   getById,
   update
 } from '../services/agentsService.ts';
-import { DELETED, OK, UPDATED } from '../core/success.response.ts';
-import { BAD_REQUEST } from '../core/error.response.ts';
 interface AgentParams {
   page?: number;
   size?: number;

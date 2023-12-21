@@ -1,4 +1,7 @@
-import { getAffiliatedAgentsByUserId, subBalancesByUserIds } from '../controllers/userController/utilities.js';
+import {
+  getAffiliatedAgentsByUserId,
+  subBalancesByUserIds
+} from '../controllers/userController/utilities.js';
 import {
   Prisma,
   PrismaClient,
@@ -66,7 +69,7 @@ export const getAllWithBalance = async (query: any, userId: number) => {
     }
     ORDER BY users.updatedAt DESC
     `;
-    
+
     const users = (await prisma.$queryRawUnsafe(`${rawQuery}
     LIMIT ${size} OFFSET ${page > 1 ? page * size : 0}
     `)) as any;
@@ -207,8 +210,8 @@ export const getAll = async (query: any, id: number) => {
 
 export const getById = async (ids: string) => {
   try {
-    const inIds = ids.split(','); 
-    const users = (await prisma.users.findMany({
+    const inIds = ids.split(',');
+    const users = await prisma.users.findMany({
       where: {
         id: {
           in: inIds
@@ -240,7 +243,7 @@ export const getById = async (ids: string) => {
           }
         }
       }
-    }));
+    });
 
     const balances = await subBalancesByUserIds(inIds);
     const userDetails = users.map((row: any) => {
@@ -252,7 +255,6 @@ export const getById = async (ids: string) => {
     });
 
     return inIds.length === 1 ? userDetails[0] : userDetails;
-
   } catch (error: any) {
     throw Error(error);
   }
@@ -330,7 +332,10 @@ export const getUsers = async (agentId: string) => {
       }
     },
     where: {
-      parentAgentId: agentId
+      parentAgentIds: {
+        array_contains: [agentId] as string[]
+      },
+      deletedAt: null
     }
   });
   return users;

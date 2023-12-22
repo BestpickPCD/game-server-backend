@@ -7,6 +7,7 @@ import { RequestWithUser } from '../models/customInterfaces.ts';
 const prisma = new PrismaClient();
 const ACCESS_TOKEN_KEY = process.env.ACCESS_TOKEN_KEY ?? '';
 const REFRESH_TOKEN_KEY = process.env.REFRESH_TOKEN_KEY ?? '';
+const SECRET_KEY = process.env.SECRET_KEY ?? '';
 
 const message = {
   KEY_NOT_VALID: 'Key is not valid',
@@ -15,7 +16,7 @@ const message = {
   TOKEN_EXPIRED: 'Token is expired'
 };
 
-export const verifyToken = async (key: string, secretKey: string) => {
+const verifyToken = async (key: string, secretKey: string) => {
   return (await jwt.verify(key, secretKey)) as Promise<{ userId: string }>;
 };
 
@@ -28,6 +29,7 @@ const findUser = async (id: string) => {
       apiKey: true,
       roleId: true,
       currencyId: true,
+      parentAgentId: true,
       isActive: true,
       username: true,
       type: true,
@@ -93,3 +95,28 @@ export const authentication = async (
     }
   }
 };
+
+export const keyApi = async (
+  req: RequestWithUser,
+  res: Response,
+  next: NextFunction
+): Promise<any> => {
+  try {
+    
+    const apiKey = String(req?.header('api-key'));
+    if(!apiKey) {
+      throw new Error(message.TOKEN_MISSING);
+    }
+    const { userId } = await verifyToken(apiKey, SECRET_KEY);
+    const user = await findUser(String(userId));
+    (req as any).user = user;
+    next();
+
+  } catch (error: any) {
+    return res.status(401).json({
+      data: null,
+      message: error.message,
+      subMessage: 'UNAUTHORIZED'
+    });
+  }
+}

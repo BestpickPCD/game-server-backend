@@ -135,7 +135,7 @@ export const login = async (req: Request, res: Response): Promise<any> => {
   }
 };
 
-export const register = async (req: Request, res: Response): Promise<any> => {
+export const register = async (req: RequestWithUser, res: Response): Promise<any> => {
   try {
     const {
       name,
@@ -176,7 +176,7 @@ export const register = async (req: Request, res: Response): Promise<any> => {
     let userSchema = {
       name,
       username,
-      parentAgentId,
+      parentAgentId: parentAgentId ?? req.user?.id ?? null,
       type,
       roleId,
       currencyId: 1

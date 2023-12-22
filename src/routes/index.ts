@@ -9,10 +9,12 @@ import roleRouter from './role.js';
 import transactionRouter from './transaction.js';
 import userRouter from './user.js';
 import vendorRouter from './vendor.js';
+import keyApiRouter from './key-api.ts'
 
 const router = express.Router();
 
 router.use('', authenticationRouter);
+router.use('/api', keyApiRouter)
 
 router.use('', currencyRouter);
 router.use('', userRouter);

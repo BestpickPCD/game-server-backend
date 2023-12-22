@@ -6,8 +6,7 @@ import {
   getGamesByPlayerId,
   gameList,
   openGame,
-  updateVendor,
-  getVendors
+  updateVendor
 } from '../controllers/gameController/index.ts';
 import express from 'express';
 import { authentication } from '../middleware/authentication.ts';

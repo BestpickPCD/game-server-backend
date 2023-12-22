@@ -47,28 +47,28 @@ export const updateVendor = async (
   next: NextFunction
 ) => {
   try {
-    const vendorId = Number(req.params.id);
+    const agentVendorId = Number(req.params.id);
 
-    if (!vendorId) {
+    if (!agentVendorId) {
       throw new Error('VendorId is required');
     }
 
-    const foundAgentVendor = await prisma.agentVendor.findUnique({
+    const foundAgentVendor = await prisma.agentVendor.findFirst({
       where: {
-        id: vendorId
+        id: agentVendorId
       }
     });
 
     if (!foundAgentVendor) {
       throw new Error('Vendor not found');
-    }
+    } 
 
-    const vendor = await prisma.agentVendor.update({
+    const vendor = await prisma.agentVendor.updateMany({
       data: {
         directUrl: !foundAgentVendor.directUrl
       },
       where: {
-        id: vendorId
+        id: agentVendorId
       }
     });
 
@@ -76,6 +76,7 @@ export const updateVendor = async (
       .status(200)
       .json({ data: vendor, message: 'Vendor updated successfully' });
   } catch (error) {
+    console.log(error)
     return next(error);
   }
 };

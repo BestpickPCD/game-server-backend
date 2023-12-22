@@ -12,37 +12,57 @@ import { BAD_REQUEST, NOT_FOUND } from '../../core/error.response.ts';
 
 const prisma = new PrismaClient();
 
+interface SelectedVendors {
+  parentVendors: number,
+  selectedVendors: number | null,
+  id: number,
+  name: string,
+  url: string,
+  keys: JSON,
+}
+
 export const getVendors = async (
   req: RequestWithUser,
   res: Response
-): Promise<any> => {
-  const vendors = await prisma.vendors.findMany({
+): Promise<any> => { 
+  const agentId = req.query.agentId ?? req.user?.id
+  const parent = await prisma.users.findUnique({
     select: {
-      id: true,
-      name: true,
-      url: true,
-      fetchGames: true,
-      agents: {
-        select: {
-          vendorId: true,
-          directUrl: true
-        },
-        where: {
-          agentId: req.query.agentId ? `${req.query.agentId}` : req.user?.id
-        }
-      }
+      parentAgentId: true
     },
     where: {
-      deletedAt: null
+      id: `${req.query.agentId}`
     }
-  });
+  }); 
+  
+  const vendors = await prisma.$queryRawUnsafe(` SELECT * FROM 
+    (SELECT * FROM 
+        ( ${parent?.parentAgentId ? 
+          `SELECT vendorId AS parentVendors 
+          FROM AgentVendor 
+          WHERE agentId = '${parent?.parentAgentId}'
+          GROUP BY parentVendors ` 
+          : `
+          SELECT id AS parentVendors
+          FROM Vendors
+          ` }
+        ) AS parentSelected
+      LEFT JOIN 
+        (SELECT vendorId AS selectedVendors, directUrl, id AS agentVendorId
+          FROM AgentVendor 
+          WHERE agentId = '${agentId}'
+          GROUP BY selectedVendors, directUrl, agentVendorId
+        ) AS selected
+      ON parentSelected.parentVendors = selected.selectedVendors
+    ) AS selectedVendors
+    JOIN Vendors ON Vendors.id = selectedVendors.parentVendors
+  `) as SelectedVendors[] ;
 
   const rearrangedVendors = vendors.map((vendor) => {
-    const canSee = vendor.agents.length === 1 ? true : false; // Check if there agent is linked to vendor
-    const { fetchGames, ...data } = {
+    const canSee = vendor.selectedVendors ? true : false;
+    const { ...data } = {
       ...vendor,
       img: getLogo(req.headers.host, vendor.name),
-      gamesTotal: (vendor.fetchGames as [])?.length ?? 0,
       canSee
     };
     return data;

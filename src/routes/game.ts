@@ -23,12 +23,6 @@ router.get(
 );
 router.post('/game/open', authentication, openGame);
 router.get(
-  '/game-vendors',
-  authentication,
-  permission('games', 'get'),
-  getVendors
-); 
-router.get(
   '/game-contract/:agentId',
   authentication,
   permission('games', 'getById'),

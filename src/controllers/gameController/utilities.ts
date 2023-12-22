@@ -6,10 +6,8 @@ import { BAD_REQUEST } from '../../core/error.response.ts';
 export const getGameLaunch = async (gameId:string, vendor:string, directUrl:boolean, username:string, nickname:string | null) => { 
     let list
     if(directUrl && (vendor.includes('Bestpick') || vendor.includes('evolution') || vendor.includes('PG Soft'))) { // remove includes out when can work on all direct APIs
-        console.log('direct')
         list = await _getLaunchURL(gameId, vendor, username, nickname)
-    } else { 
-        console.log('indirect')
+    } else {
         const nicknameFilter = nickname ? `&nickname=${nickname}` : '';
         const { data } = await axios.get(`${process.env.HONORLINK_URL}/api/game-launch-link?username=${username}${nicknameFilter}&game_id=${gameId}&vendor=${vendor}`,{
             headers: {

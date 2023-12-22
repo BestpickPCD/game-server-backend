@@ -23,7 +23,6 @@ export const getGameList = async ( vendors: any[] ) => {
     let list = [] as any[] 
     await Promise.all(vendors.map( async (vendor) => {
         const { name, url, keys, agents } = vendor as any;
-        console.log( name, url, keys, agents )
         const { directUrl } = agents[0];
         // If directUrl but no url - call through honorlink
         if(directUrl && url) {
@@ -36,7 +35,6 @@ export const getGameList = async ( vendors: any[] ) => {
                     Authorization: `Bearer ${process.env.HONORLINK_AGENT_KEY}`
                 }
             }) as any;
-            console.log(gameList.data, 'indirect')
             const arrangedData = await _rearrangeData(gameList.data, name, directUrl);
             list = list.concat(arrangedData);
         }

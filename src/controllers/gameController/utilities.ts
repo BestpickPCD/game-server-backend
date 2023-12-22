@@ -15,7 +15,7 @@ export const getGameLaunch = async (gameId:string, vendor:string, directUrl:bool
             }
         })
         list = data
-    } 
+    }
     return list
 }
 
@@ -24,10 +24,9 @@ export const getGameList = async ( vendors: any[] ) => {
     await Promise.all(vendors.map( async (vendor) => {
         const { name, url, keys, agents } = vendor as any;
         const { directUrl } = agents[0];
-
         // If directUrl but no url - call through honorlink
         if(directUrl && url) {
-            const gameList = await _getDirectURL(url, keys, name);
+            const gameList = await _getDirectURL(url, keys, name); 
             const arrangedData = await _rearrangeData(gameList.data.data, name, directUrl);
             list = list.concat(arrangedData);
         } else {

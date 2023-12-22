@@ -195,9 +195,7 @@ const validateUpdateData = async ({
   currencyId,
   roleId
 }: AgentUpdateParams): Promise<any> => {
-  if (agentId === parentAgentId) {
-    console.log('true');
-
+  if (agentId === parentAgentId) { 
     throw new BAD_REQUEST("Cannot be one's own agent");
   }
   const agent = await getAgentById(agentId);

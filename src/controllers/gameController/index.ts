@@ -17,8 +17,9 @@ export const openGame = async (
   req: RequestWithUser,
   res: Response
 ): Promise<any> => {
-
+  
   const { gameId, vendor, directUrl, username, nickname } = req.body;
+  const ipAddress = req.ip;
  
   const user = await prisma.users.findUnique({
     where: {
@@ -37,7 +38,7 @@ export const openGame = async (
       throw new Error('User not found, cant create new user')
   }
 
-  const responseData = await getGameLaunch(gameId, vendor, directUrl, username, nickname);
+  const responseData = await getGameLaunch(gameId, vendor, directUrl, username, nickname, ipAddress);
   return new OK({message:"Game open", data:responseData}).send(res);
 
 };

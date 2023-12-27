@@ -94,8 +94,13 @@ export const getBalance = async (req: Request, res: Response) => {
 // Seamless method
 export const changeBalance = async (req: Request, res: Response) => {
   try {
-    const { username, amount, transaction } = req.body;
 
+    // console.log('Request URL:', req.url);
+    // console.log('Request Method:', req.method);
+    // console.log('Request Headers:', req.headers);
+    // console.log('Request Body:', req.body);
+
+    const { username, amount, transaction } = req.body;
     const data = { username, amount, transaction } as CallbackTransactions;
 
     try {

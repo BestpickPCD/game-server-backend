@@ -5,7 +5,8 @@ interface GameLaunch {
   gameId:string,
   vendor:string,
   username:string,
-  nickname:string | null
+  nickname:string | null,
+  ipAddress:string
 }
 
 export const __evolutionGameLaunch = async (data: GameLaunch) => {
@@ -24,25 +25,45 @@ export const __evolutionGameLaunch = async (data: GameLaunch) => {
 }
 
 export const __pgsoftGameLaunch = async (data: GameLaunch) => {
-  
-  const { gameId, vendor, username, nickname } = data
+  const { gameId, username, nickname, ipAddress } = data;
   const operatorToken = '49f127e31e0d9200b4f71502d33f45a4';
   const guid = GUIDGen();
-  const game = await axios.get(`https://m.pg-redirect.net/${gameId}/index.html?ot=${operatorToken}&ops=${guid}&btt=1`)
-  // WIP
-  
 
-}
+  const response = await axios.post(
+    `https://api.pg-bo.me/external-game-launcher/api/v1/GetLaunchURLHTML?trace_id=${guid}`,
+    {
+      operator_token: operatorToken,
+      path: `/${gameId}/index.html`,
+      extra_args: `?btt=1&ops=${operatorToken}`,
+      url_type: 'game-entry',
+      client_ip: ipAddress,
+    },
+    {
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+    }
+  );
+
+  return {
+    user: {
+      username,
+      nickname,
+    },
+    html: response.data,
+  };
+};
+
 
 export const __bestpickGameLaunch = async (data: GameLaunch) => {
-
-    const { gameId, vendor, username, nickname } = data;
+  try {
+    const { gameId, username, nickname } = data;
     const response: any = await axios.post(
       'http://157.230.251.158:6175/v1/game/open',
       {
         game_id: gameId,
         user_id: 'dev2',
-        ag_code: 'dev2',
+        ag_code: 'A01',
         currency: 'usd',
         language: 'en',
         cash: 1000
@@ -55,6 +76,7 @@ export const __bestpickGameLaunch = async (data: GameLaunch) => {
         }
       }
     );
+    
     const { user_id, cash, game_id, status, url: link } = response.data;
     return {
       user: {
@@ -65,5 +87,8 @@ export const __bestpickGameLaunch = async (data: GameLaunch) => {
       },
       link
     }
+  } catch (error) {
+    console.log(error)
+  }
 
 }

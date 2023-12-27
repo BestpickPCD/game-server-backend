@@ -3,7 +3,7 @@ import { gameList, openGame } from '../controllers/gameController/index.ts';
 import { keyApi } from '../middleware/authentication.ts';
 import { getVendors } from '../controllers/vendorController/index.ts';
 import { register } from '../controllers/authenticationController/index.ts';
-import { addTransaction } from '../controllers/transactionController/index.ts';
+import { addTransaction, getTransactions } from '../controllers/transactionController/index.ts';
 
 const router = express.Router();
 
@@ -21,6 +21,11 @@ router.get(
     '/game-vendors',
     keyApi, 
     getVendors
+);
+router.get(
+    '/transactions',
+    keyApi, 
+    getTransactions
 );
 router.post(
     '/user/create',

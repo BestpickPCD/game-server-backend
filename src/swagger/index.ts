@@ -5,7 +5,7 @@ import agentJson from './agent.ts';
 import gameJson from './game.ts';
 export default {
   swaggerDefinition: {
-    openapi: '3.0.1', // YOU NEED THIS
+    openapi: '3.0.1',
     info: {
       title: 'Game Server APIS',
       version: '1.0.0',
@@ -13,15 +13,27 @@ export default {
     },
     basePath: '/',
     components: {
+      schemas: {
+        CallbackInput: {
+          type: 'object',
+          properties: {
+            callbackUrl: {
+              type: 'string',
+              format: 'uri',
+              description: 'The callback URL'
+            }
+          }
+        }
+      },
       securitySchemes: {
         bearerAuth: {
           type: 'http',
           scheme: 'bearer',
           bearerFormat: 'JWT',
-          in: 'header', // Specify where the bearer token will be passed (e.g., 'header', 'query', etc.)
-          name: 'Authorization' // Specify the name of the header or query parameter carrying the bearer token
+          in: 'header',
+          name: 'Authorization'
         }
-      }
+      },
     },
     paths: {
       ...userJson,
@@ -35,7 +47,7 @@ export default {
         type: 'apiKey',
         in: 'header',
         name: 'Authorization'
-      }
+      },
     }
   },
   apis: []

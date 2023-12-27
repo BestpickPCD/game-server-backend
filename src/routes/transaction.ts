@@ -21,7 +21,7 @@ import { asyncHandler } from '../utilities/helpers/asyncHandler.ts';
 
 const router = express.Router();
 router.get('/callback/balance', asyncHandler(getBalance));
-router.post('/callback/changeBalance', changeBalance);
+router.post('/callback/changeBalance', asyncHandler(changeBalance));
 router.get(
   '/callback-transaction/:id',
   authentication,

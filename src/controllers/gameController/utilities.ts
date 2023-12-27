@@ -3,10 +3,10 @@ import { __bestpickGameList, __evolutionGameList, __pgsoftGameList } from './ven
 import { __bestpickGameLaunch, __evolutionGameLaunch, __pgsoftGameLaunch } from './launch.ts';
 import { BAD_REQUEST } from '../../core/error.response.ts';
 
-export const getGameLaunch = async (gameId:string, vendor:string, directUrl:boolean, username:string, nickname:string | null) => { 
+export const getGameLaunch = async (gameId:string, vendor:string, directUrl:boolean, username:string, nickname:string | null, ipAddress: string) => { 
     let list
     if(directUrl && (vendor.includes('Bestpick') || vendor.includes('evolution') || vendor.includes('PG Soft'))) { // remove includes out when can work on all direct APIs
-        list = await _getLaunchURL(gameId, vendor, username, nickname)
+        list = await _getLaunchURL(gameId, vendor, username, nickname, ipAddress)
     } else {
         const nicknameFilter = nickname ? `&nickname=${nickname}` : '';
         const { data } = await axios.get(`${process.env.HONORLINK_URL}/api/game-launch-link?username=${username}${nicknameFilter}&game_id=${gameId}&vendor=${vendor}`,{
@@ -61,18 +61,18 @@ const _getDirectURL = async (url: string, keys: any, name: string) => {
 
 }
 
-const _getLaunchURL = async (gameId:string, vendor:string, username:string, nickname:string | null) => {
+const _getLaunchURL = async (gameId:string, vendor:string, username:string, nickname:string | null, ipAddress: string) => {
 
     let data
     switch (vendor) {
         case "Bestpick":
-            data = await __bestpickGameLaunch({gameId, vendor, username, nickname});
+            data = await __bestpickGameLaunch({gameId, vendor, username, nickname, ipAddress});
             break;
         case "evolution":
-            data = await __evolutionGameLaunch({gameId, vendor, username, nickname});
+            data = await __evolutionGameLaunch({gameId, vendor, username, nickname, ipAddress});
             break
         case "PG Soft":
-            data = await __pgsoftGameLaunch({gameId, vendor, username, nickname});
+            data = await __pgsoftGameLaunch({gameId, vendor, username, nickname, ipAddress});
             break
         default:
             throw new BAD_REQUEST('No Game launch method found'); 

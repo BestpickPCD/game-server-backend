@@ -19,7 +19,33 @@ import {
   getById,
   getDashboardData
 } from '../../services/usersService.ts';
+import { OK } from '../../core/success.response.ts';
+import { UNAUTHORIZED } from '../../core/error.response.ts';
 const prisma = new PrismaClient();
+
+export const verifyUser = async (
+  req: Request, 
+  res: Response
+): Promise<any> => {
+  try {
+    const { user_id, auth_secret } = req.body;
+
+    const verifyUser = await prisma.users.findUniqueOrThrow({
+      where: {
+        id: user_id
+      }
+    }) as Users;
+
+    if(verifyUser) {
+      return new OK({data: verifyUser, message: ''}).send(res);
+    }
+
+    return new UNAUTHORIZED(message.UNAUTHORIZED);
+
+  } catch (error) {
+    console.log(error)
+  }
+}
 
 export const getAllAffiliatedAgents = async (
   req: RequestWithUser,

@@ -4,6 +4,7 @@ import { keyApi } from '../middleware/authentication.ts';
 import { getVendors } from '../controllers/vendorController/index.ts';
 import { register } from '../controllers/authenticationController/index.ts';
 import { addTransaction, getTransactions } from '../controllers/transactionController/index.ts';
+import { verifyUser } from '../controllers/userController/index.ts';
 
 const router = express.Router();
 
@@ -36,6 +37,11 @@ router.post(
     '/user/add-balance',
     keyApi, 
     addTransaction
+);
+router.post(
+    '/user/verify',
+    // keyApi,
+    verifyUser
 );
 
 

@@ -62,7 +62,7 @@ export const __bestpickGameLaunch = async (data: GameLaunch) => {
       'http://157.230.251.158:6175/v1/game/open',
       {
         game_id: gameId,
-        user_id: 'dev2',
+        user_id: username,
         ag_code: 'A01',
         currency: 'usd',
         language: 'en',

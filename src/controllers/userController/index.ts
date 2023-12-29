@@ -28,11 +28,11 @@ export const verifyUser = async (
   res: Response
 ): Promise<any> => {
   try {
-    const { user_id, auth_secret } = req.body;
+    const { user_id } = req.body;
 
     const verifyUser = await prisma.users.findUniqueOrThrow({
       where: {
-        id: user_id
+        username: user_id
       }
     }) as Users;
 

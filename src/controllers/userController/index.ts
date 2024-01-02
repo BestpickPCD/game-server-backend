@@ -20,7 +20,6 @@ import {
   getDashboardData
 } from '../../services/usersService.ts';
 import { OK } from '../../core/success.response.ts';
-import { UNAUTHORIZED } from '../../core/error.response.ts';
 const prisma = new PrismaClient();
 
 export const verifyUser = async (
@@ -29,27 +28,24 @@ export const verifyUser = async (
 ): Promise<any> => {
   try {
     const { user_id } = req.body;
-
-    const verifyUser = await prisma.users.findUniqueOrThrow({
+    const verifyUser = await prisma.users.findUnique({
       where: {
         id: user_id
       }
-    }) as Users;
+    });
+    if (verifyUser) {
+      const data = {
+        username: verifyUser.username,
+        user_id: verifyUser.id,
+        'api-key': verifyUser.apiKey
+      };
 
-    const data = {
-      username: verifyUser.username,
-      user_id: verifyUser.id,
-      'api-key': verifyUser.apiKey
+      return new OK({ data }).send(res);
+    } else {
+      throw new Error(message.NOT_FOUND);
     }
-
-    if(verifyUser) {
-      return new OK({ data , message: '' }).send(res);
-    }
-
-    return new UNAUTHORIZED(message.UNAUTHORIZED);
-
   } catch (error) {
-    console.log(error)
+    return res.status(500).json({ message: message.INTERNAL_SERVER_ERROR, error });
   }
 }
 

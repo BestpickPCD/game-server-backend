@@ -94,7 +94,6 @@ export const getBalance = async (req: Request, res: Response) => {
 // Seamless method
 export const changeBalance = async (req: Request, res: Response) => {
   try {
-
     // console.log('Request URL:', req.url);
     // console.log('Request Method:', req.method);
     // console.log('Request Headers:', req.headers);
@@ -227,140 +226,147 @@ export const addTransaction = async (
   res: Response
 ): Promise<any> => {
   try {
-    
-  let status: string | null = 'approved';
+    let status: string | null = 'approved';
 
-  const {
-    id: userSessionId,
-    roleId: userSessionRoleId,
-    type: userSessionType
-  } = req.user as Users;
+    const {
+      id: userSessionId,
+      roleId: userSessionRoleId,
+      type: userSessionType
+    } = req.user as Users;
 
-  const {
-    userId,
-    type: transactionType,
-    amount: transactionAmount,
-    currencyCode
-  } = req.body;
+    const {
+      userId,
+      type: transactionType,
+      amount: transactionAmount,
+      currencyCode
+    } = req.body;
 
-  let amount = transactionAmount;
+    let amount = transactionAmount;
 
-  if (
-    userSessionId === userId &&
-    userSessionRoleId !== 1 &&
-    userSessionType !== 'player'
-  ) {
-    throw new BAD_REQUEST('Cannot add money to yourself');
-  }
+    if (
+      userSessionId === userId &&
+      userSessionRoleId !== 1 &&
+      userSessionType !== 'player'
+    ) {
+      throw new BAD_REQUEST('Cannot add money to yourself');
+    }
 
-  if (
-    transactionType === 'user.add_balance' &&
-    !(await checkTransferAbility(userSessionId, userId))
-  ) {
-    throw new BAD_REQUEST(`The transfer cannot be made.`);
-  }
+    if (
+      transactionType === 'user.add_balance' &&
+      !(await checkTransferAbility(userSessionId, userId))
+    ) {
+      throw new BAD_REQUEST(`The transfer cannot be made.`);
+    }
 
-  if (['deposit', 'user.add_balance', 'bet'].includes(transactionType) && amount > 0) {
-    amount = -1 * amount;
-  }
+    if (
+      ['deposit', 'user.add_balance', 'bet'].includes(transactionType) &&
+      amount > 0
+    ) {
+      amount = -1 * amount;
+    }
 
-  if (
-    [/*'deposit',*/ 'agent.add_balance' /*,'withdraw'*/].includes(
-      transactionType
-    )
-  ) {
-    status = 'pending';
-  }
+    if (
+      [/*'deposit',*/ 'agent.add_balance' /*,'withdraw'*/].includes(
+        transactionType
+      )
+    ) {
+      status = 'pending';
+    }
 
-  const user = (await prisma.users.findUnique({
-    where: {
-      id: userId
-    },
-    select: {
-      id: true,
-      parentAgentId: true,
-      username: true,
-      balance: true,
-      parent: {
-        select: {
-          id: true,
-          username: true
-        }
+    const user = (await prisma.users.findUnique({
+      where: {
+        id: userId
       },
-      currency: {
-        select: {
-          code: true
+      select: {
+        id: true,
+        parentAgentId: true,
+        username: true,
+        balance: true,
+        parent: {
+          select: {
+            id: true,
+            username: true
+          }
+        },
+        currency: {
+          select: {
+            code: true
+          }
         }
       }
-    }
-  })) as usernameIds;
+    })) as usernameIds;
 
-  if (user) {
-    if (user.parentAgentId) {
-      const agent = await prisma.users.findUnique({
-        where: {
-          id: user.parentAgentId as string
-        }
-      });
-      if (
-        agent &&
-        ['deposit', 'withdraw', 'user.add_balance', 'bet'].includes(transactionType)
-      ) {
+    if (user) {
+      if (user.parentAgentId) {
+        const agent = await prisma.users.findUnique({
+          where: {
+            id: user.parentAgentId as string
+          }
+        });
         if (
-          !checkBalance(
-            user as unknown as Users,
-            agent,
-            Math.abs(amount),
+          agent &&
+          ['deposit', 'withdraw', 'user.add_balance', 'bet'].includes(
             transactionType
           )
         ) {
-          return res.status(500).json({message: message.BAD_REQUEST, subMessage: 'not enough balance to play'})
+          if (
+            !checkBalance(
+              user as unknown as Users,
+              agent,
+              Math.abs(amount),
+              transactionType
+            )
+          ) {
+            return res.status(500).json({
+              message: message.BAD_REQUEST,
+              subMessage: 'not enough balance to play'
+            });
+          }
         }
       }
-    } 
 
-    const data = {
-      userId,
-      username: user.username,
-      agentId: user.parentAgentId ?? null,
-      agentUsername: user.parent?.username ?? null,
-      balance: user.balance ?? null,
-      type: transactionType,
-      status,
-      amount,
-      currencyCode: currencyCode ?? user.currency.code,
-      method: 'transfer',
-      updateBy: userSessionId ?? null
-    };
-
-    const {
-      type,
-      agentId,
-      status: transactionStatus
-    } = (await create(data)) as Transactions;
-
-    if (transactionStatus != 'pending') {
-      const { balance } = await updateBalance(
+      const data = {
         userId,
+        username: user.username,
+        agentId: user.parentAgentId ?? null,
+        agentUsername: user.parent?.username ?? null,
+        balance: user.balance ?? null,
+        type: transactionType,
+        status,
         amount,
+        currencyCode: currencyCode ?? user.currency.code,
+        method: 'transfer',
+        updateBy: userSessionId ?? null
+      };
+
+      const {
         type,
         agentId,
-        data.method
-      );
-      return new CREATED({
-        data: balance,
-        message: 'Transaction created successfully'
-      }).send(res);
-    } else {
-      return res
-        .status(200)
-        .json({ message: 'Transaction created, status pending ' });
-    }
-  }
+        status: transactionStatus
+      } = (await create(data)) as Transactions;
 
-  throw new NOT_FOUND(message.INVALID_CREDENTIALS);
+      if (transactionStatus != 'pending') {
+        const { balance } = await updateBalance(
+          userId,
+          amount,
+          type,
+          agentId,
+          data.method
+        );
+        return new CREATED({
+          data: Number(balance),
+          message: 'Transaction created successfully'
+        }).send(res);
+      } else {
+        return res
+          .status(200)
+          .json({ message: 'Transaction created, status pending ' });
+      }
+    }
+
+    throw new NOT_FOUND(message.INVALID_CREDENTIALS);
   } catch (error) {
-    console.log(error)
+    console.log(error);
   }
 };
 
@@ -583,4 +589,20 @@ const check = (amountFirst: number, amountSecond: number) => {
     return true;
   }
   return false;
+};
+
+export const getBalanceByApiKey = async (req: Request, res: Response) => {
+  const { id } = (req as any).user;
+  const foundUser = await prisma.users.findUnique({
+    select: {
+      balance: true
+    },
+    where: {
+      id
+    }
+  });
+  if (!foundUser) {
+    throw new BAD_REQUEST('User not found');
+  }
+  return new OK({ data: { balance: Number(foundUser?.balance) } }).send(res);
 };

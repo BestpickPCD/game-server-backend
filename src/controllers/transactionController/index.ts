@@ -258,7 +258,7 @@ export const addTransaction = async (
     throw new BAD_REQUEST(`The transfer cannot be made.`);
   }
 
-  if (['deposit', 'user.add_balance'].includes(transactionType) && amount > 0) {
+  if (['deposit', 'user.add_balance', 'bet'].includes(transactionType) && amount > 0) {
     amount = -1 * amount;
   }
 
@@ -322,6 +322,7 @@ export const addTransaction = async (
       username: user.username,
       agentId: user.parentAgentId ?? null,
       agentUsername: user.parent?.username ?? null,
+      balance: user.balance ?? null,
       type: transactionType,
       status,
       amount,

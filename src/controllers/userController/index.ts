@@ -32,12 +32,18 @@ export const verifyUser = async (
 
     const verifyUser = await prisma.users.findUniqueOrThrow({
       where: {
-        username: user_id
+        id: user_id
       }
     }) as Users;
 
+    const data = {
+      username: verifyUser.username,
+      user_id: verifyUser.id,
+      'api-key': verifyUser.apiKey
+    }
+
     if(verifyUser) {
-      return new OK({data: verifyUser, message: ''}).send(res);
+      return new OK({ data , message: '' }).send(res);
     }
 
     return new UNAUTHORIZED(message.UNAUTHORIZED);

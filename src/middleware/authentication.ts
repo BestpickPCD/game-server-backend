@@ -3,11 +3,11 @@ import jwt, { JwtPayload } from 'jsonwebtoken';
 import { PrismaClient } from '../config/prisma/generated/base-default/index.js';
 import redisClient from '../config/redis/index.ts';
 import { RequestWithUser } from '../models/customInterfaces.ts';
+import bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
 const ACCESS_TOKEN_KEY = process.env.ACCESS_TOKEN_KEY ?? '';
 const REFRESH_TOKEN_KEY = process.env.REFRESH_TOKEN_KEY ?? '';
-const SECRET_KEY = process.env.SECRET_KEY ?? '';
 
 const message = {
   KEY_NOT_VALID: 'Key is not valid',
@@ -21,6 +21,7 @@ const verifyToken = async (key: string, secretKey: string) => {
 };
 
 const findUser = async (id: string) => {
+
   const user = await prisma.users.findUnique({
     select: {
       id: true,
@@ -39,6 +40,7 @@ const findUser = async (id: string) => {
       id
     }
   });
+
   return user;
 };
 
@@ -102,14 +104,20 @@ export const keyApi = async (
   next: NextFunction
 ): Promise<any> => {
   try {
-    
     const apiKey = String(req?.header('api-key'));
+
     if(!apiKey) {
       throw new Error(message.TOKEN_MISSING);
     }
-    const { userId } = await verifyToken(apiKey, SECRET_KEY);
-    const user = await findUser(String(userId));
+
+    const { userId } = req.body;
+    const result = await bcrypt.compare(userId, apiKey);
+    if(!result) {
+      throw new Error(message.TOKEN_NOT_VALID);
+    }
+    const user = await findUser(String(userId)); 
     (req as any).user = user;
+    
     next();
 
   } catch (error: any) {

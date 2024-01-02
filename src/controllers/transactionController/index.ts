@@ -226,6 +226,8 @@ export const addTransaction = async (
   req: RequestWithUser,
   res: Response
 ): Promise<any> => {
+  try {
+    
   let status: string | null = 'approved';
 
   const {
@@ -302,7 +304,7 @@ export const addTransaction = async (
       });
       if (
         agent &&
-        ['deposit', 'withdraw', 'user.add_balance'].includes(transactionType)
+        ['deposit', 'withdraw', 'user.add_balance', 'bet'].includes(transactionType)
       ) {
         if (
           !checkBalance(
@@ -312,10 +314,10 @@ export const addTransaction = async (
             transactionType
           )
         ) {
-          throw new BAD_REQUEST('Not enough money');
+          return res.status(500).json({message: message.BAD_REQUEST, subMessage: 'not enough balance to play'})
         }
       }
-    }
+    } 
 
     const data = {
       userId,
@@ -357,6 +359,9 @@ export const addTransaction = async (
   }
 
   throw new NOT_FOUND(message.INVALID_CREDENTIALS);
+  } catch (error) {
+    console.log(error)
+  }
 };
 
 export const transactionAction = async (

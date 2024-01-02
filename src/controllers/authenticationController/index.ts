@@ -13,7 +13,6 @@ import {
   findCurrencyById,
   getParentAgentIdsByParentAgentId
 } from '../userController/utilities.ts';
-import { generateApiKey } from './utilities.ts';
 const prisma = new PrismaClient();
 
 export const refreshToken = async (
@@ -44,9 +43,9 @@ export const apiToken = async (
   try {
     if (!req.user) {
       return res.status(404).json({ message: message.UNAUTHORIZED });
-    }
+    } 
 
-    const token = await generateApiKey(req.user.id);
+    const token = await bcrypt.hash(req.user.id, 10);
 
     try {
       (await prisma.users.update({
@@ -264,8 +263,7 @@ export const _userInsert = async (userSchema: any) => {
   const newUser = await prisma.users.create({
     data
   });
-
-  const token = await generateApiKey(newUser.id);
+  const token = await bcrypt.hash(newUser.id, 10);
   try {
     await prisma.users.update({
       where: { id: newUser.id },

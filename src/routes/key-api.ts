@@ -24,6 +24,6 @@ router.post(
   verifyUser
 );
 
-router.get('/balance', keyApi, getBalanceByApiKey);
+router.post('/balance', keyApi, getBalanceByApiKey);
 
 export default router;

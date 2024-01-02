@@ -22,21 +22,18 @@ import {
 import { OK } from '../../core/success.response.ts';
 const prisma = new PrismaClient();
 
-export const verifyUser = async (
-  req: Request, 
-  res: Response
-): Promise<any> => {
+export const verifyUser = async (req: Request, res: Response): Promise<any> => {
   try {
-    const { user_id } = req.body;
+    const { userId } = req.body;
     const verifyUser = await prisma.users.findUnique({
       where: {
-        id: user_id
+        id: userId
       }
     });
     if (verifyUser) {
       const data = {
         username: verifyUser.username,
-        user_id: verifyUser.id,
+        id: verifyUser.id,
         'api-key': verifyUser.apiKey
       };
 
@@ -45,9 +42,11 @@ export const verifyUser = async (
       throw new Error(message.NOT_FOUND);
     }
   } catch (error) {
-    return res.status(500).json({ message: message.INTERNAL_SERVER_ERROR, error });
+    return res
+      .status(500)
+      .json({ message: message.INTERNAL_SERVER_ERROR, error });
   }
-}
+};
 
 export const getAllAffiliatedAgents = async (
   req: RequestWithUser,
@@ -153,12 +152,12 @@ export const updateUser = async (req: Request, res: Response): Promise<any> => {
       ...(rate && { rate }),
       ...(apiCall && { apiCall })
     };
-    
+
     const newUser = await prisma.users.update({
       where: { id: userId },
       data: updatedUser
     });
-    
+
     if (agentId) {
       if (newUser && newUser.type == 'agent') {
         return _updateAgent(newUser, parentAgentId, res);
@@ -271,7 +270,7 @@ export const getUserById = async (
 ): Promise<any> => {
   try {
     const { userIds } = req.params;
-    const data = await getById(userIds); 
+    const data = await getById(userIds);
 
     if (!data) {
       return res.status(404).json({ message: message.NOT_FOUND });
@@ -323,7 +322,7 @@ export const getDashboard = async (
   req: RequestWithUser,
   res: Response
 ): Promise<any> => {
-  try { 
+  try {
     const data = await getDashboardData(req.user as any);
     return res.status(200).json(data);
   } catch (error) {

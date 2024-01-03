@@ -1,28 +1,29 @@
-import axios from "axios";
-import { v4 as GUIDGen } from "uuid";
+import axios from 'axios';
+import { v4 as GUIDGen } from 'uuid';
 
 interface GameLaunch {
-  gameId:string,
-  vendor:string,
-  username:string,
-  nickname:string | null,
-  ipAddress:string
+  gameId: string;
+  vendor: string;
+  username: string;
+  nickname: string | null;
+  ipAddress: string;
 }
 
 export const __evolutionGameLaunch = async (data: GameLaunch) => {
+  const { gameId, vendor, username, nickname } = data;
 
-  const { gameId, vendor, username, nickname } = data
-  
-  const nicknameFilter: string = nickname ? `&nickname=${nickname}` : ''; 
-  const { data: list } = await axios.get(`${process.env.HONORLINK_URL}/api/game-launch-link?username=${username}${nicknameFilter}&game_id=${gameId}&vendor=${vendor}`,{
+  const nicknameFilter: string = nickname ? `&nickname=${nickname}` : '';
+  const { data: list } = await axios.get(
+    `${process.env.HONORLINK_URL}/api/game-launch-link?username=${username}${nicknameFilter}&game_id=${gameId}&vendor=${vendor}`,
+    {
       headers: {
-          Authorization: `Bearer ${process.env.HONORLINK_AGENT_KEY}`
+        Authorization: `Bearer ${process.env.HONORLINK_AGENT_KEY}`
       }
-  }); 
+    }
+  );
 
-  return list 
-    
-}
+  return list;
+};
 
 export const __pgsoftGameLaunch = async (data: GameLaunch) => {
   const { gameId, username, nickname, ipAddress } = data;
@@ -36,24 +37,23 @@ export const __pgsoftGameLaunch = async (data: GameLaunch) => {
       path: `/${gameId}/index.html`,
       extra_args: `?btt=1&ops=${operatorToken}`,
       url_type: 'game-entry',
-      client_ip: ipAddress,
+      client_ip: ipAddress
     },
     {
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
+        'Content-Type': 'application/x-www-form-urlencoded'
+      }
     }
   );
 
   return {
     user: {
       username,
-      nickname,
+      nickname
     },
-    html: response.data,
+    html: response.data
   };
 };
-
 
 export const __bestpickGameLaunch = async (data: GameLaunch) => {
   try {
@@ -76,19 +76,18 @@ export const __bestpickGameLaunch = async (data: GameLaunch) => {
         }
       }
     );
-    
+
     const { user_id, cash, game_id, status, url: link } = response.data;
     return {
       user: {
-        id: user_id ,
+        id: user_id,
         username,
         nickname,
-        balance: cash,
+        balance: cash
       },
       link
-    }
+    };
   } catch (error) {
-    console.log(error)
+    console.log(error);
   }
-
-}
+};

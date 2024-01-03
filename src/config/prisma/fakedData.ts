@@ -9,7 +9,6 @@ export const permissions = {
   transactions: ['get', 'getById', 'update', 'create', 'delete']
 };
 
-
 export const vendors = [
   {
     name: 'evolution',
@@ -219,7 +218,9 @@ export const vendors = [
     name: 'Bestpick',
     url: `http://157.230.251.158`,
     keys: {
-      apiKey: 'SRKPWNZ-6ZB48WE-PQBYJED-4B6XRPT'
+      'ag-code': 'A01',
+      'ag-token':
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6ImNyeXB0byIsImlhdCI6MTUxNjIzOTAyMn0.ZAGAuEn3ifbPB37oVc1NtqcgQAo6xOu_MLXqN6smdro'
     }
   }
-]
+];

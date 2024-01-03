@@ -8,7 +8,7 @@ import { RequestWithUser } from '../../models/customInterfaces.ts';
 import { getGamesByPlayerId as getGamesByPlayerIdService } from '../../services/vendorService.ts';
 import { message } from '../../utilities/constants/index.ts';
 import { getGameLaunch, getGameList } from './utilities.ts';
-import { OK } from '../../core/success.response.ts';  
+import { OK } from '../../core/success.response.ts';
 import { __bestpickGameLaunch } from './launch.ts';
 import { _userInsert } from '../authenticationController/index.ts';
 const prisma = new PrismaClient();
@@ -17,30 +17,34 @@ export const openGame = async (
   req: RequestWithUser,
   res: Response
 ): Promise<any> => {
-  
   const { gameId, vendor, directUrl, username, nickname } = req.body;
   const ipAddress = req.ip;
- 
-  const user = await prisma.users.findUnique({
+
+  const user = (await prisma.users.findUnique({
     where: {
       username
     }
-  }) as Users;
+  })) as Users;
 
-
-  if(!user) { 
+  if (!user) {
     const create = await _userInsert({
       name: username,
       username,
       type: 'player'
     });
-    if(!create)
-      throw new Error('User not found, cant create new user')
+    if (!create) throw new Error('User not found, cant create new user');
   }
 
-  const responseData = await getGameLaunch(gameId, vendor, directUrl, username, nickname, ipAddress);
-  return new OK({message:"Game open", data:responseData}).send(res);
+  const responseData = await getGameLaunch(
+    gameId,
+    vendor,
+    directUrl,
+    username,
+    nickname,
+    ipAddress
+  );
 
+  return new OK({ message: 'Game open', data: responseData }).send(res);
 };
 
 export const updateVendor = async (
@@ -63,7 +67,7 @@ export const updateVendor = async (
 
     if (!foundAgentVendor) {
       throw new Error('Vendor not found');
-    } 
+    }
 
     const vendor = await prisma.agentVendor.updateMany({
       data: {
@@ -78,7 +82,6 @@ export const updateVendor = async (
       .status(200)
       .json({ data: vendor, message: 'Vendor updated successfully' });
   } catch (error) {
-    console.log(error)
     return next(error);
   }
 };
@@ -88,8 +91,8 @@ export const gameList = async (
   res: Response
 ): Promise<any> => {
   try {
-
-    const agentId = req.user?.type === "agent" ? req.user?.id : req.user?.parentAgentId;
+    const agentId =
+      req.user?.type === 'agent' ? req.user?.id : req.user?.parentAgentId;
     const vendor = req.query.vendors as string;
     let whereVendor;
     if (vendor) {
@@ -118,7 +121,7 @@ export const gameList = async (
           }
         }
       }
-    }); 
+    });
 
     const list = await getGameList(getVendors);
 

@@ -68,7 +68,7 @@ async function main() {
       password: await bcrypt.hash(`agent1.agent1`, 10),
       email: `agent1@agent1.com`,
       parentAgentId: user.id,
-      roleId: 1,
+      roleId: 3,
       currencyId: 1
     }
   });
@@ -93,7 +93,7 @@ async function main() {
         password: await bcrypt.hash(`user${i}.agent1`, 10),
         email: `user${i}@agent1.com`,
         parentAgentId: agent_1.id,
-        roleId: 1,
+        roleId: 3,
         apiKey: await bcrypt.hash(agent_1.id, 10),
         parentAgentIds: [agent_1.id],
         currencyId: 1

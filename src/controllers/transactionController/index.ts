@@ -246,7 +246,8 @@ export const addTransaction = async (
     if (
       userSessionId === userId &&
       userSessionRoleId !== 1 &&
-      userSessionType !== 'player'
+      userSessionType !== 'player' &&
+      transactionType !== 'agent.add_balance'
     ) {
       throw new BAD_REQUEST('Cannot add money to yourself');
     }

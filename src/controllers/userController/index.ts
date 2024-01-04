@@ -8,7 +8,8 @@ import bcrypt from 'bcrypt';
 import { message } from '../../utilities/constants/index.ts';
 import {
   getAffiliatedAgentsByUserId,
-  getParentAgentIdsByParentAgentId
+  getParentAgentIdsByParentAgentId,
+  subBalancesByUserIds
 } from './utilities.ts';
 import Redis, { getRedisData } from '../../config/redis/index.ts';
 import { RequestWithUser } from '../../models/customInterfaces.ts';
@@ -86,6 +87,19 @@ export const getAllUsersWithBalances = async (
     return res.status(500).json({ message: message.INTERNAL_SERVER_ERROR });
   }
 };
+
+export const getAllSums = async (req:Request, res: Response) => {
+  try {
+    const { userIds } = req.params;
+    const ids = userIds.split(",");
+    const balances = await subBalancesByUserIds(ids);
+
+    return new OK({ data: balances }).send(res);
+
+  } catch (error) {
+    console.log(error)
+  }
+}
 
 export const getAllUsers = async (
   req: RequestWithUser,
@@ -271,7 +285,7 @@ export const getUserById = async (
   try {
     const { userIds } = req.params;
     const data = await getById(userIds);
-
+    
     if (!data) {
       return res.status(404).json({ message: message.NOT_FOUND });
     }

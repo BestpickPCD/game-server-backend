@@ -236,6 +236,13 @@ export const getById = async (ids: string) => {
           }
         },
         parentAgentId: true,
+        parent: {
+          select: {
+            username: true,
+            id: true,
+            name: true
+          }
+        },
         role: {
           select: {
             name: true,

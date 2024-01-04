@@ -53,7 +53,10 @@ export const getAllById = async (queryParams: any, userId: string | null) => {
     const transactions = await prismaTransaction.transactions.findMany({
       where: filter,
       skip: page * size,
-      take: Number(size)
+      take: Number(size),
+      orderBy: {
+        createdAt: 'desc'
+      }
     });
 
     const count = await prismaTransaction.transactions.count({
@@ -110,7 +113,7 @@ export const getByIdWithType = async (
         prismaTransaction.transactions.findMany({
           where: { ...filter.where },
           orderBy: {
-            createdAt: 'asc'
+            updatedAt: 'desc'
           },
           skip: params.page * params.size,
           take: params.size,

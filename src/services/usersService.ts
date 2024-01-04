@@ -71,7 +71,7 @@ export const getAllWithBalance = async (query: any, userId: number) => {
     `;
 
     const users = (await prisma.$queryRawUnsafe(`${rawQuery}
-    LIMIT ${size} OFFSET ${page > 1 ? page * size : 0}
+    LIMIT ${size} OFFSET ${page >= 1 ? page * size : 0}
     `)) as any;
 
     const total = (await prisma.$queryRawUnsafe(`${rawQuery}`)) as any;
@@ -236,6 +236,13 @@ export const getById = async (ids: string) => {
           }
         },
         parentAgentId: true,
+        parent: {
+          select: {
+            username: true,
+            id: true,
+            name: true
+          }
+        },
         role: {
           select: {
             name: true,

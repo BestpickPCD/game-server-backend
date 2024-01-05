@@ -17,6 +17,7 @@ model Transactions {
   type                  String
   method                String?
   gameId                String?
+  details               Json?
   updateBy              String?
   amount                Float   @default(0.0)
   balance               Float   @default(0.0)

@@ -235,6 +235,7 @@ export const addTransaction = async (
 
   const {
     userId,
+    gameId,
     type: transactionType,
     amount: transactionAmount,
     currencyCode
@@ -332,6 +333,7 @@ export const addTransaction = async (
       agentUsername: user.parent?.username ?? null,
       balance: user.balance ?? null,
       type: transactionType,
+      gameId,
       status,
       amount,
       currencyCode: currencyCode ?? user.currency.code,

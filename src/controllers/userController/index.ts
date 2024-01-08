@@ -172,6 +172,20 @@ export const updateUser = async (req: Request, res: Response): Promise<any> => {
       data: updatedUser
     });
 
+    if(isActive == false){
+      await prisma.users.update({
+        where: { id: userId },
+        data: {lockedAt: new Date()}
+      });
+    }
+    else{
+      await prisma.users.update({
+        where: { id: userId },
+        data: {lockedAt: null}
+      });
+    }
+    
+
     if (agentId) {
       if (newUser && newUser.type == 'agent') {
         return _updateAgent(newUser, parentAgentId, res);

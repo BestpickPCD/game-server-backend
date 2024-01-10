@@ -19,7 +19,7 @@ export const getAllById = async (queryParams: any, userId: string | null) => {
       dateTo,
       type,
       status,
-      gameId
+      // gameId
       // search
     } = queryParams;
 
@@ -43,9 +43,9 @@ export const getAllById = async (queryParams: any, userId: string | null) => {
     if (type) {
       filter.type = { in: type.split(',') };
     }
-    if (gameId) {
-      filter.gameId = gameId;
-    }
+    // if (gameId) {
+    //   filter.gameId = gameId;
+    // }
     if (status) {
       filter.status = status;
     }
@@ -124,7 +124,8 @@ export const getByIdWithType = async (
             userId: true,
             username: true,
             amount: true,
-            gameId: true,
+            roundId: true,
+            details: true,
             type: true,
             status: true,
             createdAt: true

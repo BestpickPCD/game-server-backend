@@ -16,7 +16,7 @@ model Transactions {
   agentUsername         String?
   type                  String
   method                String?
-  gameId                String?
+  roundId               String?
   details               Json?
   updateBy              String?
   amount                Float   @default(0.0)

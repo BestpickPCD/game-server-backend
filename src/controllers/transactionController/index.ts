@@ -26,7 +26,7 @@ import {
   updateBalance
 } from './utilities.ts';
 const prisma = new PrismaClient();
-
+import { io } from '../../app.ts';
 const prismaTransaction = new PrismaClientTransaction();
 
 interface usernameIds {
@@ -357,11 +357,13 @@ export const addTransaction = async (
         agentId,
         data.method
       );
+      io.emit(`${req?.user?.id}-played`, { userId, amount, type, agentId });
       return new CREATED({
         data: Number(balance),
         message: 'Transaction created successfully'
       }).send(res);
     } else {
+      io.emit(`${req?.user?.id}-played`, { userId, amount, type, agentId });
       return res
         .status(200)
         .json({ message: 'Transaction created, status pending ' });

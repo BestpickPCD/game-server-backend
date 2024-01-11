@@ -141,8 +141,8 @@ export const getBettingList = async (queryParams: any, userId: string | null) =>
     const betList = Object.values(groupedTransactions).slice(pageStart, pageEnd);
   
     return { betList, count:  Object.values(groupedTransactions).length, page, size };
+    
   } catch (error: any) {
-    console.log(error)
     throw Error(error);
   }
 }

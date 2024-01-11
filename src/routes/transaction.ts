@@ -13,7 +13,8 @@ import {
   updateBetLimit,
   getBalance,
   transactionAction,
-  getCallbackTransaction
+  getCallbackTransaction,
+  getBettingList
 } from '../controllers/transactionController/index.ts';
 import { authentication } from '../middleware/authentication.ts';
 import { permission } from '../middleware/permission.ts';
@@ -32,6 +33,12 @@ router.get(
   authentication,
   permission('transactions', 'get'),
   asyncHandler(getTransactions)
+);
+router.get(
+  '/betting-list',
+  authentication,
+  permission('transactions', 'get'),
+  asyncHandler(getBettingList)
 );
 router.get(
   '/transactions/:id',

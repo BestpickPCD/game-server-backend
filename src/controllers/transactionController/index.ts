@@ -17,7 +17,8 @@ import {
   create,
   getAllById,
   getByIdWithType,
-  getDetailsById
+  getDetailsById,
+  getBettingList as getBettingListService
 } from '../../services/transactionsService.ts';
 import { message } from '../../utilities/constants/index.ts';
 import {
@@ -56,6 +57,25 @@ export const getTransactions = async (
   return new OK({
     data: {
       data: transactions,
+      page: Number(page || 0),
+      size: Number(size || 10),
+      totalItems: Number(count)
+    }
+  }).send(res);
+};
+
+export const getBettingList = async (
+  req: Request,
+  res: Response
+): Promise<any> => {
+  const { id } = (req as any).user;
+  const data = (await getBettingListService(req.query, id)) as any;
+
+  const { betList, count, page, size } = data;
+
+  return new OK({
+    data: {
+      data: betList,
       page: Number(page || 0),
       size: Number(size || 10),
       totalItems: Number(count)

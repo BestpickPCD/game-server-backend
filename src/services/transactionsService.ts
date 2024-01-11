@@ -1,6 +1,7 @@
 import {
   Prisma,
-  PrismaClient as PrismaClientTransaction
+  PrismaClient as PrismaClientTransaction,
+  Transactions
 } from '../config/prisma/generated/transactions/index.js';
 const prismaTransaction = new PrismaClientTransaction();
 import {
@@ -18,8 +19,7 @@ export const getAllById = async (queryParams: any, userId: string | null) => {
       dateFrom,
       dateTo,
       type,
-      status,
-      // gameId
+      status
       // search
     } = queryParams;
 
@@ -43,21 +43,18 @@ export const getAllById = async (queryParams: any, userId: string | null) => {
     if (type) {
       filter.type = { in: type.split(',') };
     }
-    // if (gameId) {
-    //   filter.gameId = gameId;
-    // }
     if (status) {
       filter.status = status;
     }
 
-    const transactions = await prismaTransaction.transactions.findMany({
-      where: filter,
-      skip: page * size,
-      take: Number(size),
-      orderBy: {
-        createdAt: 'desc'
-      }
-    });
+    const  transactions = await prismaTransaction.transactions.findMany({
+        where: filter,
+        skip: page * size,
+        take: Number(size),
+        orderBy: {
+          createdAt: 'desc'
+        }
+      }) as Transactions[];
 
     const count = await prismaTransaction.transactions.count({
       where: filter
@@ -68,6 +65,87 @@ export const getAllById = async (queryParams: any, userId: string | null) => {
     throw Error(error);
   }
 };
+
+export const getBettingList = async (queryParams: any, userId: string | null) => {
+  try { 
+    const {
+      page = 1,
+      size = 10,
+      dateFrom,
+      dateTo,
+      status
+    } = queryParams;
+
+    const filter: any = {
+      OR: [
+        {
+          agentId: userId
+        },
+        {
+          userId
+        }
+      ]
+    };
+    filter.type = { in: ['bet', 'win'] };
+    if (dateFrom) {
+      filter.createdAt = { gte: new Date(dateFrom) };
+    }
+    if (dateTo) {
+      filter.createdAt = { ...filter.createdAt, lte: new Date(dateTo) };
+    } 
+    if (status) {
+      filter.status = status;
+    }
+
+    const transactions = await prismaTransaction.transactions.findMany({
+      where: filter,
+      orderBy: {
+        createdAt: 'desc'
+      }
+    }) as Transactions[];
+
+    interface GroupedTransaction {
+      roundId: string;
+      details: any;
+      betAmount: number;
+      totalAmount: number;
+      transactions: any[];
+    }
+    
+    const groupedTransactions = transactions.reduce((acc: Record<string, GroupedTransaction>, transaction) => {
+      const roundId = transaction.roundId;
+      const details = transaction.details;
+    
+      if (!roundId) {
+        return acc;
+      }
+    
+      if (!acc[roundId]) {
+        acc[roundId] = {
+          roundId: roundId,
+          details,
+          betAmount: transaction.type === "bet" ? transaction.amount : 0 ,
+          totalAmount: 0,
+          transactions: [],
+        };
+      }
+    
+      acc[roundId].totalAmount += transaction.amount;
+      acc[roundId].transactions.push(transaction);
+    
+      return acc;
+    }, {});
+
+    const pageStart = Math.max(((page > 0 ? page : 1) - 1) * size, 0);
+    const pageEnd = Math.min((page > 0 ? page : 1) * size, Object.values(groupedTransactions).length);
+    const betList = Object.values(groupedTransactions).slice(pageStart, pageEnd);
+  
+    return { betList, count:  Object.values(groupedTransactions).length, page, size };
+  } catch (error: any) {
+    console.log(error)
+    throw Error(error);
+  }
+}
 
 export const create = async (data: any) => {
   try {

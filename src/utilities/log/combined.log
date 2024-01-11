@@ -331,3 +331,39 @@
   level: 'error',
   timestamp: '2023-10-31T03:16:03.767Z'
 }
+{
+  userId: '61cda2dd-ef7a-48e9-8ac5-417e769d4ee3',
+  method: 'GET',
+  url: '/betting-list?page=0&size=10&search=&dateFrom=&dateTo=&type=&bettingList=1',
+  body: {},
+  params: {},
+  status: '500',
+  message: 'TypeError: groupedTransactions.slice is not a function',
+  subMessage: undefined,
+  level: 'error',
+  timestamp: '2024-01-11T02:46:38.844Z'
+}
+{
+  userId: '61cda2dd-ef7a-48e9-8ac5-417e769d4ee3',
+  method: 'GET',
+  url: '/betting-list?page=0&size=10&search=&dateFrom=&dateTo=&type=&bettingList=1',
+  body: {},
+  params: {},
+  status: '500',
+  message: 'TypeError: groupedTransactions.slice is not a function',
+  subMessage: undefined,
+  level: 'error',
+  timestamp: '2024-01-11T03:00:36.126Z'
+}
+{
+  userId: '',
+  method: 'GET',
+  url: '/api/betting-list?page=0&size=10&search=&dateFrom=&dateTo=&type=&bettingList=1',
+  body: {},
+  params: {},
+  status: 404,
+  message: 'Not found',
+  subMessage: undefined,
+  level: 'error',
+  timestamp: '2024-01-11T03:25:06.534Z'
+}

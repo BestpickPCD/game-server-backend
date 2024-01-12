@@ -115,10 +115,6 @@ export const getBettingList = async (queryParams: any, userId: string | null) =>
     const groupedTransactions = transactions.reduce((acc: Record<string, GroupedTransaction>, transaction) => {
       const roundId = transaction.roundId;
       const details = transaction.details;
-      let betAmount = 0;
-      if(transaction.type === "bet") {
-        betAmount += transaction.amount
-      }
       if (!roundId) {
         return acc;
       }
@@ -127,12 +123,14 @@ export const getBettingList = async (queryParams: any, userId: string | null) =>
         acc[roundId] = {
           roundId: roundId,
           details,
-          betAmount,
+          betAmount: 0,
           totalAmount: 0,
           transactions: [],
         };
+      } 
+      if(transaction.type === "bet") { 
+        acc[roundId].betAmount += transaction.amount
       }
-    
       acc[roundId].totalAmount += transaction.amount;
       acc[roundId].transactions.push(transaction);
     

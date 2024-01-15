@@ -109,12 +109,14 @@ export const getBettingList = async (queryParams: any, userId: string | null) =>
       details: any;
       betAmount: number;
       totalAmount: number;
+      createdAt: Date;
       transactions: any[];
     }
     
     const groupedTransactions = transactions.reduce((acc: Record<string, GroupedTransaction>, transaction) => {
       const roundId = transaction.roundId;
       const details = transaction.details;
+      const createdAt = transaction.createdAt;
       if (!roundId) {
         return acc;
       }
@@ -125,6 +127,7 @@ export const getBettingList = async (queryParams: any, userId: string | null) =>
           details,
           betAmount: 0,
           totalAmount: 0,
+          createdAt,
           transactions: [],
         };
       } 
@@ -138,10 +141,13 @@ export const getBettingList = async (queryParams: any, userId: string | null) =>
     }, {});
 
     const pageStart = Math.max(((page > 0 ? page : 1) - 1) * size, 0);
-    const pageEnd = Math.min((page > 0 ? page : 1) * size, Object.values(groupedTransactions).length);
-    const betList = Object.values(groupedTransactions).slice(pageStart, pageEnd);
+    const bettingTransactions = Object.values(groupedTransactions); // make obj -> array
+    const pageEnd = Math.min((page > 0 ? page : 1) * size, bettingTransactions.length);
+    const betList = bettingTransactions.slice(pageStart, pageEnd).sort(function(a,b){
+      return `${a.createdAt}`.localeCompare(`${b.createdAt}`);
+    }); // .sort to rearrange dates
   
-    return { betList, count:  Object.values(groupedTransactions).length, page, size };
+    return { betList, count:  bettingTransactions.length, page, size };
     
   } catch (error: any) {
     throw Error(error);

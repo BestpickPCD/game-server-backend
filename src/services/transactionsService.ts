@@ -143,9 +143,7 @@ export const getBettingList = async (queryParams: any, userId: string | null) =>
     const pageStart = Math.max(((page > 0 ? page : 1) - 1) * size, 0);
     const bettingTransactions = Object.values(groupedTransactions); // make obj -> array
     const pageEnd = Math.min((page > 0 ? page : 1) * size, bettingTransactions.length);
-    const betList = bettingTransactions.slice(pageStart, pageEnd).sort(function(a,b){
-      return `${a.createdAt}`.localeCompare(`${b.createdAt}`);
-    }); // .sort to rearrange dates
+    const betList = bettingTransactions.slice(pageStart, pageEnd).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()); // .sort to rearrange dates
   
     return { betList, count:  bettingTransactions.length, page, size };
     
@@ -160,7 +158,6 @@ export const create = async (data: any) => {
 
     return transcation;
   } catch (error: any) {
-    console.log(error);
     throw Error(error);
   }
 };

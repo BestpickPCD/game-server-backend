@@ -20,28 +20,33 @@ const verifyToken = async (key: string, secretKey: string) => {
   return (await jwt.verify(key, secretKey)) as Promise<{ userId: string }>;
 };
 
-const findUser = async (id: string) => {
+const findUser = async (type: string , value: string) => {
 
-  const user = await prisma.users.findUnique({
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      apiKey: true,
-      roleId: true,
-      currencyId: true,
-      parentAgentId: true,
-      isActive: true,
-      username: true,
-      type: true,
-      role: true
-    },
-    where: {
-      id
-    }
-  });
+  if(type === 'userId' || type === 'apiKey') {
+    const user = await prisma.users.findUnique({
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        apiKey: true,
+        roleId: true,
+        currencyId: true,
+        parentAgentId: true,
+        isActive: true,
+        username: true,
+        type: true,
+        role: true
+      },
+      where: {
+        [type]:value
+      }
+    });
+  
+    return user;
+  } else {
+    throw new Error(message.KEY_NOT_VALID);
+  }
 
-  return user;
 };
 
 export const authentication = async (
@@ -79,7 +84,7 @@ export const authentication = async (
           req.body?.refreshToken,
           REFRESH_TOKEN_KEY
         )) as JwtPayload;
-        const user = await findUser(String(userId));
+        const user = await findUser('userId', String(userId));
         (req as any).user = user;
         return next();
       }
@@ -110,12 +115,7 @@ export const keyApi = async (
       throw new Error(message.TOKEN_MISSING);
     }
 
-    const { userId } = req.body;
-    const result = await bcrypt.compare(userId, apiKey);
-    if(!result) {
-      throw new Error(message.TOKEN_NOT_VALID);
-    }
-    const user = await findUser(String(userId)); 
+    const user = await findUser('apiKey', String(apiKey)); 
     (req as any).user = user;
     
     next();

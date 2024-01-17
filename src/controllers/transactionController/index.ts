@@ -615,13 +615,13 @@ const check = (amountFirst: number, amountSecond: number) => {
 };
 
 export const getBalanceByApiKey = async (req: Request, res: Response) => {
-  const { id } = (req as any).user;
+  const { userId } = (req as any).body;
   const foundUser = await prisma.users.findUnique({
     select: {
       balance: true
     },
     where: {
-      id
+      id: userId
     }
   });
   if (!foundUser) {

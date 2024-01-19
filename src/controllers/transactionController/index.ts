@@ -354,7 +354,7 @@ export const addTransaction = async (
       agentUsername: user.parent?.username ?? null,
       balance: user.balance ?? null,
       type: transactionType,
-      roundId: roundId ?? `${details.gameRound}`,
+      roundId: roundId ?? `${details?.gameRound}`,
       details,
       status,
       amount,
@@ -376,14 +376,27 @@ export const addTransaction = async (
         type,
         agentId,
         data.method
-      );
-      io.emit(`${req?.user?.id}-played`, { userId, amount, type, agentId });
+      ).then((result) => {
+        io.emit(`${req?.user?.id}-played`, {
+          userId,
+          amount,
+          type,
+          agentId
+        });
+        return result;
+      });
+
       return new CREATED({
         data: Number(balance),
         message: 'Transaction created successfully'
       }).send(res);
     } else {
-      io.emit(`${req?.user?.id}-played`, { userId, amount, type, agentId });
+      await io.emit(`${req?.user?.id}-played`, {
+        userId,
+        amount,
+        type,
+        agentId
+      });
       return res
         .status(200)
         .json({ message: 'Transaction created, status pending ' });

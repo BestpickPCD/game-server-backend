@@ -59,7 +59,6 @@ export const getGameList = async (vendors: any[]) => {
           name,
           directUrl
         );
-        console.log(arrangedData)
         switch (name) {
           case 'Bestpick':
             arrangedData = arrangedData.map((item) => {

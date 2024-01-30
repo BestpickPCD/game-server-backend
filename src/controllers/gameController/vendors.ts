@@ -49,6 +49,7 @@ export const __pgsoftGameList = async (url: string, keys: any) => {
         'Content-Type': 'application/x-www-form-urlencoded'
       }
     }
-  ); 
+  );
+  console.log(data)
   return data;
 };

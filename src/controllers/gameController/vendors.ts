@@ -26,7 +26,14 @@ export const __evolutionGameList = async (url: string, keys: any) => {
 };
 
 export const __pgsoftGameList = async (url: string, keys: any) => {
-  const { operator_token, secret_key } = keys;
+
+  let PGKeys: any
+  keys.forEach((element: any) => {
+    const key = Object.keys(element);
+    PGKeys = { ...{ [`${key}`]: element[`${key}`]}, ...PGKeys }
+  });
+
+  const { operator_token, secret_key } = PGKeys;
   const guid = GUIDGen();
   const data = await axios.post(
     `${url}/external/Game/v2/Get?trace_id=${guid}`,
@@ -42,7 +49,6 @@ export const __pgsoftGameList = async (url: string, keys: any) => {
         'Content-Type': 'application/x-www-form-urlencoded'
       }
     }
-  );
-
+  ); 
   return data;
 };

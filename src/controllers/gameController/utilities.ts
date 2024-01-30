@@ -54,19 +54,25 @@ export const getGameList = async (vendors: any[]) => {
       // If directUrl but no url - call through honorlink
       if (directUrl && url) {
         const gameList = await _getDirectURL(url, keys, name);
-
         let arrangedData = await _rearrangeData(
-          gameList.data ?? gameList.data.data,
+          gameList.data.data ?? gameList.data,
           name,
           directUrl
         );
-
-        switch (name === 'Bestpick') {
-          case true:
+        console.log(arrangedData)
+        switch (name) {
+          case 'Bestpick':
             arrangedData = arrangedData.map((item) => {
               return { ...item, img: `${url}${item.img}` };
             });
             break;
+          case 'PG Soft':
+            arrangedData = arrangedData.map((item) => {
+              return { ...item, img: `${url}${item.img}` };
+            });
+            break
+          default: 
+            return Error
         }
 
         list = list.concat(arrangedData);
@@ -157,7 +163,7 @@ const _rearrangeData = async (
   data: any[],
   vendorName: string | null,
   directUrl: boolean
-) => {
+) => { 
   return data.map((datum) => ({
     id: datum.game_id ?? datum.gameId ?? datum.id ?? null,
     name:

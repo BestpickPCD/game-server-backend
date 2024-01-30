@@ -26,30 +26,32 @@ export const __evolutionGameList = async (url: string, keys: any) => {
 };
 
 export const __pgsoftGameList = async (url: string, keys: any) => {
-
-  let PGKeys: any
-  keys.forEach((element: any) => {
-    const key = Object.keys(element);
-    PGKeys = { ...{ [`${key}`]: element[`${key}`]}, ...PGKeys }
-  });
-
-  const { operator_token, secret_key } = PGKeys;
-  const guid = GUIDGen();
-  const data = await axios.post(
-    `${url}/external/Game/v2/Get?trace_id=${guid}`,
-    {
-      operator_token,
-      secret_key,
-      currency: 'KRW',
-      language: 'enus',
-      status: 1
-    },
-    {
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded'
+  try {
+    let PGKeys: any
+    keys.forEach((element: any) => {
+      const key = Object.keys(element);
+      PGKeys = { ...{ [`${key}`]: element[`${key}`]}, ...PGKeys }
+    });
+  
+    const { operator_token, secret_key } = PGKeys;
+    const guid = GUIDGen();
+    const data = await axios.post(
+      `${url}/external/Game/v2/Get?trace_id=${guid}`,
+      {
+        operator_token,
+        secret_key,
+        currency: 'KRW',
+        language: 'enus',
+        status: 1
+      },
+      {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        }
       }
-    }
-  );
-  console.log(data)
-  return data;
+    );
+    return data;
+  } catch (error) {
+    console.log(error) 
+  }
 };

@@ -55,7 +55,7 @@ export const getGameList = async (vendors: any[]) => {
       if (directUrl && url) {
         const gameList = await _getDirectURL(url, keys, name);
         let arrangedData = await _rearrangeData(
-          gameList.data.data ?? gameList.data,
+          gameList?.data.data ?? gameList?.data,
           name,
           directUrl
         );

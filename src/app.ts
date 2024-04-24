@@ -65,7 +65,8 @@ export const io = new Server(server, {
       'http://localhost:3100',
       'http://localhost:3000',
       'http://localhost:3200',
-      'http://167.99.68.34:3100'
+      'http://167.99.68.34:3100',
+      'http://172.104.58.6:3100'
     ],
     methods: ['GET', 'POST'],
     credentials: true

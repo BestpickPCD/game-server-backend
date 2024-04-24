@@ -216,7 +216,7 @@ export const vendors = [
   },
   {
     name: 'Bestpick',
-    url: `http://157.230.251.158`,
+    url: `http://172.104.190.6`,
     keys: {
       'ag-code': 'A01',
       'ag-token':

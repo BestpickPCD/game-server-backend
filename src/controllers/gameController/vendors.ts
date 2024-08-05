@@ -5,13 +5,13 @@ export const __bestpickGameList = async (url: string, keys: any[]) => {
   try {
     const gameUrl = `${url}:6175/games`;
     const objectKeys = await keys.reduce((acc, cur) => ({ ...acc, ...cur }), {});
-    console.log(objectKeys);
     const data = await axios.get(gameUrl, {
       headers: {
         ...objectKeys
       }
     });
   
+    console.log(data);
     return data;
   } catch (error) {
     console.log(error)

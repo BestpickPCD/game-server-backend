@@ -3,7 +3,7 @@ import { v4 as GUIDGen } from 'uuid';
 
 export const __bestpickGameList = async (url: string, keys: any[]) => {
   const gameUrl = `${url}:6175/games`;
-  const objectKeys = keys.reduce((acc, cur) => ({ ...acc, ...cur }), {});
+  const objectKeys = await keys.reduce((acc, cur) => ({ ...acc, ...cur }), {});
 
   const data = await axios.get(gameUrl, {
     headers: {

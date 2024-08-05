@@ -59,7 +59,8 @@ export const __bestpickGameLaunch = async (data: GameLaunch) => {
   try {
     const { gameId, username, nickname } = data;
     const response: any = await axios.post(
-      'http://172.104.190.6:6175/v1/game/open',
+      'http://192.168.2.15:6175/v1/game/open',
+      // 'http://172.104.190.6:6175/v1/game/open',
       {
         game_id: gameId,
         user_id: username,
